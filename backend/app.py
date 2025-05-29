@@ -1,36 +1,63 @@
-from fastapi import FastAPI, Request
-from dotenv import load_dotenv
-from webhook import set_webhook
-from sender_adapter import send_message
 import os
-import json
+
+from fastapi.responses import JSONResponse
+from fastapi.exceptions import HTTPException
+from fastapi import FastAPI, Request
+
+from request_models import BotRegisterRequest
+
+import sender_adapter
+import webhook_server
+
+from dotenv import load_dotenv
 load_dotenv()
+
+WEBHOOK_URL = os.getenv("WEBHOOK_URL")
+
+#TODO Move to PostgreSQL Database
+BOT_TOKENS: dict[int, str] = {}
 
 app = FastAPI(
     title="Telegram CORP AI Integration API",
 )
 
-@app.get('/')
-def index():
-    return "OK"
+@app.post('/register_bot')
+async def register_bot_token(request: BotRegisterRequest):
+    token = request.telegram_token.get_secret_value()
 
-TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN")
-WEBHOOK_URL = os.getenv("WEBHOOK_URL")
+    try:
+        bot_id = await webhook_server.get_bot_id(token)
+    except:
+        return HTTPException(status_code=404, detail="Invalid Telegram Bot TOKEN")
 
-set_webhook(TELEGRAM_TOKEN, WEBHOOK_URL)
+    BOT_TOKENS[bot_id] = token
 
-@app.post('/webhook')
-async def handle_webhook(request: Request):
-    update = await request.json()
+    response = await webhook_server.set_webhook(token, f"{WEBHOOK_URL}/webhook/{bot_id}")
 
-    #TODO ONLY FOR DEVELOPMENT
-    # with open('message.json', 'w', encoding='utf-8') as f:
-    #     json.dump(update, f, ensure_ascii=False, indent=2)
+    return response
 
-    message = update['message']
 
-    send_message(message['chat']['id'], "HELLO")
 
-    return 200
+@app.post('/webhook/{bot_id}', description="Handles webhook calls from telegram")
+async def handle_webhook(bot_id:int, request: Request):
+    try:
+        update = await request.json()
 
+        #NOTE ONLY FOR DEVELOPMENT
+        # with open('message.json', 'w', encoding='utf-8') as f:
+        #     import json
+        #     json.dump(update, f, ensure_ascii=False, indent=2)
+
+        token = BOT_TOKENS.get(bot_id)
+        if not token:
+            raise HTTPException(status_code=404, detail="Bot not registered")
+
+        message = update['message']
+
+        response = await sender_adapter.send_message(token, message['chat']['id'], "HELLO")
+
+        return response
     
+
+    except Exception as e:
+        return JSONResponse(content={"ok": False, "error": str(e)}, status_code=400)

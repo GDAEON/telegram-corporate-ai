@@ -1,15 +1,13 @@
-import requests
-from dotenv import load_dotenv
-import os
-load_dotenv()
+import httpx
 
-TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN")
+async def send_message(token:str, chat_id: int, text: str):
+    async with httpx.AsyncClient() as client:
+        response = await client.post(f"https://api.telegram.org/bot{token}/sendMessage", json={
+            "chat_id": chat_id,
+            "text": text
+        })
 
-def send_message(chat_id: str, text: str):
-    payload = {"chat_id": chat_id, "text": text}
-
-    send_message_url = f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/sendMessage"
-
-    response = requests.post(send_message_url, json=payload)
-    
-    response.raise_for_status()
+        return {
+            "status_code": response.status_code,
+            "body": response.json()
+        }
