@@ -21,7 +21,7 @@ app = FastAPI(
     title="Telegram CORP AI Integration API",
 )
 
-@app.post('/register_bot')
+@app.post('/auth_bot')
 async def register_bot_token(request: BotRegisterRequest):
     token = request.telegram_token.get_secret_value()
 
