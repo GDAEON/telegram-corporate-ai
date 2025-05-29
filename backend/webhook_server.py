@@ -18,4 +18,14 @@ async def set_webhook(TOKEN: str, WEBHOOK_URL: str) -> int:
             "status_code": response.status_code,
             "body": response.json()
         }
+    
 
+async def delete_webhook(token: str):
+    url = f"https://api.telegram.org/bot{token}/deleteWebhook"
+    async with httpx.AsyncClient() as client:
+        response = await client.post(url)
+        
+        return {
+            "status_code": response.status_code,
+            "body": response.json()
+        }
