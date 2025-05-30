@@ -36,7 +36,6 @@ async def register_bot_by_token(request: BotRegisterRequest):
 
     return response
 
-
 @app.delete("/bot", description="Deletes the webhook and credentials for the bot using either the bot ID or token or both", tags=["Telegram"])
 async def unregister_bot(
     request: BotUnregisterRequest
@@ -89,3 +88,68 @@ async def handle_webhook(bot_id:int, request: Request):
     except Exception as e:
         return JSONResponse(content={"ok": False, "error": str(e)}, status_code=400)
     
+@app.get("/schema", tags=["Constructor"])
+def get_schema():
+    return JSONResponse(content={
+        "messenger_types": {
+            "telegram": {
+                "extends": "with_buttons",
+                "name": "Telegram",
+                "internal_type": "telegram",
+                "quick_replies": {
+                    "text": True,
+                    "text_max_length": 20,
+                    "phone": True,
+                    "geolocation": True,
+                    "max_count": 32
+                },
+                "inline_buttons": {
+                    "text": True,
+                    "url": True,
+                    "payload": True,
+                    "payload_max_length": 64,
+                    "text_max_length": 20,
+                    "colors": True,
+                    "max_count": 32
+                },
+                "text": {
+                    "max_length": 4096
+                },
+                "image": {
+                    "enabled": True,
+                    "mime": ["image/jpeg", "image/png"],
+                    "max_file_size": 5 * 1024 * 1024,
+                    "caption": True,
+                    "caption_max_length": 1024
+                },
+                "video": {
+                    "enabled": True,
+                    "mime": ["video/mp4"],
+                    "max_file_size": 20 * 1024 * 1024,
+                    "caption": True,
+                    "caption_max_length": 1024
+                },
+                "document": {
+                    "enabled": True,
+                    "mime": ["*"],
+                    "max_file_size": 20 * 1024 * 1024,
+                    "caption": True,
+                    "caption_max_length": 1024
+                },
+                "audio": {
+                    "enabled": True,
+                    "mime": ["audio/mpeg", "audio/ogg"],
+                    "max_file_size": 5 * 1024 * 1024
+                },
+                "voice": {
+                    "enabled": True,
+                    "mime": ["audio/ogg"],
+                    "max_file_size": 1 * 1024 * 1024
+                },
+                "geolocation": {
+                    "enabled": False
+                }
+            }
+        }
+    })
+
