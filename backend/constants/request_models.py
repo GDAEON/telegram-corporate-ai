@@ -46,3 +46,10 @@ class SendMediaMessageRequest(BaseModel):
     inlineButtons: Optional[List[List[InlineButton]]] = None
     file: File
     caption: str
+
+
+class IntegrateUserRequest(BaseModel):
+    bot_id: str
+    name: str
+    email: str
+    

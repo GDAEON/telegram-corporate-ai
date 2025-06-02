@@ -6,6 +6,8 @@ load_dotenv()
 
 
 WEBHOOK_URL = os.getenv("WEBHOOK_URL")
+INTEGRATION_CODE = os.getenv("INTEGRATION_CODE")
+INTEGRATION_TOKEN = os.getenv("INTEGRATION_TOKEN")
 
 with open('config/scheme.json', 'r', encoding='utf-8') as f:
     SCHEME = json.load(f)

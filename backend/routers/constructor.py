@@ -9,8 +9,16 @@ router = APIRouter(tags=["Constructor"])
 
 
 @router.get("/schema")
-def get_schema():
+async def get_schema():
     return JSONResponse(content=SCHEME)
+
+@router.get("/{id}/status")
+async def get_status(id: int):
+    return {
+    "status": "active",
+    "paymentStatus": "trial",
+    "expiresAt": "2022-04-11T07:32:43.329+00:00"
+    }
 
 
 @router.post('/{id}/sendTextMessage', description="Sends message to a bot_{id} chat")
