@@ -3,7 +3,7 @@ from fastapi.responses import JSONResponse
 from fastapi.exceptions import HTTPException
 from constants.request_models import BotRegisterRequest, BotUnregisterRequest
 from config.settings import WEBHOOK_URL, BOT_TOKENS
-import webhook_server
+import services.webhook_server as webhook_server
 
 router = APIRouter(tags=["Telegram"])
 

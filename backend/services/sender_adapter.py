@@ -1,6 +1,6 @@
 import httpx
 from io import BytesIO
-from helper_functions import guess_filename
+from services.helper_functions import guess_filename
 
 async def send_message(token:str, chat_id: int, text: str):
     async with httpx.AsyncClient() as client:

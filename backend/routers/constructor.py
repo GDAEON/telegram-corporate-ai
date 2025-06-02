@@ -2,7 +2,7 @@ from fastapi import APIRouter
 from fastapi.responses import JSONResponse
 from constants.request_models import SendTextMessageRequest, SendMediaMessageRequest
 from config.settings import BOT_TOKENS, SCHEME
-import sender_adapter
+import services.sender_adapter as sender_adapter
 
 router = APIRouter(tags=["Constructor"])
 
