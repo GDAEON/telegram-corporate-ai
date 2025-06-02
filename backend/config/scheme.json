@@ -1,0 +1,74 @@
+{
+  "messenger_types": {
+    "telegram": {
+      "extends": "with_buttons",
+      "name": "Telegram",
+      "internal_type": "telegram",
+      "quick_replies": {
+        "text": true,
+        "text_max_length": 20,
+        "phone": true,
+        "geolocation": true,
+        "max_count": 32
+      },
+      "inline_buttons": {
+        "text": true,
+        "url": true,
+        "payload": true,
+        "payload_max_length": 64,
+        "text_max_length": 20,
+        "colors": true,
+        "max_count": 32
+      },
+      "text": {
+        "max_length": 4096
+      },
+      "image": {
+        "enabled": true,
+        "mime": [
+          "image/jpeg",
+          "image/png"
+        ],
+        "max_file_size": 5242880,
+        "caption": true,
+        "caption_max_length": 1024
+      },
+      "video": {
+        "enabled": true,
+        "mime": [
+          "video/mp4"
+        ],
+        "max_file_size": 20971520,
+        "caption": true,
+        "caption_max_length": 1024
+      },
+      "document": {
+        "enabled": true,
+        "mime": [
+          "*"
+        ],
+        "max_file_size": 20971520,
+        "caption": true,
+        "caption_max_length": 1024
+      },
+      "audio": {
+        "enabled": true,
+        "mime": [
+          "audio/mpeg",
+          "audio/ogg"
+        ],
+        "max_file_size": 5242880
+      },
+      "voice": {
+        "enabled": true,
+        "mime": [
+          "audio/ogg"
+        ],
+        "max_file_size": 1048576
+      },
+      "geolocation": {
+        "enabled": false
+      }
+    }
+  }
+}
