@@ -4,7 +4,7 @@ from fastapi.responses import JSONResponse
 from fastapi.exceptions import HTTPException
 from fastapi import FastAPI, Request, Query
 
-from request_models import BotRegisterRequest, BotUnregisterRequest
+from request_models import BotRegisterRequest, BotUnregisterRequest, SendTextMessageRequest, SendMediaMessageRequest
 
 import sender_adapter
 import webhook_server
@@ -31,6 +31,7 @@ async def register_bot_by_token(request: BotRegisterRequest):
         return HTTPException(status_code=404, detail="Invalid Telegram Bot TOKEN")
 
     BOT_TOKENS[bot_id] = token
+    print(bot_id)
 
     response = await webhook_server.set_webhook(token, f"{WEBHOOK_URL}/webhook/{bot_id}")
 
@@ -77,12 +78,9 @@ async def handle_webhook(bot_id:int, request: Request):
         token = BOT_TOKENS.get(bot_id)
         if not token:
             raise HTTPException(status_code=404, detail="Bot not registered")
+        
 
-        message = update['message']
-
-        response = await sender_adapter.send_message(token, message['chat']['id'], "HELLO")
-
-        return response
+        return {"status": "OK"}
     
 
     except Exception as e:
@@ -153,3 +151,42 @@ def get_schema():
         }
     })
 
+@app.post('/{id}/sendTextMessage', description="Sends message to a bot_{id} chat", tags=["Constructor"])
+async def send_message(id: int, request: SendTextMessageRequest):
+    try:
+        token = BOT_TOKENS.get(id)
+        chat_id = request.chat.externalId
+        text = request.text
+
+        response = await sender_adapter.send_message(token, chat_id, text)
+
+        if response["status_code"] == 200:
+
+            messenger_id = request.chat.messengerId
+            return {"externalId": chat_id, "messengerId": messenger_id}
+        else:
+            return {"message": response['body'], "code": "feature_not_supported"}
+        
+    except Exception as e:
+        return {"message": e, "code": "feature_not_supported"}
+
+@app.post('/{id}/sendMediaMessage', description="Sends media message to a bot_{id} chat", tags=["Constructor"])
+async def send_media_message(id: int, request: SendMediaMessageRequest):
+    try:
+        token = BOT_TOKENS.get(id)
+        chat_id = request.chat.externalId
+        file_type = request.file.type
+        file_url = request.file.url
+        file_mime = request.file.mime
+        caption = request.caption
+
+        response  = await sender_adapter.send_media(token, chat_id, file_type, file_url, file_mime, caption)
+
+        if response["status_code"] == 200:
+            messenger_id = request.chat.messengerId
+            return {"externalId": chat_id, "messengerId": messenger_id}
+        else:
+            return {"message": response['body'], "code": "feature_not_supported"}
+        
+    except Exception as e:
+        return {"message": e, "code": "feature_not_supported"}
