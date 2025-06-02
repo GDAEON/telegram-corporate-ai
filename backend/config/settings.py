@@ -4,10 +4,16 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+
 WEBHOOK_URL = os.getenv("WEBHOOK_URL")
 
 with open('config/scheme.json', 'r', encoding='utf-8') as f:
     SCHEME = json.load(f)
 
-#TODO Move to PostgreSQL Database
-BOT_TOKENS: dict[int, str] = {}
+
+POSTGRES_URL=os.getenv("POSTGRES_URL")
+POSTGRES_USER=os.getenv("POSTGRES_USER")
+POSTGRES_PASSWORD=os.getenv("POSTGRES_PASSWORD")
+POSTGRES_DB=os.getenv("POSTGRES_DB")
+FERNET_KEY=os.getenv("FERNET_KEY")
+DATABASE_CONNECTION_URL = f"postgresql://{POSTGRES_USER}:{POSTGRES_PASSWORD}@{POSTGRES_URL}/{POSTGRES_DB}"

@@ -1,8 +1,9 @@
 from fastapi import APIRouter
 from fastapi.responses import JSONResponse
 from constants.request_models import SendTextMessageRequest, SendMediaMessageRequest
-from config.settings import BOT_TOKENS, SCHEME
+from config.settings import SCHEME
 import services.sender_adapter as sender_adapter
+import services.postgresql_db as pdb
 
 router = APIRouter(tags=["Constructor"])
 
@@ -15,7 +16,7 @@ def get_schema():
 @router.post('/{id}/sendTextMessage', description="Sends message to a bot_{id} chat")
 async def send_message(id: int, request: SendTextMessageRequest):
     try:
-        token = BOT_TOKENS.get(id)
+        token = pdb.get_bot_token(id)
         chat_id = request.chat.externalId
         text = request.text
 
@@ -35,7 +36,7 @@ async def send_message(id: int, request: SendTextMessageRequest):
 @router.post('/{id}/sendMediaMessage', description="Sends media message to a bot_{id} chat")
 async def send_media_message(id: int, request: SendMediaMessageRequest):
     try:
-        token = BOT_TOKENS.get(id)
+        token = pdb.get_bot_token(id)
         chat_id = request.chat.externalId
         file_type = request.file.type
         file_url = request.file.url

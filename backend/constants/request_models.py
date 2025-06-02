@@ -4,11 +4,6 @@ from typing import Optional, List, Dict, Any
 class BotRegisterRequest(BaseModel):
     telegram_token: SecretStr 
 
-class BotUnregisterRequest(BaseModel):
-    token: Optional[SecretStr] = None
-    bot_id: Optional[int] = None
-
-
 class ExtraData(BaseModel):
     additionalProp1: Optional[Dict[str, Any]] = None
 

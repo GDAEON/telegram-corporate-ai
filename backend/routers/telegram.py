@@ -1,9 +1,10 @@
 from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse
 from fastapi.exceptions import HTTPException
-from constants.request_models import BotRegisterRequest, BotUnregisterRequest
-from config.settings import WEBHOOK_URL, BOT_TOKENS
+from constants.request_models import BotRegisterRequest
+from config.settings import WEBHOOK_URL
 import services.webhook_server as webhook_server
+import services.postgresql_db as pdb
 
 router = APIRouter(tags=["Telegram"])
 
@@ -17,39 +18,23 @@ async def register_bot_by_token(request: BotRegisterRequest):
     except:
         return HTTPException(status_code=404, detail="Invalid Telegram Bot TOKEN")
 
-    BOT_TOKENS[bot_id] = token
+    pdb.create_new_bot(bot_id, token)
 
     response = await webhook_server.set_webhook(token, f"{WEBHOOK_URL}/webhook/{bot_id}")
 
     return response
 
 
-@router.delete("/bot", description="Deletes the webhook and credentials for the bot using either the bot ID or token or both")
-async def unregister_bot(
-    request: BotUnregisterRequest
-):
-    token = request.token.get_secret_value() if request.token else None
-    bot_id = request.bot_id
+@router.delete("/bot/{bot_id}", description="Deletes the webhook and credentials for the bot using either the bot ID or token or both")
+async def unregister_bot(bot_id: int):
+    token = pdb.get_bot_token(bot_id)
+    response = await webhook_server.delete_webhook(token)
 
-    if not token and bot_id is None:
-        raise HTTPException(status_code=400, detail="Either bot_id or token must be provided")
-
-    if not token:
-        token = BOT_TOKENS.get(bot_id)
-        if not token:
-            raise HTTPException(status_code=404, detail="Bot ID not found")
-    
-    if bot_id is None:
-        matched = [k for k, v in BOT_TOKENS.items() if v == token]
-        if not matched:
-            raise HTTPException(status_code=404, detail="Token not found")
-        bot_id = matched[0]
-    
-    await webhook_server.delete_webhook(token)
-
-    BOT_TOKENS.pop(bot_id, None)
-
-    return {"detail": f"Bot {bot_id} unregistered successfully"}
+    if response["status_code"] == 200:
+        pdb.delete_bot(bot_id)
+        return {"detail": f"Bot {bot_id} unregistered successfully"}
+    else:
+        return response['body']
 
 
 @router.post('/webhook/{bot_id}', description="Handles webhook calls from telegram", tags=["Telegram"])
@@ -62,7 +47,7 @@ async def handle_webhook(bot_id:int, request: Request):
         #     import json
         #     json.dump(update, f, ensure_ascii=False, indent=2)
 
-        token = BOT_TOKENS.get(bot_id)
+        token = pdb.get_bot_token(bot_id)
         if not token:
             raise HTTPException(status_code=404, detail="Bot not registered")
         
