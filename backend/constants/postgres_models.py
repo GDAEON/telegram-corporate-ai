@@ -2,11 +2,11 @@ from cryptography.fernet import Fernet
 from sqlalchemy import create_engine, Column, LargeBinary, BigInteger
 from sqlalchemy.orm import declarative_base, sessionmaker
 
-from config.settings import FERNET_KEY, DATABASE_CONNECTION_URL
+from config.settings import FERNET_KEY, POSTGRES_CONNECTION_URL
 
 cipher = Fernet(FERNET_KEY)
 
-engine = create_engine(DATABASE_CONNECTION_URL)
+engine = create_engine(POSTGRES_CONNECTION_URL)
 Session = sessionmaker(bind=engine)
 session = Session()
 

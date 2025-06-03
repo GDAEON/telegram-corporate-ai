@@ -2,9 +2,9 @@ from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse
 from fastapi.exceptions import HTTPException
 from constants.request_models import BotRegisterRequest
-from config.settings import WEBHOOK_URL, INTEGRATION_CODE, INTEGRATION_TOKEN
+from config.settings import WEBHOOK_URL, INTEGRATION_URL, INTEGRATION_CODE, INTEGRATION_TOKEN
 import services.webhook_server as webhook_server
-import services.postgresql_db as pdb
+import services.db as db
 from datetime import datetime
 from pytz import timezone
 import httpx
@@ -21,7 +21,7 @@ async def register_bot_by_token(request: BotRegisterRequest):
     except:
         return HTTPException(status_code=404, detail="Invalid Telegram Bot TOKEN")
 
-    pdb.create_new_bot(bot_id, token)
+    db.create_new_bot(bot_id, token)
 
     response = await webhook_server.set_webhook(token, f"{WEBHOOK_URL}/webhook/{bot_id}")
 
@@ -30,11 +30,11 @@ async def register_bot_by_token(request: BotRegisterRequest):
 
 @router.delete("/bot/{bot_id}", description="Deletes the webhook and credentials for the bot using either the bot ID or token or both")
 async def unregister_bot(bot_id: int):
-    token = pdb.get_bot_token(bot_id)
+    token = db.get_bot_token(bot_id)
     response = await webhook_server.delete_webhook(token)
 
     if response["status_code"] == 200:
-        pdb.delete_bot(bot_id)
+        db.delete_bot(bot_id)
         return {"detail": f"Bot {bot_id} unregistered successfully"}
     else:
         return response['body']
@@ -50,7 +50,7 @@ async def handle_webhook(bot_id:int, request: Request):
         #     import json
         #     json.dump(update, f, ensure_ascii=False, indent=2)
 
-        token = pdb.get_bot_token(bot_id)
+        token = db.get_bot_token(bot_id)
         if not token:
             raise HTTPException(status_code=404, detail="Bot not registered")
         
@@ -126,7 +126,7 @@ async def handle_webhook(bot_id:int, request: Request):
         }
 
         async with httpx.AsyncClient() as client:
-            response = await client.post(f"{WEBHOOK_URL}/{INTEGRATION_CODE}/{bot_id}", json=request_body, headers=headers)
+            response = await client.post(f"{INTEGRATION_URL}/{INTEGRATION_CODE}/{bot_id}", json=request_body, headers=headers)
 
         if response.status_code >= 400:
             raise HTTPException(status_code=response.status_code, detail=response.text)

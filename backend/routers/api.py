@@ -2,7 +2,7 @@ from fastapi import APIRouter
 from fastapi.exceptions import HTTPException
 
 from constants.request_models import IntegrateUserRequest
-from config.settings import WEBHOOK_URL, INTEGRATION_CODE, INTEGRATION_TOKEN
+from config.settings import INTEGRATION_URL, INTEGRATION_CODE, INTEGRATION_TOKEN
 import httpx
 
 router = APIRouter(prefix="/api", tags=["API"])
@@ -29,7 +29,7 @@ async def integrate_new_user(request: IntegrateUserRequest):
     }
 
     async with httpx.AsyncClient() as client:
-        response = await client.post(f"{WEBHOOK_URL}/{INTEGRATION_CODE}", json=bot_info, headers=headers)
+        response = await client.post(f"{INTEGRATION_URL}/{INTEGRATION_CODE}", json=bot_info, headers=headers)
 
     if response.status_code >= 400:
         raise HTTPException(status_code=response.status_code, detail=response.text)
