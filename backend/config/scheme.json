@@ -1,7 +1,6 @@
 {
   "messenger_types": {
     "telegram": {
-      "extends": "with_buttons",
       "name": "Telegram",
       "internal_type": "telegram",
       "quick_replies": {
