@@ -52,4 +52,7 @@ class IntegrateUserRequest(BaseModel):
     bot_id: str
     name: str
     email: str
-    
+
+class Job(BaseModel):
+    job: str
+    targets: List[str]
