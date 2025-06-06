@@ -4,7 +4,6 @@
   justify-content: center;
   align-items: flex-start;
   padding-top: 80px; 
-  min-height: 100vh;
   min-width: 40%;
 }
 
@@ -105,7 +104,7 @@ code {
 
 @media (max-width: 768px) {
   .pageContainer {
-    padding-top: 0px;
+    padding-top: 10%;
   }
 
   .FormTitle {
@@ -117,9 +116,10 @@ code {
   }
 
   .tip {
-    margin-top: 20px;
+    margin-top: 25px;
     font-size: 10px;
     min-width: 5%;
+    color: #000000;
   }
 
   .tip::after {
@@ -133,14 +133,15 @@ code {
   }
 
   .tip2 {
-    margin-top: 10px;
+    top: 45%;
   }
 
   .tip3 {
-    margin-top: -5px;
+    /* margin-top: -5px; */
+    top: 65%
   }
 
   .tip3 strong {
-    font-size: 12px;
+    font-size: 10px;
   }
 }
