@@ -12,7 +12,7 @@ class Chat(BaseModel):
     externalId: str
     messengerInstance: str
     contact: str
-    operator: str
+    operator: Optional[str] = None
     messengerId: str
     extraData: Optional[ExtraData] = None
 
@@ -31,8 +31,8 @@ class InlineButton(BaseModel):
 
 class File(BaseModel):
     type: str
-    url: str
-    mime: str
+    mime: Optional[str] = None
+    url: Optional[str] = None
 
 class SendTextMessageRequest(BaseModel):
     chat: Chat
@@ -45,7 +45,7 @@ class SendMediaMessageRequest(BaseModel):
     quickReplies: Optional[List[List[QuickReply]]] = None
     inlineButtons: Optional[List[List[InlineButton]]] = None
     file: File
-    caption: str
+    caption: Optional[str] = None
 
 
 class IntegrateUserRequest(BaseModel):

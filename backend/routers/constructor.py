@@ -1,4 +1,4 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse
 from constants.request_models import SendTextMessageRequest, SendMediaMessageRequest
 from config.settings import SCHEME
@@ -21,11 +21,11 @@ async def get_status(id: int):
     }
 
 
-@router.post('/{id}/sendTextMessage', description="Sends message to a bot_{id} chat")
-async def send_message(id: int, request: SendTextMessageRequest):
+@router.post('/sendTextMessage', description="Sends message to a chat")
+async def send_message(request: SendTextMessageRequest):
     try:
-        token = db.get_bot_token(id)
-        chat_id = request.chat.externalId
+        token = db.get_bot_token(request.chat.messengerId)
+        chat_id = request.chat.contact
         text = request.text
 
         response = await sender_adapter.send_message(token, chat_id, text)
@@ -35,17 +35,24 @@ async def send_message(id: int, request: SendTextMessageRequest):
             messenger_id = request.chat.messengerId
             return {"externalId": chat_id, "messengerId": messenger_id}
         else:
-            return {"message": response['body'], "code": "feature_not_supported"}
+            return JSONResponse(
+                content={"message": str(e), "code": "feature_not_supported"},
+                status_code=202
+            )
+
         
     except Exception as e:
-        return {"message": e, "code": "feature_not_supported"}
+        return JSONResponse(
+            content={"message": str(e), "code": "internal_server_error"},
+            status_code=202
+        )
 
 
-@router.post('/{id}/sendMediaMessage', description="Sends media message to a bot_{id} chat")
-async def send_media_message(id: int, request: SendMediaMessageRequest):
+@router.post('/sendMediaMessage', description="Sends media message to a chat")
+async def send_media_message(request: SendMediaMessageRequest):
     try:
-        token = db.get_bot_token(id)
-        chat_id = request.chat.externalId
+        token = db.get_bot_token(request.chat.messengerId)
+        chat_id = request.chat.contact
         file_type = request.file.type
         file_url = request.file.url
         file_mime = request.file.mime
@@ -58,6 +65,9 @@ async def send_media_message(id: int, request: SendMediaMessageRequest):
             return {"externalId": chat_id, "messengerId": messenger_id}
         else:
             return {"message": response['body'], "code": "feature_not_supported"}
-        
+
     except Exception as e:
-        return {"message": e, "code": "feature_not_supported"}
+        return JSONResponse(
+            content={"message": str(e), "code": "internal_server_error"},
+            status_code=202
+        )

@@ -6,7 +6,7 @@ from config.settings import WEBHOOK_URL, INTEGRATION_URL, INTEGRATION_CODE, INTE
 import services.webhook_server as webhook_server
 import services.db as db
 from datetime import datetime
-from pytz import timezone
+from datetime import datetime, timezone
 import httpx
 
 router = APIRouter(tags=["Telegram"])
@@ -58,47 +58,32 @@ async def handle_webhook(bot_id:int, request: Request):
         if not message:
             raise HTTPException(status_code=400, detail="Unsupported update type")
 
-        from_user = message.get("from", {})
-        chat = message.get("chat", {})
+        contact_id = message.get("from", {}).get("id")
+        text = message.get("text")
 
-        ts = datetime.fromtimestamp(message["date"], tz=timezone("UTC")).isoformat()
+        ts = int(datetime.now(tz=timezone.utc).timestamp())
+        date = datetime.now().strftime("%d.%m.%Y")
 
         request_body = {
-            "eventType": "telegram_message",
+            "eventType": "InboxReceived",
             "timestamp": ts,
-            "chat": str(chat.get("id")),
-            "participant": from_user.get("username") or str(from_user.get("id")),
+            "chat": {
+                "externalId": "12",
+                "messengerInstance": "12",
+                "messengerId": f"{bot_id}",
+                "contact": {
+                    "externalId": f"{contact_id}"
+                }
+            },
+            "participant": "igor",
             "message": {
-                "externalId": str(message["message_id"]),
-                "text": message.get("text", ""),
-                "attachments": [],
-                "geoLocation": {
-                    "lat": 0,
-                    "long": 0
-                },
-                "date": ts,
-                "extraData": {
-                    "from": {
-                        "id": from_user.get("id"),
-                        "username": from_user.get("username"),
-                        "language_code": from_user.get("language_code")
-                    }
-                }
-            },
-            "externalItem": {
-                "externalId": str(message["message_id"]),
-                "url": f"https://t.me/{chat.get('username') or 'c'}/{message['message_id']}",
-                "title": "Telegram Message",
-                "extraData": {
-                    "messageType": "text"
-                }
-            },
-            "flags": {
-                "newTicketOpened": False,
-                "newChatCreated": False,
-                "externalPostComment": False
+                "externalId": "146379262",
+                "text": f"{text}",
+                "date": f"{date}"
             }
         }
+
+        print(request_body)
 
         if "photo" in message:
             photo = message["photo"][-1]
@@ -113,7 +98,7 @@ async def handle_webhook(bot_id:int, request: Request):
         elif "voice" in message:
             file_id = message["voice"]["file_id"]
             request_body["message"]["attachments"].append({
-                "type": "Audio",
+                "type": "Voice",
                 "url": f"https://api.telegram.org/file/bot{token}/{file_id}",
                 "mime": "audio/ogg"
             })
@@ -126,7 +111,9 @@ async def handle_webhook(bot_id:int, request: Request):
         }
 
         async with httpx.AsyncClient() as client:
-            response = await client.post(f"{INTEGRATION_URL}/{INTEGRATION_CODE}/{bot_id}", json=request_body, headers=headers)
+            response = await client.post(f"{INTEGRATION_URL}/{INTEGRATION_CODE}/12/event", json=request_body, headers=headers)
+
+        print(response)
 
         if response.status_code >= 400:
             raise HTTPException(status_code=response.status_code, detail=response.text)
@@ -140,4 +127,5 @@ async def handle_webhook(bot_id:int, request: Request):
             return {"status": "ok", "message": "No content"}
     
     except Exception as e:
+        print(e)
         return JSONResponse(content={"ok": False, "error": str(e)}, status_code=400)

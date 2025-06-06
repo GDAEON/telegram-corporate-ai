@@ -24,11 +24,11 @@ async def send_media(token: str, chat_id: int, file_type: str, file_url: str, fi
         file_size = len(content)
 
         method_map = {
-            "image": ("sendPhoto", "photo", 5 * 1024 * 1024),
-            "video": ("sendVideo", "video", 20 * 1024 * 1024),
-            "document": ("sendDocument", "document", 20 * 1024 * 1024),
-            "audio": ("sendAudio", "audio", 5 * 1024 * 1024),
-            "voice": ("sendVoice", "voice", 1 * 1024 * 1024)
+            "Image": ("sendPhoto", "photo", 5 * 1024 * 1024),
+            "Video": ("sendVideo", "video", 20 * 1024 * 1024),
+            "Document": ("sendDocument", "document", 20 * 1024 * 1024),
+            "Audio": ("sendAudio", "audio", 5 * 1024 * 1024),
+            "Voice": ("sendVoice", "voice", 1 * 1024 * 1024)
         }
 
         if file_type not in method_map:
