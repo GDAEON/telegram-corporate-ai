@@ -1,5 +1,5 @@
 import React from "react";
-import { ConnectionFormView } from "./ConnectionPage.view";
+import { ConnectionFormView } from "./ConnectionForm.view";
 
 export const ConnectionForm: React.FC = () => {
     return(
