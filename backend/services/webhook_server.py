@@ -5,7 +5,21 @@ async def get_bot_id(token: str) -> int:
     async with httpx.AsyncClient() as client:
         resp = await client.get(f"https://api.telegram.org/bot{token}/getMe")
         data = resp.json()
+
+        if data['ok'] == False:
+            return None
+        
         return data["result"]["id"]
+
+async def get_bot_name(token: str) -> str:
+    async with httpx.AsyncClient() as client:
+        resp = await client.get(f"https://api.telegram.org/bot{token}/getMe")
+        data = resp.json()
+
+        if data['ok'] == False:
+            return None
+
+        return data["result"]["first_name"]
 
 
 async def set_webhook(TOKEN: str, WEBHOOK_URL: str) -> Dict[str, Any]:

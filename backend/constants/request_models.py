@@ -49,9 +49,8 @@ class SendMediaMessageRequest(BaseModel):
 
 
 class IntegrateUserRequest(BaseModel):
-    bot_id: str
-    name: str
-    email: str
+    userId: int
+    token: SecretStr
 
 class Job(BaseModel):
     job: str
