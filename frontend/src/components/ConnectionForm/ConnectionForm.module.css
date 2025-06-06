@@ -71,7 +71,7 @@ code {
 }
 
 .tip1 {
-  top: 60px;
+  top: 20%;
 }
 
 .tip1::after {
@@ -81,7 +81,7 @@ code {
 }
 
 .tip2 {
-  top: 160px;
+  top: 50%;
 }
 
 .tip2::after {
@@ -91,7 +91,8 @@ code {
 }
 
 .tip3 {
-  top: 230px;
+  top: 75%;
+  width: 40%;
 }
 
 .tip3::after {
@@ -100,4 +101,46 @@ code {
 
 .tip3 strong {
   font-size: 15px;
+}
+
+@media (max-width: 768px) {
+  .pageContainer {
+    padding-top: 0px;
+  }
+
+  .FormTitle {
+    font-size: 32px;
+  }
+
+  .list {
+    font-size: 13px;
+  }
+
+  .tip {
+    margin-top: 20px;
+    font-size: 10px;
+    min-width: 5%;
+  }
+
+  .tip::after {
+    width: 6px;
+    height: 12px;
+    left: 15%;
+  }
+
+  .tip1::after {
+    left: 23%;
+  }
+
+  .tip2 {
+    margin-top: 10px;
+  }
+
+  .tip3 {
+    margin-top: -5px;
+  }
+
+  .tip3 strong {
+    font-size: 12px;
+  }
 }
