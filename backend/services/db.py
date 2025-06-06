@@ -4,19 +4,6 @@ from sqlalchemy import exists
 import constants.redis_models as rdb
 
 
-def create_new_bot(bot_id: int, token: str):
-    exists = session.get(Bot, bot_id)
-    if exists:
-        return
-
-    new_bot = Bot(bot_id = bot_id)
-    new_bot.set_token(token)
-
-    session.add(new_bot)
-    session.commit()
-
-    # rdb.Bot.create(bot_id, token)
-
 def get_bot_token(bot_id: int):
     cached = rdb.Bot.get(bot_id)
     if cached is not None:
@@ -29,8 +16,6 @@ def get_bot_token(bot_id: int):
     
     token = bot.get_token()
 
-    # rdb.Bot.create(bot_id, token)
-
     return token
 
 def delete_bot(bot_id: int):
@@ -38,8 +23,6 @@ def delete_bot(bot_id: int):
     if bot:
         session.delete(bot)
         session.commit()
-
-    # rdb.Bot.delete(bot_id)
 
 def create_new_owner(id: int, name: str, email: str, bot_id: int, bot_name: str, token: str):
     new_owner = Owner(id=id, name=name, email=email)
@@ -75,7 +58,7 @@ def add_bot_to_owner(bot_id: int, bot_name: str, token: str, owner: Owner):
     session.commit()
 
 def delete_owner(id: int):
-    owner = session.query(Bot).filter_by(id=id).first()
+    owner = session.query(Owner).filter_by(id=id).first()
     if owner:
         session.delete(owner)
         session.commit()
