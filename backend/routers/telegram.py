@@ -1,9 +1,7 @@
 from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse
 from fastapi.exceptions import HTTPException
-from constants.request_models import BotRegisterRequest
-from config.settings import WEBHOOK_URL, INTEGRATION_URL, INTEGRATION_CODE, INTEGRATION_TOKEN
-import services.webhook_server as webhook_server
+from config.settings import INTEGRATION_URL, INTEGRATION_CODE, INTEGRATION_TOKEN
 import services.db as db
 from datetime import datetime
 from datetime import datetime, timezone
@@ -12,32 +10,32 @@ import httpx
 router = APIRouter(tags=["Telegram"])
 
 
-@router.post('/bot', description="Registers a new bot in the system by saving its credentials and setting up webhook integration")
-async def register_bot_by_token(request: BotRegisterRequest):
-    token = request.telegram_token.get_secret_value()
+# @router.post('/bot', description="Registers a new bot in the system by saving its credentials and setting up webhook integration")
+# async def register_bot_by_token(request: BotRegisterRequest):
+#     token = request.telegram_token.get_secret_value()
 
-    try:
-        bot_id = await webhook_server.get_bot_id(token)
-    except:
-        return HTTPException(status_code=404, detail="Invalid Telegram Bot TOKEN")
+#     try:
+#         bot_id = await webhook_server.get_bot_id(token)
+#     except:
+#         return HTTPException(status_code=404, detail="Invalid Telegram Bot TOKEN")
 
-    db.create_new_bot(bot_id, token)
+#     db.create_new_bot(bot_id, token)
 
-    response = await webhook_server.set_webhook(token, f"{WEBHOOK_URL}/webhook/{bot_id}")
+#     response = await webhook_server.set_webhook(token, f"{WEBHOOK_URL}/webhook/{bot_id}")
 
-    return response
+#     return response
 
 
-@router.delete("/bot/{bot_id}", description="Deletes the webhook and credentials for the bot using either the bot ID or token or both")
-async def unregister_bot(bot_id: int):
-    token = db.get_bot_token(bot_id)
-    response = await webhook_server.delete_webhook(token)
+# @router.delete("/bot/{bot_id}", description="Deletes the webhook and credentials for the bot using either the bot ID or token or both")
+# async def unregister_bot(bot_id: int):
+#     token = db.get_bot_token(bot_id)
+#     response = await webhook_server.delete_webhook(token)
 
-    if response["status_code"] == 200:
-        db.delete_bot(bot_id)
-        return {"detail": f"Bot {bot_id} unregistered successfully"}
-    else:
-        return response['body']
+#     if response["status_code"] == 200:
+#         db.delete_bot(bot_id)
+#         return {"detail": f"Bot {bot_id} unregistered successfully"}
+#     else:
+#         return response['body']
 
 
 @router.post('/webhook/{bot_id}', description="Handles webhook calls from telegram", tags=["Telegram"])

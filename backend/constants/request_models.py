@@ -1,9 +1,6 @@
 from pydantic import BaseModel, SecretStr
 from typing import Optional, List, Dict, Any
 
-class BotRegisterRequest(BaseModel):
-    telegram_token: SecretStr 
-
 class ExtraData(BaseModel):
     additionalProp1: Optional[Dict[str, Any]] = None
 
@@ -48,9 +45,8 @@ class SendMediaMessageRequest(BaseModel):
     caption: Optional[str] = None
 
 
-class IntegrateUserRequest(BaseModel):
-    userId: int
-    token: SecretStr
+class IntegrateRequest(BaseModel):
+    telegram_token: SecretStr
 
 class Job(BaseModel):
     job: str
