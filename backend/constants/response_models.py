@@ -1,5 +1,6 @@
 from pydantic import BaseModel
 
 class IntegrationResponse(BaseModel):
-    ownerUuid: str
+    botName: str
+    passUuid: str
     webUrl: str

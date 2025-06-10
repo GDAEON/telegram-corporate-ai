@@ -19,7 +19,7 @@ async def get_bot_name(token: str) -> str:
         if data['ok'] == False:
             return None
 
-        return data["result"]["first_name"]
+        return data["result"]["username"]
 
 
 async def set_webhook(TOKEN: str, WEBHOOK_URL: str) -> Dict[str, Any]:

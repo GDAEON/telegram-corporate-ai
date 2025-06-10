@@ -21,10 +21,10 @@ def bot_exists(id: int) -> bool:
 def get_bot_auth(id: int) -> Optional[Tuple[str, str]]:
     bot = session.query(Bot).filter(Bot.id == id).first()
 
-    owner_uuid = bot.get_owner_uuid()
+    pass_uuid = bot.get_pass_uuid()
     web_url = bot.get_web_url()
 
-    return owner_uuid, web_url
+    return pass_uuid, web_url
 
 
 

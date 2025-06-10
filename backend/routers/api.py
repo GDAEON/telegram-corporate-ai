@@ -15,6 +15,7 @@ router = APIRouter(prefix="/api", tags=["API"])
 @router.post("/bot", response_model=IntegrationResponse)
 async def integrate_new_user(request: IntegrateRequest):
     token = request.telegram_token.get_secret_value()
+    owner_uuid = request.owner_uuid.get_secret_value()
 
     bot_id = await get_bot_id(token)
     bot_name = await get_bot_name(token)
@@ -23,11 +24,10 @@ async def integrate_new_user(request: IntegrateRequest):
         raise HTTPException(status_code=401, detail="Invalid bot token")
     
     if db.bot_exists(bot_id):
-        owner_uuid, web_url = db.get_bot_auth(bot_id)
+        pass_uuid, web_url = db.get_bot_auth(bot_id)
 
-        return IntegrationResponse(ownerUuid=owner_uuid, webUrl=web_url)
+        return IntegrationResponse(botName=bot_name, passUuid=pass_uuid, webUrl=web_url)
     
-    owner_uuid = hf.generate_uuid()
     pass_uuid = hf.generate_uuid()
 
     set_webhook_response = await set_webhook(token, f"{WEBHOOK_URL}/webhook/{bot_id}")
@@ -70,7 +70,7 @@ async def integrate_new_user(request: IntegrateRequest):
         
         db.create_new_bot(bot_id, token, bot_name, owner_uuid, pass_uuid, web_url)
 
-        return IntegrationResponse(ownerUuid=owner_uuid, webUrl=web_url)
+        return IntegrationResponse(botName=bot_name, passUuid=pass_uuid, webUrl=web_url)
     
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Request failed: {str(e)}")
