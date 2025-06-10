@@ -1,23 +1,14 @@
-import React, { useState } from "react";
+import React from "react";
 import { Modal, QRCode} from "antd"
 
 type Props = {
     botName: string;
     uuid: string;
+    open: boolean;
+    handleCancel: () => void;
 }
 
-export const OwnerQRModalView: React.FC<Props> = ({botName, uuid}) => {
-
-    const [open, setOpen] = useState(false);
-
-    const showModal = () => {
-        setOpen(true);
-    };
-
-    const handleCancel = () => {
-        setOpen(false);
-    };
-
+export const OwnerQRModalView: React.FC<Props> = ({botName, uuid, open, handleCancel}) => {
     return(
         <Modal
         open={open}
