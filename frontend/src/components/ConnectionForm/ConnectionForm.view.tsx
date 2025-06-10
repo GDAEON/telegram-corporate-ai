@@ -7,15 +7,19 @@ type FieldType = {
   token?: string;
 };
 
-const onFinish: FormProps<FieldType>["onFinish"] = (values) => {
-  console.log("Success:", values);
-};
+
 
 const onFinishFailed: FormProps<FieldType>["onFinishFailed"] = (errorInfo) => {
   console.log("Failed:", errorInfo);
 };
 
-export const ConnectionFormView: React.FC = () => {
+export const ConnectionFormView: React.FC<{ onConnect: () => void }> = ({ onConnect }) => {
+
+  const onFinish: FormProps<FieldType>["onFinish"] = values => {
+        console.log("Success:", values);
+        onConnect();                
+  };
+
   return (
     <div className={s.pageContainer}>
       <h1 className={s.FormTitle}>Connect Telegram Bot</h1>

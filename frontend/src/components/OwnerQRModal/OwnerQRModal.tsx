@@ -2,21 +2,14 @@ import React, { useState } from "react";
 import { OwnerQRModalView } from "./OwnerQRModal.view";
 
 type Props = {
-    open: boolean
-}
+    botName: string;
+    uuid: string;
+    open: boolean;
+    handleCancel: () => void;
+};
 
-export const OwnerQRModal: React.FC = () => {
-    const [open, setOpen] = useState(false);
-
-    // const showModal = () => {
-    //     setOpen(true);
-    // };
-
-    const handleCancel = () => {
-        setOpen(false);
-    };
-
-    return(
-        <OwnerQRModalView botName="corporate_ai_bot" uuid="ueiue" open={open} handleCancel={handleCancel} />
+export const OwnerQRModal: React.FC<Props> = ({ botName, uuid, open, handleCancel }) => {
+    return (
+        <OwnerQRModalView botName={botName} uuid={uuid} open={open} handleCancel={handleCancel} />
     );
 };
