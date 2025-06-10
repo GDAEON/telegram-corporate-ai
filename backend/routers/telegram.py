@@ -7,6 +7,8 @@ from datetime import datetime
 from datetime import datetime, timezone
 import httpx
 
+import services.sender_adapter as sender_adapter
+
 router = APIRouter(tags=["Telegram"])
 
 
@@ -44,20 +46,40 @@ async def handle_webhook(bot_id:int, request: Request):
         update = await request.json()
 
         #NOTE ONLY FOR DEVELOPMENT
-        # with open('message.json', 'w', encoding='utf-8') as f:
-        #     import json
-        #     json.dump(update, f, ensure_ascii=False, indent=2)
+        with open('message.json', 'w', encoding='utf-8') as f:
+            import json
+            json.dump(update, f, ensure_ascii=False, indent=2)
+
+        # return
 
         token = db.get_bot_token(bot_id)
         if not token:
             raise HTTPException(status_code=404, detail="Bot not registered")
         
         message = update.get("message") or update.get("edited_message")
-        if not message:
+        callback_query = update.get("callback_query")
+        if not message and not callback_query:
             raise HTTPException(status_code=400, detail="Unsupported update type")
 
         contact_id = message.get("from", {}).get("id")
-        text = message.get("text")
+        text = message.get("text", "")
+
+        if text.startswith("/start"):
+            _, _, input_uuid = text.partition(" ")
+            if db.compare_bot_auth_owner(bot_id, input_uuid):
+                contact_button = [
+                    [
+                        {"text": "Share my phone", "request_contact": True}
+                    ]
+                ]
+                await sender_adapter.send_message(
+                    token,
+                    contact_id,
+                    "Almost done! Please share your contact by tapping the button below.",
+                    reply_keyboard=contact_button
+                )
+                return
+
 
         ts = int(datetime.now(tz=timezone.utc).timestamp())
         date = datetime.now().strftime("%d.%m.%Y")
@@ -80,8 +102,6 @@ async def handle_webhook(bot_id:int, request: Request):
                 "date": f"{date}"
             }
         }
-
-        print(request_body)
 
         if "photo" in message:
             photo = message["photo"][-1]
@@ -111,8 +131,6 @@ async def handle_webhook(bot_id:int, request: Request):
         async with httpx.AsyncClient() as client:
             response = await client.post(f"{INTEGRATION_URL}/{INTEGRATION_CODE}/12/event", json=request_body, headers=headers)
 
-        print(response)
-
         if response.status_code >= 400:
             raise HTTPException(status_code=response.status_code, detail=response.text)
 
@@ -125,5 +143,4 @@ async def handle_webhook(bot_id:int, request: Request):
             return {"status": "ok", "message": "No content"}
     
     except Exception as e:
-        print(e)
         return JSONResponse(content={"ok": False, "error": str(e)}, status_code=400)

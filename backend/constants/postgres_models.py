@@ -1,4 +1,5 @@
 from cryptography.fernet import Fernet
+from sqlalchemy.ext.hybrid import hybrid_method
 from sqlalchemy import create_engine, Column, ForeignKey, LargeBinary, BigInteger, Text, Boolean, Index
 from sqlalchemy.orm import declarative_base, sessionmaker, relationship
 
@@ -22,6 +23,7 @@ class Bot(Base):
     ownerUuid = Column(LargeBinary, nullable=False)
     passUuid = Column(LargeBinary, nullable=False)
     webUrl = Column(LargeBinary, nullable=False)
+    isVerified = Column(Boolean, default=False)
 
     users = relationship("BotUser", back_populates="bot")
 
@@ -56,8 +58,15 @@ class User(Base):
     id = Column(BigInteger, primary_key=True)
     name = Column(Text, nullable=False)
     surname = Column(Text, nullable=False)
+    phone = Column(Text, nullable=False)
 
     bots = relationship("BotUser", back_populates="user")
+
+    def set_phone(self, plain_phone: str):
+        self.phone = cipher.encrypt(plain_phone.encode())
+
+    def get_phone(self) -> str:
+        return cipher.decrypt(self.phone).decode() 
 
 
 class BotUser(Base):

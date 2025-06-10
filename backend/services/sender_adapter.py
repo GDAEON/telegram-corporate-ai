@@ -1,18 +1,40 @@
 import httpx
 from io import BytesIO
 from services.helper_functions import guess_filename
+from typing import List, Optional, Dict, Any
 
-async def send_message(token:str, chat_id: int, text: str):
-    async with httpx.AsyncClient() as client:
-        response = await client.post(f"https://api.telegram.org/bot{token}/sendMessage", json={
-            "chat_id": chat_id,
-            "text": text
-        })
 
-        return {
-            "status_code": response.status_code,
-            "body": response.json()
+async def send_message(
+    token: str,
+    chat_id: int,
+    text: str,
+    inline_buttons: Optional[List[List[Dict[str, Any]]]] = None,
+    reply_keyboard: Optional[List[List[Dict[str, Any]]]] = None,
+    parse_mode: str = "HTML",
+) -> Dict[str, Any]:
+    payload: Dict[str, Any] = {
+        "chat_id": chat_id,
+        "text": text,
+        "parse_mode": parse_mode,
+    }
+
+    if inline_buttons:
+        payload["reply_markup"] = {"inline_keyboard": inline_buttons}
+    elif reply_keyboard:
+        payload["reply_markup"] = {
+            "keyboard": reply_keyboard,
+            "resize_keyboard": True,
+            "one_time_keyboard": True,
         }
+
+    async with httpx.AsyncClient() as client:
+        resp = await client.post(
+            f"https://api.telegram.org/bot{token}/sendMessage",
+            json=payload
+        )
+    return {"status_code": resp.status_code, "body": resp.json()}
+
+
     
     
 async def send_media(token: str, chat_id: int, file_type: str, file_url: str, file_mime: str, caption: str):
