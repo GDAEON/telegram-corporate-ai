@@ -13,11 +13,10 @@ const onFinishFailed: FormProps<FieldType>["onFinishFailed"] = (errorInfo) => {
   console.log("Failed:", errorInfo);
 };
 
-export const ConnectionFormView: React.FC<{ onConnect: () => void }> = ({ onConnect }) => {
+export const ConnectionFormView: React.FC<{ onConnect: (token: string) => void }> = ({ onConnect }) => {
 
   const onFinish: FormProps<FieldType>["onFinish"] = values => {
-        console.log("Success:", values);
-        onConnect();                
+        onConnect(values.token ?? "");                
   };
 
   return (

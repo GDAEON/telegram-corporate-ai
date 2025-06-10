@@ -1,5 +1,6 @@
 import React from "react";
-import { Modal, QRCode } from "antd";
+import { Button, Modal, QRCode } from "antd";
+import s from './OwnerQRModal.module.css'
 
 type Props = {
     botName: string;
@@ -14,9 +15,27 @@ export const OwnerQRModalView: React.FC<Props> = ({ botName, uuid, open, handleC
             open={open}
             onCancel={handleCancel}
             footer={[]}
+            centered
+            width={{
+                xs: '90%',
+                sm: '80%',
+                md: '70%',
+                lg: '60%',
+                xl: '50%',
+                xxl: '40%',
+            }}
         >
-            <QRCode value={`https://t.me/${botName}?start=${uuid}`} />
-            <h1>Scan the QR code to authorize in the bot</h1>
+            <div className={s.qrCodeWrapper}>
+                <QRCode size={300} icon={"/telegram-icon.svg"} iconSize={80} value={`https://t.me/${botName}?start=${uuid}`} />
+                <h1 style={{textAlign: "center"}}>Scan the QR code or click the button below to authorize in the bot</h1>
+                <Button style={{height: "50px"}} block type="primary" size="large" onClick={() =>
+                    window.open(
+                    `https://t.me/${botName}?start=${uuid}`,
+                    "_blank",
+                    "noopener,noreferrer"
+                    )
+                }>Authorize</Button>
+            </div>
         </Modal>
     );
 };

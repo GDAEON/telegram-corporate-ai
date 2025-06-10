@@ -1,4 +1,5 @@
 from fastapi import FastAPI, Request
+from fastapi.middleware.cors import CORSMiddleware
 from routers.telegram import router as telegram_router
 from routers.constructor import router as constructor_router
 from routers.api import router as api_router
@@ -10,6 +11,15 @@ from constants.prometheus_models import REQUEST_COUNT, REQUEST_LATENCY
 app = FastAPI(
     title="Telegram CORP AI Integration API",
 )
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 
 app.include_router(telegram_router)
 app.include_router(constructor_router)
