@@ -26,7 +26,7 @@ async def integrate_new_user(request: IntegrateRequest):
     if db.bot_exists(bot_id):
         pass_uuid, web_url = db.get_bot_auth(bot_id)
 
-        return IntegrationResponse(botName=bot_name, passUuid=pass_uuid, webUrl=web_url)
+        return IntegrationResponse(botName=bot_name, passUuid=pass_uuid, webUrl=web_url, botId=bot_id)
     
     pass_uuid = hf.generate_uuid()
 
@@ -70,11 +70,13 @@ async def integrate_new_user(request: IntegrateRequest):
         
         db.create_new_bot(bot_id, token, bot_name, owner_uuid, pass_uuid, web_url)
 
-        return IntegrationResponse(botName=bot_name, passUuid=pass_uuid, webUrl=web_url)
+        return IntegrationResponse(botName=bot_name, passUuid=pass_uuid, webUrl=web_url, botId=bot_id)
     
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Request failed: {str(e)}")
         
-    
+@router.get("/{bot_id}/isVerified")
+def is_bot_verified(bot_id: int):
+    return db.is_bot_verified(bot_id)
     
 

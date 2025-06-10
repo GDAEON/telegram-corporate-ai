@@ -57,12 +57,17 @@ async def handle_webhook(bot_id:int, request: Request):
             raise HTTPException(status_code=404, detail="Bot not registered")
         
         message = update.get("message") or update.get("edited_message")
-        callback_query = update.get("callback_query")
-        if not message and not callback_query:
+        if not message:
             raise HTTPException(status_code=400, detail="Unsupported update type")
 
         contact_id = message.get("from", {}).get("id")
         text = message.get("text", "")
+
+        contact_info = message.get("contact")
+
+        if contact_info and not db.bot_has_user(bot_id, contact_id) and db.compare_bot_auth_owner(bot_id, input_uuid):
+            db.add_user_to_a_bot(bot_id, contact_id, contact_info.get("first_name"), contact_info.get("last_name"), contact_info.get("phone_number"))
+            db.bot_set_verified(bot_id, True)
 
         if text.startswith("/start"):
             _, _, input_uuid = text.partition(" ")

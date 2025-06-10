@@ -4,3 +4,4 @@ class IntegrationResponse(BaseModel):
     botName: str
     passUuid: str
     webUrl: str
+    botId: int

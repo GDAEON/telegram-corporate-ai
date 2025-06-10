@@ -1,5 +1,5 @@
 from cryptography.fernet import Fernet
-from sqlalchemy.ext.hybrid import hybrid_method
+from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy import create_engine, Column, ForeignKey, LargeBinary, BigInteger, Text, Boolean, Index
 from sqlalchemy.orm import declarative_base, sessionmaker, relationship
 
@@ -23,7 +23,15 @@ class Bot(Base):
     ownerUuid = Column(LargeBinary, nullable=False)
     passUuid = Column(LargeBinary, nullable=False)
     webUrl = Column(LargeBinary, nullable=False)
-    isVerified = Column(Boolean, default=False)
+    isVerified = Column(Boolean, default=False, nullable=False)
+
+    @hybrid_property
+    def verified(self) -> bool:
+        return self.isVerified
+
+    @verified.setter
+    def verified(self, value: bool) -> None:
+        self.isVerified = bool(value)
 
     users = relationship("BotUser", back_populates="bot")
 
@@ -75,6 +83,7 @@ class BotUser(Base):
     bot_id = Column(BigInteger, ForeignKey('bots.id', ondelete='CASCADE'), primary_key=True)
     user_id = Column(BigInteger, ForeignKey('users.id', ondelete='CASCADE'), primary_key=True)
     is_active = Column(Boolean, default=True, nullable=False)
+    is_owner = Column(Boolean, default=True, nullable=False)
 
     bot = relationship("Bot", back_populates="users")
     user = relationship("User", back_populates="bots")

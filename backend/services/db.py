@@ -47,6 +47,7 @@ def add_user_to_a_bot(bot_id: int, user_id: int, name: str, surname: str, phone:
     user = session.query(User).filter_by(id=user_id).one_or_none()
     if user is None:
         user = User(id=user_id, name=name, surname=surname)
+        user.set_phone(phone)
         session.add(user)
         session.flush()
 
@@ -63,6 +64,9 @@ def bot_has_user(bot_id: int, user_id: int) -> bool:
             )
         ).scalar()
 
-
+def bot_set_verified(id: int, new_verified: bool):
+    bot = session.query(Bot).get(id)
+    bot.verified = new_verified
+    session.commit()
 
 
