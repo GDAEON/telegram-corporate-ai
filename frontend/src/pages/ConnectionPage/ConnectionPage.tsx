@@ -10,6 +10,7 @@ export const ConnectionPage: React.FC = () => {
     const [open, setOpen] = React.useState(false);
     const [botName, setBotName] = React.useState<string>("");
     const [passUuid, setPassUuid] = React.useState<string>("");
+    const [loading, setLoading] = React.useState(false);
 
     React.useEffect(() => {
         const param = searchParams.get("ref") || "";
@@ -17,6 +18,7 @@ export const ConnectionPage: React.FC = () => {
     }, [searchParams]);
 
     const handleConnect = async (token: string) => {
+        setLoading(true);
         try {
             const response = await fetch("http://localhost:8000/api/bot", {
                 method: "POST",
@@ -31,21 +33,24 @@ export const ConnectionPage: React.FC = () => {
 
             if (!response.ok) {
                 message.error(data.detail ?? "Request failed");
+                setLoading(false);
                 return;
             }
 
             setBotName(data.botName);
             setPassUuid(data.passUuid);
             setOpen(true);
+            setLoading(false);
         } catch (e) {
             message.error((e as Error).message);
+            setLoading(false);
         }
     };
 
     return(
         <div>
             <div className={s.ConnectionFormWrapper}>
-                <ConnectionForm onConnect={handleConnect} />
+                 <ConnectionForm onConnect={handleConnect} loading={loading} />
             </div>
             <OwnerQRModal
                 botName={botName}

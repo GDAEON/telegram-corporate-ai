@@ -13,7 +13,7 @@ const onFinishFailed: FormProps<FieldType>["onFinishFailed"] = (errorInfo) => {
   console.log("Failed:", errorInfo);
 };
 
-export const ConnectionFormView: React.FC<{ onConnect: (token: string) => void }> = ({ onConnect }) => {
+export const ConnectionFormView: React.FC<{ onConnect: (token: string) => void; loading: boolean }> = ({ onConnect, loading }) => {
 
   const onFinish: FormProps<FieldType>["onFinish"] = values => {
         onConnect(values.token ?? "");                
@@ -34,11 +34,11 @@ export const ConnectionFormView: React.FC<{ onConnect: (token: string) => void }
             { required: true, message: "Please input telegram bot token" },
           ]}
         >
-          <Input style={{height: "50px"}} placeholder="Paste your bot token here..." />
+          <Input style={{height: "50px"}} placeholder="Paste your bot token here..." disabled={loading} />
         </Form.Item>
 
         <Form.Item>
-          <Button style={{height: "50px"}} block type="primary" size="large" htmlType="submit">
+          <Button style={{height: "50px"}} block type="primary" size="large" htmlType="submit" loading={loading} disabled={loading}>
             Connect
           </Button>
         </Form.Item>
