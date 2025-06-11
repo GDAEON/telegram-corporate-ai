@@ -1,9 +1,13 @@
+from typing import Optional
 from fastapi import APIRouter
 from fastapi.exceptions import HTTPException
 from fastapi.responses import JSONResponse
 
 from constants.request_models import IntegrateRequest
-from constants.response_models import IntegrationResponse
+from constants.response_models import (
+    IntegrationResponse,
+    UsersPageResponse,
+)
 from config.settings import INTEGRATION_URL, INTEGRATION_CODE, INTEGRATION_TOKEN, WEBHOOK_URL
 import httpx
 import services.helper_functions as hf
@@ -78,5 +82,27 @@ async def integrate_new_user(request: IntegrateRequest):
 @router.get("/{bot_id}/isVerified")
 async def is_bot_verified(bot_id: int):
     return db.is_bot_verified(bot_id)
+
+
+@router.get("/{bot_id}/users", response_model=UsersPageResponse)
+async def list_bot_users(
+    bot_id: int,
+    page: int = 1,
+    per_page: int = 10,
+    search: Optional[str] = None,
+    status: Optional[bool] = None,
+):
+    try:
+        users, total = db.get_bot_users(
+            bot_id=bot_id,
+            page=page,
+            per_page=per_page,
+            search=search,
+            is_active=status,
+        )
+
+        return {"users": users, "total": total}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
     
 

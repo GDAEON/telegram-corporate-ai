@@ -1,12 +1,17 @@
-import React, { useRef, useState } from "react";
+import React, { useRef, useState, useEffect } from "react";
 import { Button, Input, InputRef, Space, Table, Tag } from "antd";
-import type { ColumnType, ColumnsType } from "antd/es/table";
+import type {
+  ColumnType,
+  ColumnsType,
+  TablePaginationConfig,
+} from "antd/es/table";
 import {
   DeleteOutlined,
   SearchOutlined,
   ShareAltOutlined,
 } from "@ant-design/icons";
 import Highlighter from "react-highlight-words";
+import { useSearchParams } from "react-router-dom";
 import s from "./AdminPanel.module.css";
 
 interface DataType {
@@ -17,18 +22,21 @@ interface DataType {
   isOwner: boolean;
 }
 
-const data: DataType[] = [
-  { key: "1", name: "John Brown", phone: "+71111111111", status: true, isOwner: true },
-  { key: "2", name: "Jim Green", phone: "+71111111111", status: false, isOwner: false },
-  { key: "3", name: "Joe Black", phone: "+71111111111", status: true, isOwner: false },
-];
-
 type DataIndex = keyof DataType;
 
 export const AdminPanel: React.FC = () => {
   const [searchText, setSearchText] = useState("");
   const [searchedColumn, setSearchedColumn] = useState<DataIndex | "">("");
   const searchInput = useRef<InputRef>(null);
+  const [data, setData] = useState<DataType[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [pagination, setPagination] = useState<TablePaginationConfig>({
+    current: 1,
+    pageSize: 5,
+    total: 0,
+  });
+  const [searchParams] = useSearchParams();
+  const botId = searchParams.get("botId");
 
   const handleSearch = (
     selectedKeys: string[],
@@ -44,6 +52,55 @@ export const AdminPanel: React.FC = () => {
     clearFilters();
     setSearchText("");
   };
+
+  const fetchData = async (
+    page: number,
+    pageSize: number,
+    status?: boolean
+  ) => {
+    if (!botId) return;
+    setLoading(true);
+
+    const params = new URLSearchParams();
+    params.append("page", String(page));
+    params.append("per_page", String(pageSize));
+    if (searchText) params.append("search", searchText);
+    if (status !== undefined) params.append("status", String(status));
+
+    const res = await fetch(
+      `http://localhost:8000/api/${botId}/users?${params.toString()}`
+    );
+    const json = await res.json();
+
+    if (!res.ok) {
+      console.error("Failed to fetch bot users:", json);
+      setLoading(false);
+      return;
+    }
+
+    const usersArray = Array.isArray(json.users) ? json.users : [];
+    setData(
+      usersArray.map((u: any) => ({
+        key: String(u.id),
+        name: `${u.name ?? ""} ${u.surname ?? ""}`.trim(),
+        phone: u.phone ?? "",
+        status: u.status,
+        isOwner: u.isOwner,
+      }))
+    );
+
+    setPagination({
+      current: page,
+      pageSize: pageSize, 
+      total: json.total || 0,
+    });
+    setLoading(false);
+  };
+
+  useEffect(() => {
+    fetchData(pagination.current || 1, pagination.pageSize || 10);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [botId, pagination.current, pagination.pageSize, searchText]);
 
   const getColumnSearchProps = (
     dataIndex: DataIndex
@@ -203,7 +260,26 @@ export const AdminPanel: React.FC = () => {
         Open Constructor
       </Button>
       <Button icon={<ShareAltOutlined />}>Invite user</Button>
-      <Table columns={columns} dataSource={data} loading={false} />
+      <Table
+        columns={columns}
+        dataSource={data}
+        loading={loading}
+        pagination={{
+          ...pagination,
+          showSizeChanger: true, 
+          pageSizeOptions: ["5", "10", "20", "50"],
+        }}
+        onChange={(pag, filters) => {
+          const newPage = pag.current || 1;
+          const newSize = pag.pageSize || pagination.pageSize!;
+          const status = filters.status
+            ? (filters.status[0] as boolean)
+            : undefined;
+
+          setPagination({ ...pagination, current: newPage, pageSize: newSize });
+          fetchData(newPage, newSize, status);
+        }}
+      />
     </div>
   );
 };
