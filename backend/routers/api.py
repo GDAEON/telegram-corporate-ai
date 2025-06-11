@@ -1,3 +1,4 @@
+from typing import Optional
 from fastapi import APIRouter
 from fastapi.exceptions import HTTPException
 from fastapi.responses import JSONResponse
@@ -87,18 +88,20 @@ async def is_bot_verified(bot_id: int):
 async def list_bot_users(
     bot_id: int,
     page: int = 1,
-    search: str | None = None,
-    status: bool | None = None,
+    per_page: int = 10,
+    search: Optional[str] = None,
+    status: Optional[bool] = None,
 ):
     try:
         users, total = db.get_bot_users(
             bot_id=bot_id,
             page=page,
-            per_page=10,
+            per_page=per_page,
             search=search,
             is_active=status,
         )
-        return UsersPageResponse(users=users, total=total)
+
+        return {"users": users, "total": total}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
     

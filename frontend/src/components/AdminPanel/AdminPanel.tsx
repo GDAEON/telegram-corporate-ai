@@ -1,6 +1,10 @@
 import React, { useRef, useState, useEffect } from "react";
 import { Button, Input, InputRef, Space, Table, Tag } from "antd";
-import type { ColumnType, ColumnsType, TablePaginationConfig } from "antd/es/table";
+import type {
+  ColumnType,
+  ColumnsType,
+  TablePaginationConfig,
+} from "antd/es/table";
 import {
   DeleteOutlined,
   SearchOutlined,
@@ -28,7 +32,7 @@ export const AdminPanel: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [pagination, setPagination] = useState<TablePaginationConfig>({
     current: 1,
-    pageSize: 10,
+    pageSize: 5,
     total: 0,
   });
   const [searchParams] = useSearchParams();
@@ -49,17 +53,34 @@ export const AdminPanel: React.FC = () => {
     setSearchText("");
   };
 
-  const fetchData = async (page: number, status?: boolean) => {
+  const fetchData = async (
+    page: number,
+    pageSize: number,
+    status?: boolean
+  ) => {
     if (!botId) return;
     setLoading(true);
+
     const params = new URLSearchParams();
     params.append("page", String(page));
+    params.append("per_page", String(pageSize));
     if (searchText) params.append("search", searchText);
     if (status !== undefined) params.append("status", String(status));
-    const res = await fetch(`http://80.82.38.72:1080/api/${botId}/users?${params.toString()}`);
+
+    const res = await fetch(
+      `http://localhost:8000/api/${botId}/users?${params.toString()}`
+    );
     const json = await res.json();
+
+    if (!res.ok) {
+      console.error("Failed to fetch bot users:", json);
+      setLoading(false);
+      return;
+    }
+
+    const usersArray = Array.isArray(json.users) ? json.users : [];
     setData(
-      json.users.map((u: any) => ({
+      usersArray.map((u: any) => ({
         key: String(u.id),
         name: `${u.name ?? ""} ${u.surname ?? ""}`.trim(),
         phone: u.phone ?? "",
@@ -67,14 +88,19 @@ export const AdminPanel: React.FC = () => {
         isOwner: u.isOwner,
       }))
     );
-    setPagination({ current: page, pageSize: 10, total: json.total });
+
+    setPagination({
+      current: page,
+      pageSize: pageSize, 
+      total: json.total || 0,
+    });
     setLoading(false);
   };
 
   useEffect(() => {
-    fetchData(pagination.current || 1);
+    fetchData(pagination.current || 1, pagination.pageSize || 10);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [botId, pagination.current, searchText]);
+  }, [botId, pagination.current, pagination.pageSize, searchText]);
 
   const getColumnSearchProps = (
     dataIndex: DataIndex
@@ -238,11 +264,20 @@ export const AdminPanel: React.FC = () => {
         columns={columns}
         dataSource={data}
         loading={loading}
-        pagination={pagination}
+        pagination={{
+          ...pagination,
+          showSizeChanger: true, 
+          pageSizeOptions: ["5", "10", "20", "50"],
+        }}
         onChange={(pag, filters) => {
-          setPagination({ ...pagination, current: pag.current });
-          const status = filters.status ? (filters.status[0] as boolean) : undefined;
-          fetchData(pag.current || 1, status);
+          const newPage = pag.current || 1;
+          const newSize = pag.pageSize || pagination.pageSize!;
+          const status = filters.status
+            ? (filters.status[0] as boolean)
+            : undefined;
+
+          setPagination({ ...pagination, current: newPage, pageSize: newSize });
+          fetchData(newPage, newSize, status);
         }}
       />
     </div>

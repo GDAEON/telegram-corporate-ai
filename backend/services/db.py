@@ -1,4 +1,5 @@
 from contextlib import contextmanager
+from cryptography.fernet import InvalidToken
 from typing import Optional, Tuple
 
 from sqlalchemy import exists, or_, func
@@ -203,16 +204,22 @@ def get_bot_users(
 
         users = []
         for user, bu in rows:
-            phone = user.get_phone() if user.phone else None
-            users.append(
-                {
-                    "id": user.id,
-                    "name": user.name,
-                    "surname": user.surname,
-                    "phone": phone,
-                    "isOwner": bu.is_owner,
-                    "status": bu.is_active,
-                }
-            )
+            raw_phone = user.phone
+            if raw_phone:
+                try:
+                    phone = user.get_phone()
+                except InvalidToken:
+                    # not a valid Fernet token — assume it’s already plaintext
+                    phone = raw_phone
+            else:
+                phone = None
 
+            users.append({
+                "id": user.id,
+                "name": user.name,
+                "surname": user.surname,
+                "phone": phone,
+                "isOwner": bu.is_owner,
+                "status": bu.is_active,
+            })
         return users, total
