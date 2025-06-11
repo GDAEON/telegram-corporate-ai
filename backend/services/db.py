@@ -1,7 +1,7 @@
 from contextlib import contextmanager
 from typing import Optional, Tuple
 
-from sqlalchemy import exists
+from sqlalchemy import exists, or_, func
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import sessionmaker
 from constants.postgres_models import engine, Bot, User, BotUser
@@ -163,3 +163,56 @@ def bot_set_verified(id: int, new_verified: bool):
         bot = session.get(Bot, id)
         if bot:
             bot.verified = new_verified
+
+
+def get_bot_users(
+    bot_id: int,
+    page: int = 1,
+    per_page: int = 10,
+    search: str | None = None,
+    is_active: bool | None = None,
+):
+    """Return users for a bot with optional search and status filter."""
+    with get_session() as session:
+        query = (
+            session.query(User, BotUser)
+            .join(BotUser, User.id == BotUser.user_id)
+            .filter(BotUser.bot_id == bot_id)
+        )
+
+        if search:
+            pattern = f"%{search.lower()}%"
+            query = query.filter(
+                or_(
+                    func.lower(User.name).like(pattern),
+                    func.lower(User.surname).like(pattern),
+                )
+            )
+
+        if is_active is not None:
+            query = query.filter(BotUser.is_active == is_active)
+
+        total = query.count()
+
+        rows = (
+            query.order_by(User.id)
+            .offset((page - 1) * per_page)
+            .limit(per_page)
+            .all()
+        )
+
+        users = []
+        for user, bu in rows:
+            phone = user.get_phone() if user.phone else None
+            users.append(
+                {
+                    "id": user.id,
+                    "name": user.name,
+                    "surname": user.surname,
+                    "phone": phone,
+                    "isOwner": bu.is_owner,
+                    "status": bu.is_active,
+                }
+            )
+
+        return users, total
