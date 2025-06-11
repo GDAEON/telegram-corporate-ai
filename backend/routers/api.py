@@ -76,7 +76,7 @@ async def integrate_new_user(request: IntegrateRequest):
         raise HTTPException(status_code=500, detail=f"Request failed: {str(e)}")
         
 @router.get("/{bot_id}/isVerified")
-def is_bot_verified(bot_id: int):
+async def is_bot_verified(bot_id: int):
     return db.is_bot_verified(bot_id)
     
 

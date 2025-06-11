@@ -41,112 +41,134 @@ router = APIRouter(tags=["Telegram"])
 
 
 @router.post('/webhook/{bot_id}', description="Handles webhook calls from telegram", tags=["Telegram"])
-async def handle_webhook(bot_id:int, request: Request):
-    try:
-        update = await request.json()
+async def handle_webhook(bot_id: int, request: Request):
+    # receive and persist update (dev only)
+    update = await request.json()
+    # with open('message.json', 'w', encoding='utf-8') as f:
+    #     json.dump(update, f, ensure_ascii=False, indent=2)
 
-        #NOTE ONLY FOR DEVELOPMENT
-        with open('message.json', 'w', encoding='utf-8') as f:
-            import json
-            json.dump(update, f, ensure_ascii=False, indent=2)
+    # fetch our bot's token
+    token = db.get_bot_token(bot_id)
+    if not token:
+        raise HTTPException(status_code=404, detail="Bot not registered")
 
-        # return
+    # extract the message payload
+    message = update.get("message") or update.get("edited_message")
+    if not message:
+        raise HTTPException(status_code=400, detail="Unsupported update type")
 
-        token = db.get_bot_token(bot_id)
-        if not token:
-            raise HTTPException(status_code=404, detail="Bot not registered")
-        
-        message = update.get("message") or update.get("edited_message")
-        if not message:
-            raise HTTPException(status_code=400, detail="Unsupported update type")
+    contact_id = message["from"]["id"]
+    text = message.get("text", "")
+    contact_info = message.get("contact")
 
-        contact_id = message.get("from", {}).get("id")
-        text = message.get("text", "")
+    # 1) if this is the “share your contact” response and they're already flagged as owner, verify them
+    if contact_info and db.get_is_bot_owner(bot_id, contact_id):
+        db.update_user(
+            bot_id,
+            contact_id,
+            contact_info.get("first_name"),
+            contact_info.get("last_name"),
+            contact_info.get("phone_number"),
+        )
+        db.bot_set_verified(bot_id, True)
+        # you might want to send them a confirmation message here
+        await sender_adapter.send_message(
+            token,
+            contact_id,
+            "Thanks, you’re all set! 🎉"
+        )
+        return {"status": "ok"}
 
-        contact_info = message.get("contact")
-
-        if contact_info and not db.bot_has_user(bot_id, contact_id) and db.get_is_bot_owner(bot_id, contact_id):
-            db.update_user(bot_id, contact_id, contact_info.get("first_name"), contact_info.get("last_name"), contact_info.get("phone_number"))
-            db.bot_set_verified(bot_id, True)
-
-        if text.startswith("/start"):
-            _, _, input_uuid = text.partition(" ")
-            if db.compare_bot_auth_owner(bot_id, input_uuid):
-                contact_button = [
-                    [
-                        {"text": "Share my phone", "request_contact": True}
-                    ]
-                ]
-                db.add_owner_user(bot_id, contact_id)
-                await sender_adapter.send_message(
-                    token,
-                    contact_id,
-                    "Almost done! Please share your contact by tapping the button below.",
-                    reply_keyboard=contact_button
-                )
-                return
-
-
-        ts = int(datetime.now(tz=timezone.utc).timestamp())
-        date = datetime.now().strftime("%d.%m.%Y")
-
-        request_body = {
-            "eventType": "InboxReceived",
-            "timestamp": ts,
-            "chat": {
-                "externalId": "12",
-                "messengerInstance": "12",
-                "messengerId": f"{bot_id}",
-                "contact": {
-                    "externalId": f"{contact_id}"
-                }
-            },
-            "participant": "igor",
-            "message": {
-                "externalId": "146379262",
-                "text": f"{text}",
-                "date": f"{date}"
-            }
-        }
-
-        if "photo" in message:
-            photo = message["photo"][-1]
-            file_id = photo["file_id"]
-            request_body["message"]["attachments"].append({
-                "type": "Image",
-                "url": f"https://api.telegram.org/file/bot{token}/{file_id}",
-                "mime": "image/jpeg"
-            })
-            request_body["externalItem"]["extraData"]["messageType"] = "photo"
-
-        elif "voice" in message:
-            file_id = message["voice"]["file_id"]
-            request_body["message"]["attachments"].append({
-                "type": "Voice",
-                "url": f"https://api.telegram.org/file/bot{token}/{file_id}",
-                "mime": "audio/ogg"
-            })
-            request_body["externalItem"]["extraData"]["messageType"] = "voice"
-
-
-        headers = {
-            "Authorization": f"Bearer {INTEGRATION_TOKEN}",
-            "Content-Type": "application/json"
-        }
-
-        async with httpx.AsyncClient() as client:
-            response = await client.post(f"{INTEGRATION_URL}/{INTEGRATION_CODE}/12/event", json=request_body, headers=headers)
-
-        if response.status_code >= 400:
-            raise HTTPException(status_code=response.status_code, detail=response.text)
-
-        if response.content:
-            try:
-                return response.json()
-            except Exception:
-                return {"status": "ok", "raw_response": response.text}
+    # 2) if it’s a /start command with a UUID, kick off the “please share contact” flow
+    if text.startswith("/start"):
+        _, _, input_uuid = text.partition(" ")
+        if input_uuid and db.compare_bot_auth_owner(bot_id, input_uuid):
+            contact_button = [
+                [{"text": "Share my phone", "request_contact": True}]
+            ]
+            db.add_owner_user(bot_id, contact_id)
+            await sender_adapter.send_message(
+                token,
+                contact_id,
+                "Almost done! Please share your contact by tapping the button below.",
+                reply_keyboard=contact_button
+            )
+            return {"status": "ok"}
         else:
-            return {"status": "ok", "message": "No content"}
+            # invalid or missing UUID
+            await sender_adapter.send_message(
+                token,
+                contact_id,
+                "Sorry, I didn’t recognize that code. Please try again."
+            )
+            return {"status": "ok"}
+
+    # 3) everything else: we don’t do anything special
+    return {"status": "ok"}
+
+                
+    #     return "OK"
+
+    #     ts = int(datetime.now(tz=timezone.utc).timestamp())
+    #     date = datetime.now().strftime("%d.%m.%Y")
+
+    #     request_body = {
+    #         "eventType": "InboxReceived",
+    #         "timestamp": ts,
+    #         "chat": {
+    #             "externalId": "12",
+    #             "messengerInstance": "12",
+    #             "messengerId": f"{bot_id}",
+    #             "contact": {
+    #                 "externalId": f"{contact_id}"
+    #             }
+    #         },
+    #         "participant": "igor",
+    #         "message": {
+    #             "externalId": "146379262",
+    #             "text": f"{text}",
+    #             "date": f"{date}"
+    #         }
+    #     }
+
+    #     if "photo" in message:
+    #         photo = message["photo"][-1]
+    #         file_id = photo["file_id"]
+    #         request_body["message"]["attachments"].append({
+    #             "type": "Image",
+    #             "url": f"https://api.telegram.org/file/bot{token}/{file_id}",
+    #             "mime": "image/jpeg"
+    #         })
+    #         request_body["externalItem"]["extraData"]["messageType"] = "photo"
+
+    #     elif "voice" in message:
+    #         file_id = message["voice"]["file_id"]
+    #         request_body["message"]["attachments"].append({
+    #             "type": "Voice",
+    #             "url": f"https://api.telegram.org/file/bot{token}/{file_id}",
+    #             "mime": "audio/ogg"
+    #         })
+    #         request_body["externalItem"]["extraData"]["messageType"] = "voice"
+
+
+    #     headers = {
+    #         "Authorization": f"Bearer {INTEGRATION_TOKEN}",
+    #         "Content-Type": "application/json"
+    #     }
+
+    #     async with httpx.AsyncClient() as client:
+    #         response = await client.post(f"{INTEGRATION_URL}/{INTEGRATION_CODE}/12/event", json=request_body, headers=headers)
+
+    #     if response.status_code >= 400:
+    #         raise HTTPException(status_code=response.status_code, detail=response.text)
+
+    #     if response.content:
+    #         try:
+    #             return response.json()
+    #         except Exception:
+    #             return {"status": "ok", "raw_response": response.text}
+    #     else:
+    #         return {"status": "ok", "message": "No content"}
     
-    except Exception as e:
-        return JSONResponse(content={"ok": False, "error": str(e)}, status_code=400)
+    # except Exception as e:
+    #     return JSONResponse(content={"ok": False, "error": str(e)}, status_code=400)
