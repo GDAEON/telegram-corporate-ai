@@ -10,6 +10,7 @@ export const ConnectionPage: React.FC = () => {
     const [open, setOpen] = React.useState(false);
     const [botName, setBotName] = React.useState<string>("");
     const [passUuid, setPassUuid] = React.useState<string>("");
+    const [botId, setBotId] = React.useState<number | null>(null);
     const [loading, setLoading] = React.useState(false);
 
     React.useEffect(() => {
@@ -20,7 +21,7 @@ export const ConnectionPage: React.FC = () => {
     const handleConnect = async (token: string) => {
         setLoading(true);
         try {
-            const response = await fetch("http://localhost:8000/api/bot", {
+            const response = await fetch("http://80.82.38.72:1080/api/bot", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
@@ -39,6 +40,7 @@ export const ConnectionPage: React.FC = () => {
 
             setBotName(data.botName);
             setPassUuid(data.passUuid);
+            setBotId(data.botId);
             setOpen(true);
             setLoading(false);
         } catch (e) {
@@ -54,7 +56,8 @@ export const ConnectionPage: React.FC = () => {
             </div>
             <OwnerQRModal
                 botName={botName}
-                uuid={passUuid}
+                uuid={ref}
+                botId={botId}
                 open={open}
                 handleCancel={() => setOpen(false)}
             />

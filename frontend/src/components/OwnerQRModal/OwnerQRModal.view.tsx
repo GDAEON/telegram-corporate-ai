@@ -26,7 +26,7 @@ export const OwnerQRModalView: React.FC<Props> = ({ botName, uuid, open, handleC
             }}
         >
             <div className={s.qrCodeWrapper}>
-                <QRCode size={300} icon={"/telegram-icon.svg"} iconSize={80} value={`https://t.me/${botName}?start=${uuid}`} />
+                <QRCode size={300} icon={"/telegram-icon.svg"} iconSize={40} value={`https://t.me/${botName}?start=${uuid}`} />
                 <h1 style={{textAlign: "center"}}>Scan the QR code or click the button below to authorize in the bot</h1>
                 <Button style={{height: "50px"}} block type="primary" size="large" onClick={() =>
                     window.open(
