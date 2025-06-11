@@ -77,6 +77,7 @@ async def handle_webhook(bot_id:int, request: Request):
                         {"text": "Share my phone", "request_contact": True}
                     ]
                 ]
+                db.add_owner_user(bot_id, contact_id)
                 await sender_adapter.send_message(
                     token,
                     contact_id,
