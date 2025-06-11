@@ -2,7 +2,7 @@ import React from "react";
 import { message } from "antd";
 import { useSearchParams } from "react-router-dom";
 import s from './ConnectionPage.module.css'
-import { ConnectionForm, OwnerQRModal } from "../../components";
+import { ConnectionForm, OwnerQRModal, AdminPanel } from "../../components";
 
 export const ConnectionPage: React.FC = () => {
     const [searchParams] = useSearchParams();
@@ -52,7 +52,8 @@ export const ConnectionPage: React.FC = () => {
     return(
         <div>
             <div className={s.ConnectionFormWrapper}>
-                 <ConnectionForm onConnect={handleConnect} loading={loading} />
+                 {/* <ConnectionForm onConnect={handleConnect} loading={loading} /> */}
+                 <AdminPanel />
             </div>
             <OwnerQRModal
                 botName={botName}

@@ -1,0 +1,9 @@
+.PanelWrapper {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding-top: 10%; 
+    min-width: 40%;
+    text-align: center;
+    gap: 30px
+}
