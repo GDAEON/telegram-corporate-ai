@@ -1,4 +1,5 @@
 from constants.postgres_models import session, Bot, User, BotUser
+from sqlalchemy.orm.exc import NoResultFound
 from typing import Optional, Tuple
 from sqlalchemy import exists
 import constants.redis_models as rdb
@@ -42,6 +43,43 @@ def is_bot_verified(id: int) -> bool:
     if not bot:
         return False
     return bot.isVerified
+
+def add_owner_user(bot_id: int, user_id: int):
+    user = session.query(User).filter_by(id=user_id).one_or_none()
+    if user is None:
+        user = User(id=user_id)
+        session.add(user)
+        session.flush()
+
+    bot = session.query(Bot).get(bot_id)
+    bot.users.append(BotUser(user=user, is_owner=True))
+
+    session.commit()
+
+def get_is_bot_owner(bot_id: int, user_id: int) -> bool:
+    bu = (
+        session
+        .query(BotUser.is_owner)
+        .filter(
+            BotUser.bot_id  == bot_id,
+            BotUser.user_id == user_id
+        )
+        .first()
+    )
+    return bool(bu and bu[0])
+
+def update_user(user_id: int, name: str, surname: str, phone: str):
+    try:
+        user = session.query(User).filter(User.id == user_id).one()
+    except NoResultFound:
+        return
+
+    user.name = name
+    user.surname = surname
+    user.set_phone(phone)  
+
+    session.commit()
+
 
 def add_user_to_a_bot(bot_id: int, user_id: int, name: str, surname: str, phone: str):
     user = session.query(User).filter_by(id=user_id).one_or_none()

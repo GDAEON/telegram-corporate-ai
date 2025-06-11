@@ -64,9 +64,9 @@ class User(Base):
     __tablename__ = 'users'
 
     id = Column(BigInteger, primary_key=True)
-    name = Column(Text, nullable=False)
-    surname = Column(Text, nullable=False)
-    phone = Column(Text, nullable=False)
+    name = Column(Text, nullable=True)
+    surname = Column(Text, nullable=True)
+    phone = Column(Text, nullable=True)
 
     bots = relationship("BotUser", back_populates="user")
 
@@ -83,7 +83,7 @@ class BotUser(Base):
     bot_id = Column(BigInteger, ForeignKey('bots.id', ondelete='CASCADE'), primary_key=True)
     user_id = Column(BigInteger, ForeignKey('users.id', ondelete='CASCADE'), primary_key=True)
     is_active = Column(Boolean, default=True, nullable=False)
-    is_owner = Column(Boolean, default=True, nullable=False)
+    is_owner = Column(Boolean, default=False, nullable=False)
 
     bot = relationship("Bot", back_populates="users")
     user = relationship("User", back_populates="bots")
