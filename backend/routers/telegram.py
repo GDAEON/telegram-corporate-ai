@@ -81,6 +81,14 @@ async def handle_webhook(bot_id: int, request: Request):
                 )
                 return {"status": "ok"}
             elif input_uuid and db.compare_bot_auth_pass(bot_id, input_uuid):
+                if db.bot_has_user(bot_id, contact_id):
+                    await sender_adapter.send_message(
+                        token,
+                        contact_id,
+                        "You are logged in!",
+                    )
+                    return {"status": "ok"}
+
                 contact_button = [[{"text": "Share my phone", "request_contact": True}]]
                 db.add_user_to_a_bot(
                     bot_id,
