@@ -125,8 +125,9 @@ export const ConnectionPage: React.FC = () => {
             ) : (
                 <>
                     <div className={s.BotList}>
+                        <h1>Available bots</h1>
                         {bots.map((b) => (
-                            <Button key={b.botId} block style={{marginBottom: '10px'}} onClick={() => selectBot(b)}>
+                            <Button key={b.botId} type="primary" block style={{marginBottom: '10px'}} onClick={() => selectBot(b)}>
                                 {b.botName}
                             </Button>
                         ))}
