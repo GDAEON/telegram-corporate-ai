@@ -10,6 +10,7 @@ async def send_message(
     text: str,
     inline_buttons: Optional[List[List[Dict[str, Any]]]] = None,
     reply_keyboard: Optional[List[List[Dict[str, Any]]]] = None,
+    remove_keyboard: bool = False,
     parse_mode: str = "HTML",
 ) -> Dict[str, Any]:
     payload: Dict[str, Any] = {
@@ -18,7 +19,9 @@ async def send_message(
         "parse_mode": parse_mode,
     }
 
-    if inline_buttons:
+    if remove_keyboard:
+        payload["reply_markup"] = {"remove_keyboard": True}
+    elif inline_buttons:
         payload["reply_markup"] = {"inline_keyboard": inline_buttons}
     elif reply_keyboard:
         payload["reply_markup"] = {
