@@ -6,6 +6,7 @@ import type {
   TablePaginationConfig,
 } from "antd/es/table";
 import {
+  CheckOutlined,
   DeleteOutlined,
   SearchOutlined,
   ShareAltOutlined,
@@ -37,6 +38,57 @@ export const AdminPanel: React.FC = () => {
   });
   const [searchParams] = useSearchParams();
   const botId = searchParams.get("botId");
+  const [inviteCopied, setInviteCopied] = useState(false);
+  const inviteTimer = useRef<NodeJS.Timeout | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (inviteTimer.current) {
+        clearTimeout(inviteTimer.current);
+      }
+    };
+  }, []);
+
+  const handleInviteUser = async () => {
+    if (!botId) return;
+    try {
+      const res = await fetch(`http://localhost:8000/api/${botId}/authInfo`);
+      const json = await res.json();
+
+      if (!res.ok) {
+        message.error(json.detail ?? "Failed to get invite link");
+        return;
+      }
+
+      const link = `https://t.me/${json.botName}?start=${json.passUiid}`;
+      await navigator.clipboard.writeText(link);
+      message.success("Invite link copied");
+      setInviteCopied(true);
+      if (inviteTimer.current) {
+        clearTimeout(inviteTimer.current);
+      }
+      inviteTimer.current = setTimeout(() => setInviteCopied(false), 1000);
+    } catch (e) {
+      message.error((e as Error).message);
+    }
+  };
+
+  const handleOpenConstructor = async () => {
+    if (!botId) return;
+    try {
+      const res = await fetch(`http://localhost:8000/api/${botId}/authInfo`);
+      const json = await res.json();
+
+      if (!res.ok) {
+        message.error(json.detail ?? "Failed to get constructor link");
+        return;
+      }
+
+      window.open(json.webUrl, "_blank", "noopener,noreferrer");
+    } catch (e) {
+      message.error((e as Error).message);
+    }
+  };
 
   const handleSearch = (
     selectedKeys: string[],
@@ -315,10 +367,17 @@ export const AdminPanel: React.FC = () => {
   return (
     <div className={s.PanelWrapper}>
       <h1>Hello OwnerName!</h1>
-      <Button block type="primary" size="large" style={{ height: 50 }}>
+      <Button block type="primary" size="large" style={{ height: 50 }} onClick={handleOpenConstructor}>
         Open Constructor
       </Button>
-      <Button icon={<ShareAltOutlined />}>Invite user</Button>
+      <Button
+        icon={inviteCopied ? <CheckOutlined /> : <ShareAltOutlined />}
+        onClick={handleInviteUser}
+        type={inviteCopied ? "primary" : "default"}
+        style={{ transition: "background-color 0.3s" }}
+      >
+        {inviteCopied ? "Invitation Link Copied" : "Invite user"}
+      </Button>
       <Table
         columns={columns}
         dataSource={data}

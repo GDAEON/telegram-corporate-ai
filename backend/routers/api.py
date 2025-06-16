@@ -28,9 +28,9 @@ async def integrate_new_user(request: IntegrateRequest):
         raise HTTPException(status_code=401, detail="Invalid bot token")
     
     if db.bot_exists(bot_id):
-        pass_uuid, web_url = db.get_bot_auth(bot_id)
+        stored_name, pass_uuid, web_url = db.get_bot_auth(bot_id)
 
-        return IntegrationResponse(botName=bot_name, passUuid=pass_uuid, webUrl=web_url, botId=bot_id)
+        return IntegrationResponse(botName=stored_name, passUuid=pass_uuid, webUrl=web_url, botId=bot_id)
     
     pass_uuid = hf.generate_uuid()
 
@@ -117,9 +117,9 @@ async def owner_name(bot_id: int) -> str:
 @router.get("/{bot_id}/authInfo")
 async def auth_info(bot_id: int):
     try:
-        pass_uuid, web_url = db.get_bot_auth(bot_id)
+        bot_name, pass_uuid, web_url = db.get_bot_auth(bot_id)
 
-        return {"passUiid": pass_uuid, "webUrl": web_url}
+        return {"botName": bot_name, "passUiid": pass_uuid, "webUrl": web_url}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 

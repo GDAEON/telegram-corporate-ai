@@ -46,12 +46,13 @@ def bot_exists(id: int) -> bool:
         return session.query(exists().where(Bot.id == id)).scalar()
 
 
-def get_bot_auth(id: int) -> Optional[Tuple[str, str]]:
+def get_bot_auth(id: int) -> Optional[Tuple[str, str, str]]:
+    """Return bot name, pass uuid and web url for the bot."""
     with get_session() as session:
         bot = session.get(Bot, id)
         if not bot:
             return None
-        return bot.get_pass_uuid(), bot.get_web_url()
+        return bot.name, bot.get_pass_uuid(), bot.get_web_url()
 
 
 def compare_bot_auth_owner(id: int, tested_owner_uuid: str) -> bool:
