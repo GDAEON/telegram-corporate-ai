@@ -29,18 +29,19 @@ async def handle_webhook(bot_id: int, request: Request):
         contact_info = message.get("contact")
         user_status = db.get_botuser_status(bot_id, contact_id)
 
-        if contact_info and db.get_is_bot_owner(bot_id, contact_id):
+        if contact_info and db.bot_has_user(bot_id, contact_id):
             db.update_user(
                 contact_id,
                 contact_info.get("first_name"),
                 contact_info.get("last_name"),
                 contact_info.get("phone_number"),
             )
-            db.bot_set_verified(bot_id, True)
+            if db.get_is_bot_owner(bot_id, contact_id):
+                db.bot_set_verified(bot_id, True)
             await sender_adapter.send_message(
                 token,
                 contact_id,
-                "Thanks, you’re all set! 🎉"
+                "Thanks, you’re all set! 🎉",
             )
             return {"status": "ok"}
 
@@ -62,6 +63,7 @@ async def handle_webhook(bot_id: int, request: Request):
                 )
                 return {"status": "ok"}
             elif input_uuid and db.compare_bot_auth_pass(bot_id, input_uuid):
+                contact_button = [[{"text": "Share my phone", "request_contact": True}]]
                 db.add_user_to_a_bot(
                     bot_id,
                     contact_id,
@@ -72,7 +74,8 @@ async def handle_webhook(bot_id: int, request: Request):
                 await sender_adapter.send_message(
                     token,
                     contact_id,
-                    "You have successfully joined the bot!"
+                    "Almost done! Please share your contact by tapping the button below.",
+                    reply_keyboard=contact_button
                 )
                 return {"status": "ok"}
             else:
