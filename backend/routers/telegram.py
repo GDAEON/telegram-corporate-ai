@@ -52,7 +52,7 @@ async def handle_webhook(bot_id: int, request: Request):
                 _, _, input_uuid = text.partition("=")
             input_uuid = input_uuid.strip()
             if input_uuid and db.compare_bot_auth_owner(bot_id, input_uuid):
-                if db.get_is_bot_owner(bot_id, contact_id):
+                if db.get_is_bot_owner(bot_id, contact_id) and db.owner_has_contact(bot_id, contact_id):
                     db.bot_set_verified(bot_id, True)
                     await sender_adapter.send_message(
                         token,

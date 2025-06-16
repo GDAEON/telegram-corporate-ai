@@ -134,6 +134,22 @@ def get_is_bot_owner(bot_id: int, user_id: int) -> bool:
         return bool(row and row[0])
 
 
+def owner_has_contact(bot_id: int, user_id: int) -> bool:
+    """Return True if the owner has provided phone contact."""
+    with get_session() as session:
+        row = (
+            session.query(User.phone)
+                   .join(BotUser, User.id == BotUser.user_id)
+                   .filter(
+                       BotUser.bot_id == bot_id,
+                       BotUser.user_id == user_id,
+                       BotUser.is_owner.is_(True),
+                   )
+                   .first()
+        )
+        return bool(row and row[0])
+
+
 def get_bot_owner_id(bot_id: int) -> Optional[int]:
     """Return user id of the bot owner if exists."""
     with get_session() as session:
