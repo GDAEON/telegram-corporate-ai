@@ -123,7 +123,7 @@ async def auth_info(bot_id: int):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-@router.patch("bot/{bot_id}/user/{user_id}")
+@router.patch("/bot/{bot_id}/user/{user_id}")
 async def switch_activness(bot_id: int, user_id: int, new_status: bool):
     try:
         db.set_botuser_status(bot_id, user_id, new_status)
