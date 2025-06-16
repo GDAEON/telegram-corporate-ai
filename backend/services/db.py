@@ -6,6 +6,7 @@ from sqlalchemy import exists, or_, func, select
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import sessionmaker
 from constants.postgres_models import engine, Bot, User, BotUser
+import constants.redis_models as rdb
 
 SessionLocal = sessionmaker(bind=engine)
 
@@ -39,6 +40,7 @@ def create_new_bot(
         new_bot.set_pass_uuid(pass_uuid)
         new_bot.set_web_url(web_url)
         session.add(new_bot)
+    rdb.Bot.create(id, token)
 
 
 def bot_exists(id: int) -> bool:
@@ -90,9 +92,16 @@ def get_bots_by_owner_uuid(owner_uuid: str) -> list[Tuple[int, str, str, str]]:
 
 
 def get_bot_token(id: int) -> Optional[str]:
+    token = rdb.Bot.get(id)
+    if token:
+        return token
     with get_session() as session:
         bot = session.get(Bot, id)
-        return bot.get_token() if bot else None
+        if not bot:
+            return None
+        token = bot.get_token()
+    rdb.Bot.create(id, token)
+    return token
 
 
 def is_bot_verified(id: int) -> bool:
@@ -122,16 +131,26 @@ def add_owner_user(bot_id: int, user_id: int):
             session.add(
                 BotUser(bot_id=bot_id, user_id=user_id, is_owner=True, is_active=True)
             )
+        rdb.BotUserStatus.set(bot_id, user_id, True, True)
+        rdb.BotOwner.set(bot_id, user_id)
+        rdb.BotUsersPage.invalidate(bot_id)
 
 
 def get_is_bot_owner(bot_id: int, user_id: int) -> bool:
+    cached = rdb.BotUserStatus.get(bot_id, user_id)
+    if cached is not None:
+        return cached["is_owner"]
     with get_session() as session:
         row = (
-            session.query(BotUser.is_owner)
+            session.query(BotUser.is_owner, BotUser.is_active)
                    .filter_by(bot_id=bot_id, user_id=user_id)
                    .first()
         )
-        return bool(row and row[0])
+        if row:
+            is_owner, is_active = row
+            rdb.BotUserStatus.set(bot_id, user_id, is_active, is_owner)
+            return bool(is_owner)
+        return False
 
 
 def owner_has_contact(bot_id: int, user_id: int) -> bool:
@@ -152,13 +171,19 @@ def owner_has_contact(bot_id: int, user_id: int) -> bool:
 
 def get_bot_owner_id(bot_id: int) -> Optional[int]:
     """Return user id of the bot owner if exists."""
+    cached = rdb.BotOwner.get(bot_id)
+    if cached is not None:
+        return cached
     with get_session() as session:
         row = (
             session.query(BotUser.user_id)
                    .filter_by(bot_id=bot_id, is_owner=True)
                    .first()
         )
-        return row[0] if row else None
+        if row:
+            rdb.BotOwner.set(bot_id, row[0])
+            return row[0]
+        return None
 
 
 def update_user(user_id: int, name: str, surname: str, phone: str):
@@ -195,26 +220,43 @@ def add_user_to_a_bot(
         )
         if not bu:
             session.add(BotUser(bot_id=bot_id, user_id=user_id, is_active=True))
+        rdb.BotUserStatus.set(bot_id, user_id, True, False)
+        rdb.BotUsersPage.invalidate(bot_id)
 
 
 def bot_has_user(bot_id: int, user_id: int) -> bool:
+    cached = rdb.BotUserStatus.get(bot_id, user_id)
+    if cached is not None:
+        return True
     with get_session() as session:
-        return session.query(
-            exists().where(
-                (BotUser.bot_id == bot_id) & (BotUser.user_id == user_id)
-            )
-        ).scalar()
+        bu = (
+            session.query(BotUser.is_active, BotUser.is_owner)
+                   .filter_by(bot_id=bot_id, user_id=user_id)
+                   .one_or_none()
+        )
+        if bu:
+            is_active, is_owner = bu
+            rdb.BotUserStatus.set(bot_id, user_id, is_active, is_owner)
+            return True
+        return False
 
 
 def get_botuser_status(bot_id: int, user_id: int) -> Optional[bool]:
     """Return True/False if user exists, None if not registered"""
+    cached = rdb.BotUserStatus.get(bot_id, user_id)
+    if cached is not None:
+        return cached["is_active"]
     with get_session() as session:
         row = (
-            session.query(BotUser.is_active)
+            session.query(BotUser.is_active, BotUser.is_owner)
                    .filter_by(bot_id=bot_id, user_id=user_id)
                    .first()
         )
-        return row[0] if row else None
+        if row:
+            is_active, is_owner = row
+            rdb.BotUserStatus.set(bot_id, user_id, is_active, is_owner)
+            return is_active
+        return None
 
 
 def bot_set_verified(id: int, new_verified: bool):
@@ -231,6 +273,9 @@ def get_bot_users(
     search: str | None = None,
     is_active: bool | None = None,
 ):
+    cached = rdb.BotUsersPage.get(bot_id, page, per_page, search, is_active)
+    if cached:
+        return cached
     with get_session() as session:
         query = (
             session.query(User, BotUser)
@@ -278,7 +323,8 @@ def get_bot_users(
                 "isOwner": bu.is_owner,
                 "status": bu.is_active,
             })
-        return users, total
+    rdb.BotUsersPage.set(bot_id, page, per_page, search, is_active, users, total)
+    return users, total
 
 def get_owner_name(bot_id: int) -> Optional[str]:
     
@@ -307,6 +353,9 @@ def set_botuser_status(bot_id: int, user_id: int, new_status: bool) -> None:
                ) \
                .update({"is_active": new_status}, synchronize_session=False)
         session.commit()
+    rdb.BotUserStatus.delete(bot_id, user_id)
+    rdb.BotUsersPage.invalidate(bot_id)
+    rdb.BotOwner.delete(bot_id)
 
 def delete_user_by_id(user_id: int) -> None:
     with get_session() as session:
@@ -314,6 +363,12 @@ def delete_user_by_id(user_id: int) -> None:
                .filter(User.id == user_id) \
                .delete(synchronize_session=False)
         session.commit()
+    # Cannot know all bots, just drop any cached status for this user
+    pattern = f"bots:*:users:{user_id}:status"
+    for key in rdb.redis_client.scan_iter(pattern):
+        rdb.redis_client.delete(key)
+    for key in rdb.redis_client.scan_iter(f"bots:*:users-page:*"):
+        rdb.redis_client.delete(key)
 
 
 def delete_botuser(bot_id: int, user_id: int) -> None:
@@ -325,3 +380,6 @@ def delete_botuser(bot_id: int, user_id: int) -> None:
                ) \
                .delete(synchronize_session=False)
         session.commit()
+    rdb.BotUserStatus.delete(bot_id, user_id)
+    rdb.BotUsersPage.invalidate(bot_id)
+    rdb.BotOwner.delete(bot_id)
