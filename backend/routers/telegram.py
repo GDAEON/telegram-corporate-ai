@@ -42,6 +42,7 @@ async def handle_webhook(bot_id: int, request: Request):
                 token,
                 contact_id,
                 "Thanks, you’re all set! 🎉",
+                remove_keyboard=True,
             )
             return {"status": "ok"}
 
