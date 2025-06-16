@@ -37,6 +37,16 @@ export const AdminPanel: React.FC = () => {
   });
   const [searchParams] = useSearchParams();
   const botId = searchParams.get("botId");
+  const [inviteCopied, setInviteCopied] = useState(false);
+  const inviteTimer = useRef<NodeJS.Timeout>();
+
+  useEffect(() => {
+    return () => {
+      if (inviteTimer.current) {
+        clearTimeout(inviteTimer.current);
+      }
+    };
+  }, []);
 
   const handleInviteUser = async () => {
     if (!botId) return;
@@ -52,6 +62,11 @@ export const AdminPanel: React.FC = () => {
       const link = `https://t.me/${json.botName}?start=${json.passUiid}`;
       await navigator.clipboard.writeText(link);
       message.success("Invite link copied");
+      setInviteCopied(true);
+      if (inviteTimer.current) {
+        clearTimeout(inviteTimer.current);
+      }
+      inviteTimer.current = setTimeout(() => setInviteCopied(false), 2000);
     } catch (e) {
       message.error((e as Error).message);
     }
@@ -337,7 +352,14 @@ export const AdminPanel: React.FC = () => {
       <Button block type="primary" size="large" style={{ height: 50 }}>
         Open Constructor
       </Button>
-      <Button icon={<ShareAltOutlined />} onClick={handleInviteUser}>Invite user</Button>
+      <Button
+        icon={<ShareAltOutlined />}
+        onClick={handleInviteUser}
+        type={inviteCopied ? "primary" : "default"}
+        style={{ transition: "background-color 0.3s" }}
+      >
+        {inviteCopied ? "Invitation Link Copied" : "Invite user"}
+      </Button>
       <Table
         columns={columns}
         dataSource={data}
