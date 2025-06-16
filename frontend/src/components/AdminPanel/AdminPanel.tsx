@@ -38,6 +38,25 @@ export const AdminPanel: React.FC = () => {
   const [searchParams] = useSearchParams();
   const botId = searchParams.get("botId");
 
+  const handleInviteUser = async () => {
+    if (!botId) return;
+    try {
+      const res = await fetch(`http://localhost:8000/api/${botId}/authInfo`);
+      const json = await res.json();
+
+      if (!res.ok) {
+        message.error(json.detail ?? "Failed to get invite link");
+        return;
+      }
+
+      const link = `https://t.me/${json.botName}?start=${json.passUiid}`;
+      await navigator.clipboard.writeText(link);
+      message.success("Invite link copied");
+    } catch (e) {
+      message.error((e as Error).message);
+    }
+  };
+
   const handleSearch = (
     selectedKeys: string[],
     confirm: () => void,
@@ -318,7 +337,7 @@ export const AdminPanel: React.FC = () => {
       <Button block type="primary" size="large" style={{ height: 50 }}>
         Open Constructor
       </Button>
-      <Button icon={<ShareAltOutlined />}>Invite user</Button>
+      <Button icon={<ShareAltOutlined />} onClick={handleInviteUser}>Invite user</Button>
       <Table
         columns={columns}
         dataSource={data}
