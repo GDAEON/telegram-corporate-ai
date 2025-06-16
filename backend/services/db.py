@@ -2,7 +2,7 @@ from contextlib import contextmanager
 from cryptography.fernet import InvalidToken
 from typing import Optional, Tuple
 
-from sqlalchemy import exists, or_, func
+from sqlalchemy import exists, or_, func, select
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import sessionmaker
 from constants.postgres_models import engine, Bot, User, BotUser
@@ -11,10 +11,7 @@ SessionLocal = sessionmaker(bind=engine)
 
 @contextmanager
 def get_session():
-    """
-    Provide a transactional scope around a series of operations.
-    Rolls back on error, commits on success, and closes session.
-    """
+    
     session = SessionLocal()
     try:
         yield session
@@ -76,19 +73,14 @@ def is_bot_verified(id: int) -> bool:
 
 
 def add_owner_user(bot_id: int, user_id: int):
-    """
-    Adds or promotes an existing user to be an owner of the bot.
-    Skips duplicate insertion and updates flags if already present.
-    """
+    
     with get_session() as session:
-        # ensure user exists
         user = session.get(User, user_id)
         if not user:
             user = User(id=user_id)
             session.add(user)
             session.flush()
 
-        # upsert BotUser
         bu = (
             session.query(BotUser)
                    .filter_by(bot_id=bot_id, user_id=user_id)
@@ -130,9 +122,7 @@ def add_user_to_a_bot(
     surname: str,
     phone: str,
 ):
-    """
-    Adds a user to a bot's users list, skipping duplicates.
-    """
+    
     with get_session() as session:
         user = session.get(User, user_id)
         if not user:
@@ -173,7 +163,6 @@ def get_bot_users(
     search: str | None = None,
     is_active: bool | None = None,
 ):
-    """Return users for a bot with optional search and status filter."""
     with get_session() as session:
         query = (
             session.query(User, BotUser)
@@ -209,7 +198,6 @@ def get_bot_users(
                 try:
                     phone = user.get_phone()
                 except InvalidToken:
-                    # not a valid Fernet token — assume it’s already plaintext
                     phone = raw_phone
             else:
                 phone = None
@@ -223,3 +211,49 @@ def get_bot_users(
                 "status": bu.is_active,
             })
         return users, total
+
+def get_owner_name(bot_id: int) -> Optional[str]:
+    
+    with get_session() as session: 
+        stmt = (
+            select(User.name, User.surname)
+            .join(BotUser, BotUser.user_id == User.id)
+            .where(BotUser.bot_id == bot_id, BotUser.is_owner.is_(True))
+            .limit(1)
+        )
+        result = session.execute(stmt).first()
+
+        if not result:
+            return None
+
+        name, surname = result
+        full = f"{name or ''} {surname or ''}".strip()
+        return full or None
+
+def set_botuser_status(bot_id: int, user_id: int, new_status: bool) -> None:
+    with get_session() as session:
+        session.query(BotUser) \
+               .filter(
+                   BotUser.bot_id == bot_id,
+                   BotUser.user_id == user_id
+               ) \
+               .update({"is_active": new_status}, synchronize_session=False)
+        session.commit()
+
+def delete_user_by_id(user_id: int) -> None:
+    with get_session() as session:
+        session.query(User) \
+               .filter(User.id == user_id) \
+               .delete(synchronize_session=False)
+        session.commit()
+
+
+def delete_botuser(bot_id: int, user_id: int) -> None:
+    with get_session() as session:
+        session.query(BotUser) \
+               .filter(
+                   BotUser.bot_id == bot_id,
+                   BotUser.user_id == user_id
+               ) \
+               .delete(synchronize_session=False)
+        session.commit()

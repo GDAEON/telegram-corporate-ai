@@ -1,7 +1,7 @@
 from typing import Optional
 from fastapi import APIRouter
 from fastapi.exceptions import HTTPException
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, Response
 
 from constants.request_models import IntegrateRequest
 from constants.response_models import (
@@ -104,5 +104,37 @@ async def list_bot_users(
         return {"users": users, "total": total}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
-    
 
+@router.get("/{bot_id}/owner")
+async def owner_name(bot_id: int) -> str:
+    try:
+        owner_name = db.get_owner_name(bot_id)
+
+        return owner_name
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/{bot_id}/authInfo")
+async def auth_info(bot_id: int):
+    try:
+        pass_uuid, web_url = db.get_bot_auth(bot_id)
+
+        return {"passUiid": pass_uuid, "webUrl": web_url}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.patch("bot/{bot_id}/user/{user_id}")
+async def switch_activness(bot_id: int, user_id: int, new_status: bool):
+    try:
+        db.set_botuser_status(bot_id, user_id, new_status)
+        return {"user_id": user_id, "is_active": new_status}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.delete("/bot/{bot_id}/user/{user_id}")
+async def delete_user(bot_id: int, user_id: int):
+    try:
+        db.delete_user_by_id(user_id)
+        return Response(status_code=204)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
