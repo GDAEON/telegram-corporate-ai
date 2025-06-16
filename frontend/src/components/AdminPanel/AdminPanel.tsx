@@ -1,5 +1,5 @@
 import React, { useRef, useState, useEffect } from "react";
-import { Button, Input, InputRef, Space, Table, Tag } from "antd";
+import { Button, Input, InputRef, Space, Table, Tag, Popconfirm, message } from "antd";
 import type {
   ColumnType,
   ColumnsType,
@@ -95,6 +95,56 @@ export const AdminPanel: React.FC = () => {
       total: json.total || 0,
     });
     setLoading(false);
+  };
+
+  const handleStatusToggle = async (userId: string, currentStatus: boolean) => {
+    if (!botId) return;
+
+    try {
+      const res = await fetch(
+        `http://localhost:8000/api/bot/${botId}/user/${userId}?new_status=${!currentStatus}`,
+        {
+          method: "PATCH",
+        }
+      );
+
+      if (!res.ok) {
+        const json = await res.json();
+        message.error(json.detail ?? "Failed to update status");
+        return;
+      }
+
+      setData((prev) =>
+        prev.map((u) =>
+          u.key === userId ? { ...u, status: !currentStatus } : u
+        )
+      );
+      message.success("Status updated");
+    } catch (e) {
+      message.error((e as Error).message);
+    }
+  };
+
+  const handleDelete = async (userId: string) => {
+    if (!botId) return;
+
+    try {
+      const res = await fetch(
+        `http://localhost:8000/api/bot/${botId}/user/${userId}`,
+        { method: "DELETE" }
+      );
+
+      if (!res.ok) {
+        const json = await res.json();
+        message.error(json.detail ?? "Failed to delete user");
+        return;
+      }
+
+      setData((prev) => prev.filter((u) => u.key !== userId));
+      message.success("User deleted");
+    } catch (e) {
+      message.error((e as Error).message);
+    }
   };
 
   useEffect(() => {
@@ -228,7 +278,8 @@ export const AdminPanel: React.FC = () => {
       title: "Actions",
       key: "actions",
       align: "center",
-      render: (_, { status, isOwner }) => {
+      render: (_, record) => {
+        const { status, isOwner, key } = record;
         if (isOwner) {
           return <p>You</p>;
         }
@@ -241,12 +292,20 @@ export const AdminPanel: React.FC = () => {
               color={color}
               variant={variant}
               style={{ minWidth: 100, textAlign: "center" }}
+              onClick={() => handleStatusToggle(key, status)}
             >
               {text}
             </Button>
-            <Button variant="solid" color="danger">
-              Delete <DeleteOutlined />
-            </Button>
+            <Popconfirm
+              title="Delete this user?"
+              onConfirm={() => handleDelete(key)}
+              okText="Yes"
+              cancelText="No"
+            >
+              <Button variant="solid" color="danger">
+                Delete <DeleteOutlined />
+              </Button>
+            </Popconfirm>
           </Space>
         );
       },
