@@ -61,6 +61,13 @@ def compare_bot_auth_owner(id: int, tested_owner_uuid: str) -> bool:
         return bool(bot and bot.get_owner_uuid() == tested_owner_uuid)
 
 
+def compare_bot_auth_pass(id: int, tested_pass_uuid: str) -> bool:
+    """Return True if pass uuid matches the stored value"""
+    with get_session() as session:
+        bot = session.get(Bot, id)
+        return bool(bot and bot.get_pass_uuid() == tested_pass_uuid)
+
+
 def get_bot_by_owner_uuid(owner_uuid: str) -> Optional[Tuple[int, str, str, str]]:
     """Return bot info by owner uuid."""
     with get_session() as session:
@@ -131,14 +138,15 @@ def add_user_to_a_bot(
     user_id: int,
     name: str,
     surname: str,
-    phone: str,
+    phone: str | None = None,
 ):
     
     with get_session() as session:
         user = session.get(User, user_id)
         if not user:
             user = User(id=user_id, name=name, surname=surname)
-            user.set_phone(phone)
+            if phone:
+                user.set_phone(phone)
             session.add(user)
             session.flush()
 
@@ -158,6 +166,17 @@ def bot_has_user(bot_id: int, user_id: int) -> bool:
                 (BotUser.bot_id == bot_id) & (BotUser.user_id == user_id)
             )
         ).scalar()
+
+
+def get_botuser_status(bot_id: int, user_id: int) -> Optional[bool]:
+    """Return True/False if user exists, None if not registered"""
+    with get_session() as session:
+        row = (
+            session.query(BotUser.is_active)
+                   .filter_by(bot_id=bot_id, user_id=user_id)
+                   .first()
+        )
+        return row[0] if row else None
 
 
 def bot_set_verified(id: int, new_verified: bool):

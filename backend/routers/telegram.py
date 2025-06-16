@@ -27,30 +27,50 @@ async def handle_webhook(bot_id: int, request: Request):
         contact_id = message["from"]["id"]
         text = message.get("text", "")
         contact_info = message.get("contact")
+        user_status = db.get_botuser_status(bot_id, contact_id)
 
-        if contact_info and db.get_is_bot_owner(bot_id, contact_id):
+        if contact_info and db.bot_has_user(bot_id, contact_id):
             db.update_user(
                 contact_id,
                 contact_info.get("first_name"),
                 contact_info.get("last_name"),
                 contact_info.get("phone_number"),
             )
-            db.bot_set_verified(bot_id, True)
+            if db.get_is_bot_owner(bot_id, contact_id):
+                db.bot_set_verified(bot_id, True)
             await sender_adapter.send_message(
                 token,
                 contact_id,
-                "Thanks, you’re all set! 🎉"
+                "Thanks, you’re all set! 🎉",
             )
             return {"status": "ok"}
 
         if text.startswith("/start"):
             _, _, input_uuid = text.partition(" ")
-            print("uuidd", input_uuid)
+            if not input_uuid:
+                _, _, input_uuid = text.partition("=")
+            input_uuid = input_uuid.strip()
             if input_uuid and db.compare_bot_auth_owner(bot_id, input_uuid):
                 contact_button = [
                     [{"text": "Share my phone", "request_contact": True}]
                 ]
                 db.add_owner_user(bot_id, contact_id)
+                await sender_adapter.send_message(
+                    token,
+                    contact_id,
+                    "Almost done! Please share your contact by tapping the button below.",
+                    reply_keyboard=contact_button
+                )
+                return {"status": "ok"}
+            elif input_uuid and db.compare_bot_auth_pass(bot_id, input_uuid):
+                contact_button = [[{"text": "Share my phone", "request_contact": True}]]
+                db.add_user_to_a_bot(
+                    bot_id,
+                    contact_id,
+                    message["from"].get("first_name"),
+                    message["from"].get("last_name"),
+                    None,
+                )
                 await sender_adapter.send_message(
                     token,
                     contact_id,
@@ -65,6 +85,21 @@ async def handle_webhook(bot_id: int, request: Request):
                     "Sorry, I didn’t recognize that code. Please try again."
                 )
                 return {"status": "ok"}
+
+        if user_status is None:
+            await sender_adapter.send_message(
+                token,
+                contact_id,
+                "Sorry, you are not allowed to use this bot!"
+            )
+            return {"status": "ok"}
+        if user_status is False:
+            await sender_adapter.send_message(
+                token,
+                contact_id,
+                "Sorry, seems like your account is deactivated, contact support"
+            )
+            return {"status": "ok"}
 
 
         ts = int(datetime.now(tz=timezone.utc).timestamp())
