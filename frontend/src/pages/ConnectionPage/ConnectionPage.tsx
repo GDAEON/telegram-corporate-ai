@@ -52,8 +52,7 @@ export const ConnectionPage: React.FC = () => {
     return(
         <div>
             <div className={s.ConnectionFormWrapper}>
-                 {/* <ConnectionForm onConnect={handleConnect} loading={loading} /> */}
-                 <AdminPanel />
+                 <ConnectionForm onConnect={handleConnect} loading={loading} />
             </div>
             <OwnerQRModal
                 botName={botName}
