@@ -47,23 +47,6 @@ export const AdminPanel: React.FC = () => {
         clearTimeout(inviteTimer.current);
       }
     };
-  const handleOpenConstructor = async () => {
-    if (!botId) return;
-    try {
-      const res = await fetch(`http://localhost:8000/api/${botId}/authInfo`);
-      const json = await res.json();
-
-      if (!res.ok) {
-        message.error(json.detail ?? "Failed to get constructor link");
-        return;
-      }
-
-      window.open(json.webUrl, "_blank", "noopener,noreferrer");
-    } catch (e) {
-      message.error((e as Error).message);
-    }
-  };
-
   }, []);
 
   const handleInviteUser = async () => {
@@ -341,13 +324,7 @@ export const AdminPanel: React.FC = () => {
         return (
           <Space size="middle">
             <Button
-      <Button
-        block
-        type="primary"
-        size="large"
-        style={{ height: 50 }}
-        onClick={handleOpenConstructor}
-      >
+              color={color}
               variant={variant}
               style={{ minWidth: 100, textAlign: "center" }}
               onClick={() => handleStatusToggle(key, status)}
