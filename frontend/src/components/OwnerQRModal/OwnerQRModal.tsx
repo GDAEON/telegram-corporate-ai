@@ -7,10 +7,11 @@ type Props = {
     uuid: string;
     open: boolean;
     botId: number | null;
-    handleCancel: () => void;
+    onCancel: () => void;
+    onVerified: () => void;
 };
 
-export const OwnerQRModal: React.FC<Props> = ({ botName, uuid, botId, open, handleCancel }) => {
+export const OwnerQRModal: React.FC<Props> = ({ botName, uuid, botId, open, onCancel, onVerified }) => {
 
     useEffect(() => {
         if (!open) return;
@@ -19,16 +20,16 @@ export const OwnerQRModal: React.FC<Props> = ({ botName, uuid, botId, open, hand
             const res = await fetch(`${BACKEND_IP}/${botId}/isVerified`);
             const verified = await res.json();
             if (verified) {
-                handleCancel();
+                onVerified();
             }
         };
 
-        checkVerification();                          
+        checkVerification();
         const timer = setInterval(checkVerification, 3000);
         return () => clearInterval(timer);
-    }, [open, botId, handleCancel]);
+    }, [open, botId, onVerified]);
     
     return (
-        <OwnerQRModalView botName={botName} uuid={uuid} open={open} handleCancel={handleCancel} />
+        <OwnerQRModalView botName={botName} uuid={uuid} open={open} onCancel={onCancel} />
     );
 };

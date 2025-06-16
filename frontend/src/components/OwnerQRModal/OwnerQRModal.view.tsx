@@ -6,14 +6,14 @@ type Props = {
     botName: string;
     uuid: string;
     open: boolean;
-    handleCancel: () => void;
+    onCancel: () => void;
 };
 
-export const OwnerQRModalView: React.FC<Props> = ({ botName, uuid, open, handleCancel }) => {
+export const OwnerQRModalView: React.FC<Props> = ({ botName, uuid, open, onCancel }) => {
     return (
         <Modal
             open={open}
-            onCancel={handleCancel}
+            onCancel={onCancel}
             footer={[]}
             centered
             width={{
