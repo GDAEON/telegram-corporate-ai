@@ -75,9 +75,29 @@ async def integrate_new_user(request: IntegrateRequest):
         db.create_new_bot(bot_id, token, bot_name, owner_uuid, pass_uuid, web_url)
 
         return IntegrationResponse(botName=bot_name, passUuid=pass_uuid, webUrl=web_url, botId=bot_id)
-    
+
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Request failed: {str(e)}")
+
+
+@router.get("/owner/{owner_uuid}/bot")
+async def bot_by_owner(owner_uuid: str):
+    """Return bot info by owner uuid."""
+    try:
+        info = db.get_bot_by_owner_uuid(owner_uuid)
+        if not info:
+            raise HTTPException(status_code=404, detail="Bot not found")
+        bot_id, bot_name, pass_uuid, web_url = info
+        return {
+            "botId": bot_id,
+            "botName": bot_name,
+            "passUuid": pass_uuid,
+            "webUrl": web_url,
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
         
 @router.get("/{bot_id}/isVerified")
 async def is_bot_verified(bot_id: int):

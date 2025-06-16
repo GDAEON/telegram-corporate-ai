@@ -12,7 +12,6 @@ import {
   ShareAltOutlined,
 } from "@ant-design/icons";
 import Highlighter from "react-highlight-words";
-import { useSearchParams } from "react-router-dom";
 import s from "./AdminPanel.module.css";
 
 interface DataType {
@@ -36,8 +35,11 @@ export const AdminPanel: React.FC = () => {
     pageSize: 5,
     total: 0,
   });
-  const [searchParams] = useSearchParams();
-  const botId = searchParams.get("botId");
+  const storedInfo = localStorage.getItem("botInfo");
+  const botId = storedInfo ? JSON.parse(storedInfo).botId : null;
+  const botName = storedInfo ? JSON.parse(storedInfo).botName : null;
+  const passUuid = storedInfo ? JSON.parse(storedInfo).passUuid : null;
+  const webUrl = storedInfo ? JSON.parse(storedInfo).webUrl : null;
   const [inviteCopied, setInviteCopied] = useState(false);
   const inviteTimer = useRef<NodeJS.Timeout | null>(null);
 
@@ -50,17 +52,9 @@ export const AdminPanel: React.FC = () => {
   }, []);
 
   const handleInviteUser = async () => {
-    if (!botId) return;
+    if (!botId || !botName || !passUuid) return;
     try {
-      const res = await fetch(`http://localhost:8000/api/${botId}/authInfo`);
-      const json = await res.json();
-
-      if (!res.ok) {
-        message.error(json.detail ?? "Failed to get invite link");
-        return;
-      }
-
-      const link = `https://t.me/${json.botName}?start=${json.passUiid}`;
+      const link = `https://t.me/${botName}?start=${passUuid}`;
       await navigator.clipboard.writeText(link);
       message.success("Invite link copied");
       setInviteCopied(true);
@@ -74,17 +68,9 @@ export const AdminPanel: React.FC = () => {
   };
 
   const handleOpenConstructor = async () => {
-    if (!botId) return;
+    if (!webUrl) return;
     try {
-      const res = await fetch(`http://localhost:8000/api/${botId}/authInfo`);
-      const json = await res.json();
-
-      if (!res.ok) {
-        message.error(json.detail ?? "Failed to get constructor link");
-        return;
-      }
-
-      window.open(json.webUrl, "_blank", "noopener,noreferrer");
+      window.open(webUrl, "_blank", "noopener,noreferrer");
     } catch (e) {
       message.error((e as Error).message);
     }

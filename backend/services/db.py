@@ -61,6 +61,16 @@ def compare_bot_auth_owner(id: int, tested_owner_uuid: str) -> bool:
         return bool(bot and bot.get_owner_uuid() == tested_owner_uuid)
 
 
+def get_bot_by_owner_uuid(owner_uuid: str) -> Optional[Tuple[int, str, str, str]]:
+    """Return bot info by owner uuid."""
+    with get_session() as session:
+        bots = session.query(Bot).all()
+        for bot in bots:
+            if bot.get_owner_uuid() == owner_uuid:
+                return bot.id, bot.name, bot.get_pass_uuid(), bot.get_web_url()
+    return None
+
+
 def get_bot_token(id: int) -> Optional[str]:
     with get_session() as session:
         bot = session.get(Bot, id)
