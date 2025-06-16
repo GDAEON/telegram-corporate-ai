@@ -6,6 +6,7 @@ from sqlalchemy import exists, or_, func, select
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import sessionmaker
 from constants.postgres_models import engine, Bot, User, BotUser
+from constants import redis_models as rdb
 
 SessionLocal = sessionmaker(bind=engine)
 
@@ -40,32 +41,63 @@ def create_new_bot(
         new_bot.set_web_url(web_url)
         session.add(new_bot)
 
+    rdb.Bot.create(id, token)
+    rdb.Bot.set_auth(id, name, owner_uuid, pass_uuid, web_url)
+
 
 def bot_exists(id: int) -> bool:
+    if rdb.Bot.exists(id):
+        return True
     with get_session() as session:
-        return session.query(exists().where(Bot.id == id)).scalar()
+        exists_db = session.query(exists().where(Bot.id == id)).scalar()
+        if exists_db:
+            bot = session.get(Bot, id)
+            if bot:
+                rdb.Bot.create(id, bot.get_token())
+                rdb.Bot.set_auth(id, bot.name, bot.get_owner_uuid(), bot.get_pass_uuid(), bot.get_web_url())
+        return exists_db
 
 
 def get_bot_auth(id: int) -> Optional[Tuple[str, str, str]]:
     """Return bot name, pass uuid and web url for the bot."""
+    cached = rdb.Bot.get_auth(id)
+    if cached:
+        return cached["name"], cached["pass_uuid"], cached["web_url"]
+
     with get_session() as session:
         bot = session.get(Bot, id)
         if not bot:
             return None
+        rdb.Bot.set_auth(id, bot.name, bot.get_owner_uuid(), bot.get_pass_uuid(), bot.get_web_url())
+        rdb.Bot.create(id, bot.get_token())
         return bot.name, bot.get_pass_uuid(), bot.get_web_url()
 
 
 def compare_bot_auth_owner(id: int, tested_owner_uuid: str) -> bool:
+    cached = rdb.Bot.get_auth(id)
+    if cached and cached.get("owner_uuid") == tested_owner_uuid:
+        return True
     with get_session() as session:
         bot = session.get(Bot, id)
-        return bool(bot and bot.get_owner_uuid() == tested_owner_uuid)
+        if not bot:
+            return False
+        rdb.Bot.set_auth(id, bot.name, bot.get_owner_uuid(), bot.get_pass_uuid(), bot.get_web_url())
+        rdb.Bot.create(id, bot.get_token())
+        return bool(bot.get_owner_uuid() == tested_owner_uuid)
 
 
 def compare_bot_auth_pass(id: int, tested_pass_uuid: str) -> bool:
     """Return True if pass uuid matches the stored value"""
+    cached = rdb.Bot.get_auth(id)
+    if cached and cached.get("pass_uuid") == tested_pass_uuid:
+        return True
     with get_session() as session:
         bot = session.get(Bot, id)
-        return bool(bot and bot.get_pass_uuid() == tested_pass_uuid)
+        if not bot:
+            return False
+        rdb.Bot.set_auth(id, bot.name, bot.get_owner_uuid(), bot.get_pass_uuid(), bot.get_web_url())
+        rdb.Bot.create(id, bot.get_token())
+        return bool(bot.get_pass_uuid() == tested_pass_uuid)
 
 
 def get_bot_by_owner_uuid(owner_uuid: str) -> Optional[Tuple[int, str, str, str]]:
@@ -90,9 +122,17 @@ def get_bots_by_owner_uuid(owner_uuid: str) -> list[Tuple[int, str, str, str]]:
 
 
 def get_bot_token(id: int) -> Optional[str]:
+    cached = rdb.Bot.get(id)
+    if cached is not None:
+        return cached
     with get_session() as session:
         bot = session.get(Bot, id)
-        return bot.get_token() if bot else None
+        if not bot:
+            return None
+        token = bot.get_token()
+        rdb.Bot.create(id, token)
+        rdb.Bot.set_auth(id, bot.name, bot.get_owner_uuid(), bot.get_pass_uuid(), bot.get_web_url())
+        return token
 
 
 def is_bot_verified(id: int) -> bool:
@@ -119,19 +159,25 @@ def add_owner_user(bot_id: int, user_id: int):
             bu.is_owner = True
             bu.is_active = True
         else:
-            session.add(
-                BotUser(bot_id=bot_id, user_id=user_id, is_owner=True, is_active=True)
-            )
+            session.add(BotUser(bot_id=bot_id, user_id=user_id, is_owner=True, is_active=True))
+
+    rdb.Bot.set_owner_id(bot_id, user_id)
 
 
 def get_is_bot_owner(bot_id: int, user_id: int) -> bool:
+    cached_owner_id = rdb.Bot.get_owner_id(bot_id)
+    if cached_owner_id is not None:
+        return cached_owner_id == user_id
     with get_session() as session:
         row = (
             session.query(BotUser.is_owner)
                    .filter_by(bot_id=bot_id, user_id=user_id)
                    .first()
         )
-        return bool(row and row[0])
+        if row and row[0]:
+            rdb.Bot.set_owner_id(bot_id, user_id)
+            return True
+        return False
 
 
 def owner_has_contact(bot_id: int, user_id: int) -> bool:
@@ -152,13 +198,19 @@ def owner_has_contact(bot_id: int, user_id: int) -> bool:
 
 def get_bot_owner_id(bot_id: int) -> Optional[int]:
     """Return user id of the bot owner if exists."""
+    cached = rdb.Bot.get_owner_id(bot_id)
+    if cached is not None:
+        return cached
     with get_session() as session:
         row = (
             session.query(BotUser.user_id)
                    .filter_by(bot_id=bot_id, is_owner=True)
                    .first()
         )
-        return row[0] if row else None
+        if row:
+            rdb.Bot.set_owner_id(bot_id, row[0])
+            return row[0]
+        return None
 
 
 def update_user(user_id: int, name: str, surname: str, phone: str):
@@ -281,10 +333,16 @@ def get_bot_users(
         return users, total
 
 def get_owner_name(bot_id: int) -> Optional[str]:
-    
-    with get_session() as session: 
+    owner_id = rdb.Bot.get_owner_id(bot_id)
+    with get_session() as session:
+        if owner_id is not None:
+            user = session.get(User, owner_id)
+            if user:
+                full = f"{user.name or ''} {user.surname or ''}".strip()
+                return full or None
+
         stmt = (
-            select(User.name, User.surname)
+            select(User.name, User.surname, User.id)
             .join(BotUser, BotUser.user_id == User.id)
             .where(BotUser.bot_id == bot_id, BotUser.is_owner.is_(True))
             .limit(1)
@@ -294,7 +352,8 @@ def get_owner_name(bot_id: int) -> Optional[str]:
         if not result:
             return None
 
-        name, surname = result
+        name, surname, uid = result
+        rdb.Bot.set_owner_id(bot_id, uid)
         full = f"{name or ''} {surname or ''}".strip()
         return full or None
 
