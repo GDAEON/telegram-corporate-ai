@@ -73,6 +73,23 @@ export const AdminPanel: React.FC = () => {
     }
   };
 
+  const handleOpenConstructor = async () => {
+    if (!botId) return;
+    try {
+      const res = await fetch(`http://localhost:8000/api/${botId}/authInfo`);
+      const json = await res.json();
+
+      if (!res.ok) {
+        message.error(json.detail ?? "Failed to get constructor link");
+        return;
+      }
+
+      window.open(json.webUrl, "_blank", "noopener,noreferrer");
+    } catch (e) {
+      message.error((e as Error).message);
+    }
+  };
+
   const handleSearch = (
     selectedKeys: string[],
     confirm: () => void,
@@ -350,7 +367,7 @@ export const AdminPanel: React.FC = () => {
   return (
     <div className={s.PanelWrapper}>
       <h1>Hello OwnerName!</h1>
-      <Button block type="primary" size="large" style={{ height: 50 }}>
+      <Button block type="primary" size="large" style={{ height: 50 }} onClick={handleOpenConstructor}>
         Open Constructor
       </Button>
       <Button
