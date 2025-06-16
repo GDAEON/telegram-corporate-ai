@@ -80,22 +80,20 @@ async def integrate_new_user(request: IntegrateRequest):
         raise HTTPException(status_code=500, detail=f"Request failed: {str(e)}")
 
 
-@router.get("/owner/{owner_uuid}/bot")
-async def bot_by_owner(owner_uuid: str):
-    """Return bot info by owner uuid."""
+@router.get("/owner/{owner_uuid}/bots")
+async def bots_by_owner(owner_uuid: str):
+    """Return list of bots for given owner uuid."""
     try:
-        info = db.get_bot_by_owner_uuid(owner_uuid)
-        if not info:
-            raise HTTPException(status_code=404, detail="Bot not found")
-        bot_id, bot_name, pass_uuid, web_url = info
-        return {
-            "botId": bot_id,
-            "botName": bot_name,
-            "passUuid": pass_uuid,
-            "webUrl": web_url,
-        }
-    except HTTPException:
-        raise
+        infos = db.get_bots_by_owner_uuid(owner_uuid)
+        return [
+            {
+                "botId": bot_id,
+                "botName": bot_name,
+                "passUuid": pass_uuid,
+                "webUrl": web_url,
+            }
+            for bot_id, bot_name, pass_uuid, web_url in infos
+        ]
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
         
@@ -140,6 +138,16 @@ async def auth_info(bot_id: int):
         bot_name, pass_uuid, web_url = db.get_bot_auth(bot_id)
 
         return {"botName": bot_name, "passUiid": pass_uuid, "webUrl": web_url}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.patch("/bot/{bot_id}/logout")
+async def logout_owner(bot_id: int):
+    """Log out owner from admin panel."""
+    try:
+        db.bot_set_verified(bot_id, False)
+        return {"botId": bot_id, "verified": False}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 

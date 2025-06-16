@@ -16,6 +16,16 @@ import Highlighter from "react-highlight-words";
 import s from "./AdminPanel.module.css";
 import { BACKEND_IP } from "../../shared";
 
+type Props = {
+  onExit: () => void;
+  botInfo: {
+    botId: number;
+    botName: string;
+    passUuid: string;
+    webUrl: string;
+  };
+};
+
 interface DataType {
   key: string;
   name: string;
@@ -26,7 +36,7 @@ interface DataType {
 
 type DataIndex = keyof DataType;
 
-export const AdminPanel: React.FC = () => {
+export const AdminPanel: React.FC<Props> = ({ onExit, botInfo }) => {
   const [searchText, setSearchText] = useState("");
   const [searchedColumn, setSearchedColumn] = useState<DataIndex | "">("");
   const searchInput = useRef<InputRef>(null);
@@ -37,11 +47,7 @@ export const AdminPanel: React.FC = () => {
     pageSize: 5,
     total: 0,
   });
-  const storedInfo = localStorage.getItem("botInfo");
-  const botId = storedInfo ? JSON.parse(storedInfo).botId : null;
-  const botName = storedInfo ? JSON.parse(storedInfo).botName : null;
-  const passUuid = storedInfo ? JSON.parse(storedInfo).passUuid : null;
-  const webUrl = storedInfo ? JSON.parse(storedInfo).webUrl : null;
+  const { botId, botName, passUuid, webUrl } = botInfo;
   const [inviteCopied, setInviteCopied] = useState(false);
   const inviteTimer = useRef<NodeJS.Timeout | null>(null);
 
@@ -366,7 +372,7 @@ export const AdminPanel: React.FC = () => {
       >
         {inviteCopied ? "Invitation Link Copied" : "Invite user"}
       </Button>
-      <Button color="danger" variant="outlined">Exit <CloseOutlined /></Button>
+      <Button color="danger" variant="outlined" onClick={onExit}>Exit <CloseOutlined /></Button>
       <Table
         columns={columns}
         dataSource={data}
