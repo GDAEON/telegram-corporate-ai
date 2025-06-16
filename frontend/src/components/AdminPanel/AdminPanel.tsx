@@ -7,6 +7,7 @@ import type {
 } from "antd/es/table";
 import {
   CheckOutlined,
+  CloseOutlined,
   DeleteOutlined,
   SearchOutlined,
   ShareAltOutlined,
@@ -365,6 +366,7 @@ export const AdminPanel: React.FC = () => {
       >
         {inviteCopied ? "Invitation Link Copied" : "Invite user"}
       </Button>
+      <Button color="danger" variant="outlined">Exit <CloseOutlined /></Button>
       <Table
         columns={columns}
         dataSource={data}
