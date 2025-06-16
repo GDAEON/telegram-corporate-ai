@@ -51,6 +51,18 @@ export const AdminPanel: React.FC<Props> = ({ onExit, botInfo }) => {
   const [inviteCopied, setInviteCopied] = useState(false);
   const inviteTimer = useRef<NodeJS.Timeout | null>(null);
 
+  const [isMobile, setIsMobile] = useState<boolean>(
+    typeof window !== "undefined" && window.innerWidth <= 768
+  );
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth <= 768);
+    };
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
   useEffect(() => {
     return () => {
       if (inviteTimer.current) {
@@ -332,6 +344,32 @@ export const AdminPanel: React.FC<Props> = ({ onExit, botInfo }) => {
         const color = status ? "danger" : "green";
         const text = status ? "Deactivate" : "Activate";
         const variant = status ? "outlined" : "filled";
+        if (isMobile) {
+          return (
+            <Space size={4}>
+              <Button
+                icon={status ? <CloseOutlined /> : <CheckOutlined />}
+                color={color}
+                variant={variant}
+                size="small"
+                onClick={() => handleStatusToggle(key, status)}
+              />
+              <Popconfirm
+                title="Delete this user?"
+                onConfirm={() => handleDelete(key)}
+                okText="Yes"
+                cancelText="No"
+              >
+                <Button
+                  size="small"
+                  variant="solid"
+                  color="danger"
+                  icon={<DeleteOutlined />}
+                />
+              </Popconfirm>
+            </Space>
+          );
+        }
         return (
           <Space size="middle">
             <Button
@@ -373,6 +411,7 @@ export const AdminPanel: React.FC<Props> = ({ onExit, botInfo }) => {
         {inviteCopied ? "Invitation Link Copied" : "Invite user"}
       </Button>
       <Button color="danger" variant="outlined" onClick={onExit}>Exit <CloseOutlined /></Button>
+      <div className={s.TableWrapper}>
       <Table
         columns={columns}
         dataSource={data}
@@ -393,6 +432,7 @@ export const AdminPanel: React.FC<Props> = ({ onExit, botInfo }) => {
           fetchData(newPage, newSize, status);
         }}
       />
+      </div>
     </div>
   );
 };

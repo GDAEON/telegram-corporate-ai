@@ -8,3 +8,30 @@
     text-align: center;
     gap: 30px
 }
+
+.TableWrapper {
+    width: 100%;
+    overflow-x: auto;
+}
+
+@media (max-width: 768px) {
+    .PanelWrapper {
+        padding: 20px 10px;
+        min-width: 100%;
+    }
+
+    .PanelWrapper h1 {
+        font-size: 24px;
+    }
+
+    .TableWrapper .ant-table-cell {
+        padding: 8px;
+        font-size: 12px;
+    }
+
+    .TableWrapper .ant-btn {
+        min-width: auto;
+        padding: 0 6px;
+        font-size: 12px;
+    }
+}
