@@ -34,7 +34,11 @@ export const ConnectionPage: React.FC = () => {
                 const res = await fetch(`${BACKEND_IP}/owner/${ref}/bots`);
                 if (!res.ok) return;
                 const data = await res.json();
-                setBots(data);
+                const unique = data.filter(
+                    (b: BotInfo, idx: number) =>
+                        data.findIndex((other: BotInfo) => other.botId === b.botId) === idx
+                );
+                setBots(unique);
             } catch {
                 /* ignore */
             }
@@ -81,7 +85,10 @@ export const ConnectionPage: React.FC = () => {
                 botId: data.botId,
                 webUrl: data.webUrl,
             };
-            setBots((prev) => [...prev, info]);
+            setBots((prev) => {
+                if (prev.some((b) => b.botId === info.botId)) return prev;
+                return [...prev, info];
+            });
             setLoading(false);
             selectBot(info);
         } catch (e) {
