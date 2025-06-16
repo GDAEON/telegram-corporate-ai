@@ -101,6 +101,23 @@ export const ConnectionPage: React.FC = () => {
         setSelectedBot(null);
     };
 
+    React.useEffect(() => {
+        if (!showAdmin || !selectedBot) return;
+
+        const unloadHandler = () => {
+            fetch(`${BACKEND_IP}/bot/${selectedBot.botId}/logout`, {
+                method: "PATCH",
+                keepalive: true,
+            }).catch(() => {/* ignore */});
+        };
+
+        window.addEventListener("beforeunload", unloadHandler);
+        return () => {
+            window.removeEventListener("beforeunload", unloadHandler);
+            unloadHandler();
+        };
+    }, [showAdmin, selectedBot]);
+
     return(
         <div>
             {showAdmin && selectedBot ? (
