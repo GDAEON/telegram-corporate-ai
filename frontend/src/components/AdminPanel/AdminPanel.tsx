@@ -6,6 +6,7 @@ import type {
   TablePaginationConfig,
 } from "antd/es/table";
 import {
+  CheckOutlined,
   DeleteOutlined,
   SearchOutlined,
   ShareAltOutlined,
@@ -38,7 +39,7 @@ export const AdminPanel: React.FC = () => {
   const [searchParams] = useSearchParams();
   const botId = searchParams.get("botId");
   const [inviteCopied, setInviteCopied] = useState(false);
-  const inviteTimer = useRef<NodeJS.Timeout>();
+  const inviteTimer = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     return () => {
@@ -66,7 +67,7 @@ export const AdminPanel: React.FC = () => {
       if (inviteTimer.current) {
         clearTimeout(inviteTimer.current);
       }
-      inviteTimer.current = setTimeout(() => setInviteCopied(false), 2000);
+      inviteTimer.current = setTimeout(() => setInviteCopied(false), 1000);
     } catch (e) {
       message.error((e as Error).message);
     }
@@ -353,7 +354,7 @@ export const AdminPanel: React.FC = () => {
         Open Constructor
       </Button>
       <Button
-        icon={<ShareAltOutlined />}
+        icon={inviteCopied ? <CheckOutlined /> : <ShareAltOutlined />}
         onClick={handleInviteUser}
         type={inviteCopied ? "primary" : "default"}
         style={{ transition: "background-color 0.3s" }}
