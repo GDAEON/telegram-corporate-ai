@@ -3,6 +3,7 @@ import { message } from "antd";
 import { useSearchParams } from "react-router-dom";
 import s from './ConnectionPage.module.css'
 import { ConnectionForm, OwnerQRModal, AdminPanel } from "../../components";
+import { BACKEND_IP } from "../../shared";
 
 export const ConnectionPage: React.FC = () => {
     const [searchParams] = useSearchParams();
@@ -41,7 +42,7 @@ export const ConnectionPage: React.FC = () => {
 
         const fetchInfo = async () => {
             try {
-                const res = await fetch(`http://80.82.38.72:1080/api/owner/${ref}/bot`);
+                const res = await fetch(`${BACKEND_IP}/owner/${ref}/bot`);
                 if (!res.ok) return;
                 const data = await res.json();
                 setBotName(data.botName);
@@ -52,7 +53,7 @@ export const ConnectionPage: React.FC = () => {
                     "botInfo",
                     JSON.stringify({ ...data, ownerUuid: ref })
                 );
-                const vr = await fetch(`http://80.82.38.72:1080/api/${data.botId}/isVerified`);
+                const vr = await fetch(`${BACKEND_IP}/${data.botId}/isVerified`);
                 const verified = await vr.json();
                 setOpen(!verified);
                 setShowAdmin(verified);
@@ -67,7 +68,7 @@ export const ConnectionPage: React.FC = () => {
     const handleConnect = async (token: string) => {
         setLoading(true);
         try {
-            const response = await fetch("http://80.82.38.72:1080/api/bot", {
+            const response = await fetch(`${BACKEND_IP}/bot`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({

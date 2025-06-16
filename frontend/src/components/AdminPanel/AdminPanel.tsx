@@ -13,6 +13,7 @@ import {
 } from "@ant-design/icons";
 import Highlighter from "react-highlight-words";
 import s from "./AdminPanel.module.css";
+import { BACKEND_IP } from "../../shared";
 
 interface DataType {
   key: string;
@@ -106,7 +107,7 @@ export const AdminPanel: React.FC = () => {
     if (status !== undefined) params.append("status", String(status));
 
     const res = await fetch(
-      `http://localhost:8000/api/${botId}/users?${params.toString()}`
+      `${BACKEND_IP}/${botId}/users?${params.toString()}`
     );
     const json = await res.json();
 
@@ -140,7 +141,7 @@ export const AdminPanel: React.FC = () => {
 
     try {
       const res = await fetch(
-        `http://localhost:8000/api/bot/${botId}/user/${userId}?new_status=${!currentStatus}`,
+        `${BACKEND_IP}/bot/${botId}/user/${userId}?new_status=${!currentStatus}`,
         {
           method: "PATCH",
         }
@@ -168,7 +169,7 @@ export const AdminPanel: React.FC = () => {
 
     try {
       const res = await fetch(
-        `http://localhost:8000/api/bot/${botId}/user/${userId}`,
+        `${BACKEND_IP}/bot/${botId}/user/${userId}`,
         { method: "DELETE" }
       );
 
