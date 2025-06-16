@@ -66,7 +66,7 @@ class User(Base):
     id = Column(BigInteger, primary_key=True)
     name = Column(Text, nullable=True)
     surname = Column(Text, nullable=True)
-    phone = Column(Text, nullable=True)
+    phone = Column(LargeBinary, nullable=True)
 
     bots = relationship("BotUser", back_populates="user")
 

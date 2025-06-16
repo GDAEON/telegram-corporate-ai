@@ -1,5 +1,6 @@
 import React, { useEffect } from "react";
 import { OwnerQRModalView } from "./OwnerQRModal.view";
+import { BACKEND_IP } from "../../shared";
 
 type Props = {
     botName: string;
@@ -15,7 +16,7 @@ export const OwnerQRModal: React.FC<Props> = ({ botName, uuid, botId, open, hand
         if (!open) return;
 
         const checkVerification = async () => {
-            const res = await fetch(`http://80.82.38.72:1080/api/${botId}/isVerified`);
+            const res = await fetch(`${BACKEND_IP}/${botId}/isVerified`);
             const verified = await res.json();
             if (verified) {
                 handleCancel();
