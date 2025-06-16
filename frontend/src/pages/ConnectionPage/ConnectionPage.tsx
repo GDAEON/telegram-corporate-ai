@@ -1,18 +1,23 @@
 import React from "react";
-import { message } from "antd";
+import { message, Button } from "antd";
 import { useSearchParams } from "react-router-dom";
 import s from './ConnectionPage.module.css'
 import { ConnectionForm, OwnerQRModal, AdminPanel } from "../../components";
 import { BACKEND_IP } from "../../shared";
 
+interface BotInfo {
+    botName: string;
+    passUuid: string;
+    botId: number;
+    webUrl: string;
+}
+
 export const ConnectionPage: React.FC = () => {
     const [searchParams] = useSearchParams();
     const [ref, setRef] = React.useState<string>("");
+    const [bots, setBots] = React.useState<BotInfo[]>([]);
+    const [selectedBot, setSelectedBot] = React.useState<BotInfo | null>(null);
     const [open, setOpen] = React.useState(false);
-    const [botName, setBotName] = React.useState<string>("");
-    const [passUuid, setPassUuid] = React.useState<string>("");
-    const [botId, setBotId] = React.useState<number | null>(null);
-    const [webUrl, setWebUrl] = React.useState<string>("");
     const [showAdmin, setShowAdmin] = React.useState(false);
     const [loading, setLoading] = React.useState(false);
 
@@ -24,46 +29,31 @@ export const ConnectionPage: React.FC = () => {
     React.useEffect(() => {
         if (!ref) return;
 
-        const stored = localStorage.getItem("botInfo");
-        if (stored) {
+        const fetchBots = async () => {
             try {
-                const info = JSON.parse(stored);
-                if (info.ownerUuid === ref) {
-                    setBotName(info.botName);
-                    setPassUuid(info.passUuid);
-                    setBotId(info.botId);
-                    setWebUrl(info.webUrl);
-                    setShowAdmin(true);
-                    setOpen(false);
-                    return;
-                }
-            } catch {}
-        }
-
-        const fetchInfo = async () => {
-            try {
-                const res = await fetch(`${BACKEND_IP}/owner/${ref}/bot`);
+                const res = await fetch(`${BACKEND_IP}/owner/${ref}/bots`);
                 if (!res.ok) return;
                 const data = await res.json();
-                setBotName(data.botName);
-                setPassUuid(data.passUuid);
-                setBotId(data.botId);
-                setWebUrl(data.webUrl);
-                localStorage.setItem(
-                    "botInfo",
-                    JSON.stringify({ ...data, ownerUuid: ref })
-                );
-                const vr = await fetch(`${BACKEND_IP}/${data.botId}/isVerified`);
-                const verified = await vr.json();
-                setOpen(!verified);
-                setShowAdmin(verified);
+                setBots(data);
             } catch {
                 /* ignore */
             }
         };
 
-        fetchInfo();
+        fetchBots();
     }, [ref]);
+
+    const selectBot = async (bot: BotInfo) => {
+        setSelectedBot(bot);
+        try {
+            const vr = await fetch(`${BACKEND_IP}/${bot.botId}/isVerified`);
+            const verified = await vr.json();
+            setOpen(!verified);
+            setShowAdmin(verified);
+        } catch {
+            /* ignore */
+        }
+    };
 
     const handleConnect = async (token: string) => {
         setLoading(true);
@@ -85,48 +75,62 @@ export const ConnectionPage: React.FC = () => {
                 return;
             }
 
-            setBotName(data.botName);
-            setPassUuid(data.passUuid);
-            setBotId(data.botId);
-            setWebUrl(data.webUrl);
-            localStorage.setItem(
-                "botInfo",
-                JSON.stringify({
-                    botName: data.botName,
-                    passUuid: data.passUuid,
-                    botId: data.botId,
-                    webUrl: data.webUrl,
-                    ownerUuid: ref,
-                })
-            );
-            setOpen(true);
-            setShowAdmin(false);
+            const info: BotInfo = {
+                botName: data.botName,
+                passUuid: data.passUuid,
+                botId: data.botId,
+                webUrl: data.webUrl,
+            };
+            setBots((prev) => [...prev, info]);
             setLoading(false);
+            selectBot(info);
         } catch (e) {
             message.error((e as Error).message);
             setLoading(false);
         }
     };
 
+    const handleLogout = async () => {
+        if (!selectedBot) return;
+        try {
+            await fetch(`${BACKEND_IP}/bot/${selectedBot.botId}/logout`, { method: "PATCH" });
+        } catch {
+            /* ignore */
+        }
+        setShowAdmin(false);
+        setSelectedBot(null);
+    };
+
     return(
         <div>
-            {showAdmin ? (
-                <AdminPanel />
+            {showAdmin && selectedBot ? (
+                <AdminPanel onExit={handleLogout} botInfo={selectedBot} />
             ) : (
-                <div className={s.ConnectionFormWrapper}>
-                    <ConnectionForm onConnect={handleConnect} loading={loading} />
-                </div>
+                <>
+                    <div className={s.BotList}>
+                        {bots.map((b) => (
+                            <Button key={b.botId} block style={{marginBottom: '10px'}} onClick={() => selectBot(b)}>
+                                {b.botName}
+                            </Button>
+                        ))}
+                    </div>
+                    <div className={s.ConnectionFormWrapper}>
+                        <ConnectionForm onConnect={handleConnect} loading={loading} />
+                    </div>
+                </>
             )}
-            <OwnerQRModal
-                botName={botName}
-                uuid={ref}
-                botId={botId}
-                open={open}
-                handleCancel={() => {
-                    setOpen(false);
-                    setShowAdmin(true);
-                }}
-            />
+            {selectedBot && (
+                <OwnerQRModal
+                    botName={selectedBot.botName}
+                    uuid={ref}
+                    botId={selectedBot.botId}
+                    open={open}
+                    handleCancel={() => {
+                        setOpen(false);
+                        setShowAdmin(true);
+                    }}
+                />
+            )}
         </div>
     )
 }

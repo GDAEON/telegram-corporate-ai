@@ -78,6 +78,17 @@ def get_bot_by_owner_uuid(owner_uuid: str) -> Optional[Tuple[int, str, str, str]
     return None
 
 
+def get_bots_by_owner_uuid(owner_uuid: str) -> list[Tuple[int, str, str, str]]:
+    """Return list of bot info tuples for the given owner uuid."""
+    with get_session() as session:
+        bots = session.query(Bot).all()
+        res = []
+        for bot in bots:
+            if bot.get_owner_uuid() == owner_uuid:
+                res.append((bot.id, bot.name, bot.get_pass_uuid(), bot.get_web_url()))
+        return res
+
+
 def get_bot_token(id: int) -> Optional[str]:
     with get_session() as session:
         bot = session.get(Bot, id)
@@ -121,6 +132,17 @@ def get_is_bot_owner(bot_id: int, user_id: int) -> bool:
                    .first()
         )
         return bool(row and row[0])
+
+
+def get_bot_owner_id(bot_id: int) -> Optional[int]:
+    """Return user id of the bot owner if exists."""
+    with get_session() as session:
+        row = (
+            session.query(BotUser.user_id)
+                   .filter_by(bot_id=bot_id, is_owner=True)
+                   .first()
+        )
+        return row[0] if row else None
 
 
 def update_user(user_id: int, name: str, surname: str, phone: str):

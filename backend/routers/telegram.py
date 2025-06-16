@@ -52,6 +52,14 @@ async def handle_webhook(bot_id: int, request: Request):
                 _, _, input_uuid = text.partition("=")
             input_uuid = input_uuid.strip()
             if input_uuid and db.compare_bot_auth_owner(bot_id, input_uuid):
+                if db.get_is_bot_owner(bot_id, contact_id):
+                    db.bot_set_verified(bot_id, True)
+                    await sender_adapter.send_message(
+                        token,
+                        contact_id,
+                        "You are logged in!",
+                    )
+                    return {"status": "ok"}
                 contact_button = [
                     [{"text": "Share my phone", "request_contact": True}]
                 ]

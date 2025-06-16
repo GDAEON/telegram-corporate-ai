@@ -2,7 +2,12 @@
     width: 100vw;
     display: flex;
     justify-content: center;
-    align-items: center;  
+    align-items: center;
     margin-bottom: 10%;
+}
+
+.BotList {
+    max-width: 400px;
+    margin: 0 auto 20px auto;
 }
 
