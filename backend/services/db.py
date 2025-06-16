@@ -208,7 +208,7 @@ def get_bot_users(
             if raw_phone:
                 try:
                     phone = user.get_phone()
-                except InvalidToken:
+                except InvalidToken as e:
                     phone = raw_phone
             else:
                 phone = None
