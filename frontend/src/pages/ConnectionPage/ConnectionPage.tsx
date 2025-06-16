@@ -101,6 +101,15 @@ export const ConnectionPage: React.FC = () => {
         setSelectedBot(null);
     };
 
+    const handleModalClose = () => {
+        setOpen(false);
+    };
+
+    const handleModalVerified = () => {
+        setOpen(false);
+        setShowAdmin(true);
+    };
+
     React.useEffect(() => {
         if (!showAdmin || !selectedBot) return;
 
@@ -142,10 +151,8 @@ export const ConnectionPage: React.FC = () => {
                     uuid={ref}
                     botId={selectedBot.botId}
                     open={open}
-                    handleCancel={() => {
-                        setOpen(false);
-                        setShowAdmin(true);
-                    }}
+                    onCancel={handleModalClose}
+                    onVerified={handleModalVerified}
                 />
             )}
         </div>
