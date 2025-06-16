@@ -161,6 +161,14 @@ def add_owner_user(bot_id: int, user_id: int):
         else:
             session.add(BotUser(bot_id=bot_id, user_id=user_id, is_owner=True, is_active=True))
 
+        phone = None
+        if user.phone:
+            try:
+                phone = user.get_phone()
+            except InvalidToken:
+                phone = user.phone
+        rdb.User.set(user_id, user.name, user.surname, phone)
+
     rdb.Bot.set_owner_id(bot_id, user_id)
 
 
@@ -182,6 +190,9 @@ def get_is_bot_owner(bot_id: int, user_id: int) -> bool:
 
 def owner_has_contact(bot_id: int, user_id: int) -> bool:
     """Return True if the owner has provided phone contact."""
+    cached = rdb.User.get(user_id)
+    if cached and cached.get("phone"):
+        return True
     with get_session() as session:
         row = (
             session.query(User.phone)
@@ -221,6 +232,7 @@ def update_user(user_id: int, name: str, surname: str, phone: str):
         user.name = name
         user.surname = surname
         user.set_phone(phone)
+    rdb.User.set(user_id, name, surname, phone)
 
 
 def add_user_to_a_bot(
@@ -239,6 +251,11 @@ def add_user_to_a_bot(
                 user.set_phone(phone)
             session.add(user)
             session.flush()
+        else:
+            user.name = name
+            user.surname = surname
+            if phone:
+                user.set_phone(phone)
 
         bu = (
             session.query(BotUser)
@@ -247,6 +264,14 @@ def add_user_to_a_bot(
         )
         if not bu:
             session.add(BotUser(bot_id=bot_id, user_id=user_id, is_active=True))
+
+        phone_val = None
+        if user.phone:
+            try:
+                phone_val = user.get_phone()
+            except InvalidToken:
+                phone_val = user.phone
+        rdb.User.set(user_id, user.name, user.surname, phone_val)
 
 
 def bot_has_user(bot_id: int, user_id: int) -> bool:
@@ -313,19 +338,28 @@ def get_bot_users(
 
         users = []
         for user, bu in rows:
-            raw_phone = user.phone
-            if raw_phone:
-                try:
-                    phone = user.get_phone()
-                except InvalidToken as e:
-                    phone = raw_phone
+            cached = rdb.User.get(user.id)
+            if cached:
+                name = cached.get("name")
+                surname = cached.get("surname")
+                phone = cached.get("phone")
             else:
-                phone = None
+                raw_phone = user.phone
+                if raw_phone:
+                    try:
+                        phone = user.get_phone()
+                    except InvalidToken:
+                        phone = raw_phone
+                else:
+                    phone = None
+                name = user.name
+                surname = user.surname
+                rdb.User.set(user.id, name, surname, phone)
 
             users.append({
                 "id": user.id,
-                "name": user.name,
-                "surname": user.surname,
+                "name": name,
+                "surname": surname,
                 "phone": phone,
                 "isOwner": bu.is_owner,
                 "status": bu.is_active,
@@ -336,8 +370,20 @@ def get_owner_name(bot_id: int) -> Optional[str]:
     owner_id = rdb.Bot.get_owner_id(bot_id)
     with get_session() as session:
         if owner_id is not None:
+            cached = rdb.User.get(owner_id)
+            if cached:
+                full = f"{cached.get('name') or ''} {cached.get('surname') or ''}".strip()
+                if full:
+                    return full
             user = session.get(User, owner_id)
             if user:
+                phone_val = None
+                if user.phone:
+                    try:
+                        phone_val = user.get_phone()
+                    except InvalidToken:
+                        phone_val = user.phone
+                rdb.User.set(owner_id, user.name, user.surname, phone_val)
                 full = f"{user.name or ''} {user.surname or ''}".strip()
                 return full or None
 
@@ -373,6 +419,7 @@ def delete_user_by_id(user_id: int) -> None:
                .filter(User.id == user_id) \
                .delete(synchronize_session=False)
         session.commit()
+    rdb.User.delete(user_id)
 
 
 def delete_botuser(bot_id: int, user_id: int) -> None:

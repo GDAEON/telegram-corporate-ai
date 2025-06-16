@@ -84,4 +84,41 @@ class Bot:
     @staticmethod
     def __redis_key_for_owner_id(bot_id: int) -> str:
         return f"bots:{bot_id}:owner"
+
+
+class User:
+    @staticmethod
+    def set(user_id: int, name: str, surname: str, phone: str | None = None) -> None:
+        key = User.__redis_key(user_id)
+        data = {
+            "name": name,
+            "surname": surname,
+        }
+        if phone is not None:
+            data["phone"] = cipher.encrypt(phone.encode())
+        redis_client.set(key, json.dumps(data), ex=int(eval(REDIS_CACHE_TIME)))
+
+    @staticmethod
+    def get(user_id: int):
+        key = User.__redis_key(user_id)
+        value = redis_client.get(key)
+        if value:
+            data = json.loads(value)
+            phone = data.get("phone")
+            if phone:
+                try:
+                    data["phone"] = cipher.decrypt(phone).decode()
+                except Exception:
+                    data["phone"] = phone
+            return data
+        return None
+
+    @staticmethod
+    def delete(user_id: int) -> None:
+        key = User.__redis_key(user_id)
+        redis_client.delete(key)
+
+    @staticmethod
+    def __redis_key(user_id: int) -> str:
+        return f"users:{user_id}"
     
