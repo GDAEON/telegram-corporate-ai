@@ -12,6 +12,26 @@ router = APIRouter(tags=["Constructor"])
 async def get_schema():
     return JSONResponse(content=SCHEME)
 
+@router.get("/messengers")
+async def list_messengers():
+    try:
+        bots = db.get_all_bots()
+        items = [
+            {
+                "externalType": "telegram",
+                "externalId": "12",
+                "name": name,
+                "messengerId": bot_id,
+            }
+            for bot_id, name in bots
+        ]
+        return {"items": items}
+    except Exception as e:
+        return JSONResponse(
+            content={"message": str(e), "code": "internal_server_error"},
+            status_code=500,
+        )
+
 @router.get("/{id}/status")
 async def get_status(id: int):
     return {
