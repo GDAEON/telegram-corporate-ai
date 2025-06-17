@@ -55,75 +55,26 @@ async def integrate_new_user(request: IntegrateRequest):
     }
 
     try:
-        if not db.bot_exists(bot_id):
-            async with httpx.AsyncClient() as client:
-                integration_response = await client.post(
-                    f"{INTEGRATION_URL}/{INTEGRATION_CODE}",
-                    json=integration_request,
-                    headers=headers,
-                )
-
-            data = integration_response.json()
-
-            if "webUrl" in data:
-                web_url = data["webUrl"]
-            else:
-                try:
-                    error_detail = integration_response.json()
-                except Exception:
-                    error_detail = integration_response.text
-                raise HTTPException(
-                    status_code=integration_response.status_code,
-                    detail=error_detail,
-                )
-
-            db.create_new_bot(
-                bot_id,
-                token,
-                bot_name,
-                owner_uuid,
-                pass_uuid,
-                web_url,
+        async with httpx.AsyncClient() as client:
+            integration_response = await client.post(f"{INTEGRATION_URL}/{INTEGRATION_CODE}",
+            json=integration_request,
+            headers=headers
             )
 
-        if not db.bot_exists(bot_id):
-            async with httpx.AsyncClient() as client:
-                integration_response = await client.post(
-                    f"{INTEGRATION_URL}/{INTEGRATION_CODE}",
-                    json=integration_request,
-                    headers=headers,
-                )
+        data = integration_response.json()
 
-            data = integration_response.json()
-
-            if "webUrl" in data:
-                web_url = data["webUrl"]
-            else:
-                try:
-                    error_detail = integration_response.json()
-                except Exception:
-                    error_detail = integration_response.text
-                raise HTTPException(
-                    status_code=integration_response.status_code,
-                    detail=error_detail,
-                )
-
-            db.create_new_bot(
-                bot_id,
-                token,
-                bot_name,
-                owner_uuid,
-                pass_uuid,
-                web_url,
-            )
+        if "webUrl" in data:
+            web_url = data["webUrl"]
         else:
-            stored_name, pass_uuid, web_url = db.get_bot_auth(bot_id)
-            return IntegrationResponse(
-                botName=stored_name,
-                passUuid=pass_uuid,
-                webUrl=web_url,
-                botId=bot_id,
-            )
+            try:
+                error_detail = integration_response.json()
+            except Exception:
+                error_detail = integration_response.text
+            raise HTTPException(status_code=integration_response.status_code, detail=error_detail)
+        
+        db.create_new_bot(bot_id, token, bot_name, owner_uuid, pass_uuid, web_url)
+
+        return IntegrationResponse(botName=bot_name, passUuid=pass_uuid, webUrl=web_url, botId=bot_id)
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Request failed: {str(e)}")
