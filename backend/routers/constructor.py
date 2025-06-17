@@ -19,7 +19,7 @@ async def list_messengers():
         items = [
             {
                 "externalType": "telegram",
-                "externalId": "12",
+                "externalId": "12", # TODO replace with bot_id
                 "name": name,
                 "messengerId": bot_id,
             }
