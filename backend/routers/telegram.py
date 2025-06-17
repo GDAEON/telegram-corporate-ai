@@ -131,18 +131,26 @@ async def handle_webhook(bot_id: int, request: Request):
         ts = int(datetime.now(tz=timezone.utc).timestamp())
         date = datetime.now().strftime("%d.%m.%Y")
 
+        user_info = message.get("from", {})
+        participant_name = (
+            user_info.get("username")
+            or " ".join(
+                part for part in [user_info.get("first_name"), user_info.get("last_name")] if part
+            )
+        )
+
         request_body = {
             "eventType": "InboxReceived",
             "timestamp": ts,
             "chat": {
-                "externalId": "12", # TODO replace with bot_id
+                "externalId": f"{contact_id}",
                 "messengerInstance": "12", # TODO replace with bot_id
                 "messengerId": f"{bot_id}",
                 "contact": {
                     "externalId": f"{contact_id}"
                 }
             },
-            "participant": "igor",
+            "participant": participant_name,
             "message": {
                 "externalId": "146379262", # TODO replace with message_id
                 "text": f"{text}",
