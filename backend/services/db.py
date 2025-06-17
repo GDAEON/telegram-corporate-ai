@@ -99,6 +99,13 @@ def get_bots_by_owner_uuid(owner_uuid: str) -> list[Tuple[int, str, str, str]]:
         return res
 
 
+def get_all_bots() -> list[Tuple[int, str]]:
+    """Return list of bot id and name for all bots."""
+    with get_session() as session:
+        rows = session.query(Bot.id, Bot.name).order_by(Bot.id).all()
+        return [(bot_id, name) for bot_id, name in rows]
+
+
 def get_bot_token(id: int) -> Optional[str]:
     token = rdb.Bot.get(id)
     if token:
