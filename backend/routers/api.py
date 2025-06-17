@@ -170,6 +170,57 @@ async def auth_info(bot_id: int):
         raise HTTPException(status_code=500, detail=str(e))
 
 
+@router.post("/bot/{bot_id}/refresh", response_model=IntegrationResponse)
+async def refresh_web_url(bot_id: int):
+    """Fetch a new admin panel URL for the bot."""
+    if not db.bot_exists(bot_id):
+        raise HTTPException(status_code=404, detail="Bot not found")
+
+    bot_name, pass_uuid, _ = db.get_bot_auth(bot_id)
+
+    integration_request = {
+        "externalId": "12",  # TODO replace with bot_id
+        "name": str(bot_name),
+        "locale": "ru",
+        "paymentType": "external",
+        "status": {"status": "active"},
+    }
+
+    headers = {
+        "Authorization": f"Bearer {INTEGRATION_TOKEN}",
+        "Content-Type": "application/json",
+    }
+
+    try:
+        async with httpx.AsyncClient() as client:
+            integration_response = await client.post(
+                f"{INTEGRATION_URL}/{INTEGRATION_CODE}",
+                json=integration_request,
+                headers=headers,
+            )
+
+        data = integration_response.json()
+        if "webUrl" not in data:
+            try:
+                error_detail = integration_response.json()
+            except Exception:
+                error_detail = integration_response.text
+            raise HTTPException(
+                status_code=integration_response.status_code,
+                detail=error_detail,
+            )
+
+        web_url = data["webUrl"]
+        db.update_bot_web_url(bot_id, web_url)
+
+        return IntegrationResponse(
+            botName=bot_name, passUuid=pass_uuid, webUrl=web_url, botId=bot_id
+        )
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Request failed: {str(e)}")
+
+
 @router.patch("/bot/{bot_id}/logout")
 async def logout_owner(bot_id: int):
     """Log out owner from admin panel."""

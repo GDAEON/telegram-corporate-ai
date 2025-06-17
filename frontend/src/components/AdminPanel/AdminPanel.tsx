@@ -88,9 +88,16 @@ export const AdminPanel: React.FC<Props> = ({ onExit, botInfo }) => {
   };
 
   const handleOpenConstructor = async () => {
-    if (!webUrl) return;
     try {
-      window.open(webUrl, "_blank", "noopener,noreferrer");
+      const response = await fetch(`${BACKEND_IP}/bot/${botId}/refresh`, {
+        method: "POST",
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        message.error(data.detail ?? "Request failed");
+        return;
+      }
+      window.open(data.webUrl, "_blank", "noopener,noreferrer");
     } catch (e) {
       message.error((e as Error).message);
     }
