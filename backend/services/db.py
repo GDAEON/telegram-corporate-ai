@@ -48,6 +48,14 @@ def bot_exists(id: int) -> bool:
         return session.query(exists().where(Bot.id == id)).scalar()
 
 
+def update_bot_web_url(id: int, new_url: str) -> None:
+    """Update stored web URL for a bot."""
+    with get_session() as session:
+        bot = session.get(Bot, id)
+        if bot:
+            bot.set_web_url(new_url)
+
+
 def get_bot_auth(id: int) -> Optional[Tuple[str, str, str]]:
     """Return bot name, pass uuid and web url for the bot."""
     with get_session() as session:
