@@ -47,7 +47,7 @@ export const AdminPanel: React.FC<Props> = ({ onExit, botInfo }) => {
     pageSize: 5,
     total: 0,
   });
-  const { botId, botName, passUuid, webUrl } = botInfo;
+  const { botId, botName, passUuid } = botInfo;
   const [inviteCopied, setInviteCopied] = useState(false);
   const inviteTimer = useRef<NodeJS.Timeout | null>(null);
 
