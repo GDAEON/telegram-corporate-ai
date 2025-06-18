@@ -48,8 +48,18 @@
       "datasource": "Prometheus",
       "targets": [
         {
-          "expr": "sum by (direction, text) (increase(bot_message_text_total[5m]))",
-          "legendFormat": "{{direction}} {{text}}"
+          "expr": "increase(bot_message_text_total[1m])",
+          "legendFormat": "{{direction}}",
+          "format": "table",
+          "instant": true
+        }
+      ],
+      "transformations": [
+        {
+          "id": "labelsToFields",
+          "options": {
+            "mode": "labels"
+          }
         }
       ]
     },
