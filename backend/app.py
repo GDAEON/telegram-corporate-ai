@@ -7,6 +7,7 @@ from routers.metrics import router as metrics_router
 
 import time
 from constants.prometheus_models import REQUEST_COUNT, REQUEST_LATENCY
+import services.logging_setup  # configure logging on import
 
 app = FastAPI(
     title="Telegram CORP AI Integration API",

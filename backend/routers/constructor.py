@@ -48,7 +48,12 @@ async def send_message(request: SendTextMessageRequest):
         chat_id = request.chat.contact
         text = request.text
 
-        response = await sender_adapter.send_message(token, chat_id, text)
+        response = await sender_adapter.send_message(
+            token,
+            chat_id,
+            text,
+            bot_id=request.chat.messengerId,
+        )
 
         if response["status_code"] == 200:
 
@@ -78,7 +83,15 @@ async def send_media_message(request: SendMediaMessageRequest):
         file_mime = request.file.mime
         caption = request.caption
 
-        response  = await sender_adapter.send_media(token, chat_id, file_type, file_url, file_mime, caption)
+        response = await sender_adapter.send_media(
+            token,
+            chat_id,
+            file_type,
+            file_url,
+            file_mime,
+            caption,
+            bot_id=request.chat.messengerId,
+        )
 
         if response["status_code"] == 200:
             messenger_id = request.chat.messengerId
