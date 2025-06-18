@@ -48,6 +48,7 @@ class SendMediaMessageRequest(BaseModel):
 class IntegrateRequest(BaseModel):
     telegram_token: SecretStr
     owner_uuid: SecretStr
+    locale: Optional[str] = "en"
 
 class Job(BaseModel):
     job: str

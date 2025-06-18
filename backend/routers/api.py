@@ -26,6 +26,7 @@ router = APIRouter(prefix="/api", tags=["API"])
 async def integrate_new_user(request: IntegrateRequest):
     token = request.telegram_token.get_secret_value()
     owner_uuid = request.owner_uuid.get_secret_value()
+    locale = request.locale or "en"
 
     bot_id = await get_bot_id(token)
     bot_name = await get_bot_name(token)
@@ -36,8 +37,11 @@ async def integrate_new_user(request: IntegrateRequest):
     bot_exists = db.bot_exists(bot_id)
 
     if bot_exists:
-        stored_name, pass_uuid, _ = db.get_bot_auth(bot_id)
+        stored_name, pass_uuid, _, stored_locale = db.get_bot_auth(bot_id)
         bot_name = stored_name
+        locale = request.locale or stored_locale or "en"
+        if locale != stored_locale:
+            db.update_bot_locale(bot_id, locale)
     else:
         pass_uuid = hf.generate_uuid()
 
@@ -51,7 +55,7 @@ async def integrate_new_user(request: IntegrateRequest):
     integration_request = {
         "externalId": "12",  # TODO replace with bot_id
         "name": str(bot_name),
-        "locale": "ru",
+        "locale": locale,
         "paymentType": "external",
         "status": {
             "status": "active",
@@ -95,6 +99,7 @@ async def integrate_new_user(request: IntegrateRequest):
                 owner_uuid,
                 pass_uuid,
                 web_url,
+                locale,
             )
 
         return IntegrationResponse(
@@ -163,7 +168,7 @@ async def owner_name(bot_id: int) -> str:
 @router.get("/{bot_id}/authInfo")
 async def auth_info(bot_id: int):
     try:
-        bot_name, pass_uuid, web_url = db.get_bot_auth(bot_id)
+        bot_name, pass_uuid, web_url, _ = db.get_bot_auth(bot_id)
 
         return {"botName": bot_name, "passUiid": pass_uuid, "webUrl": web_url}
     except Exception as e:
@@ -171,17 +176,18 @@ async def auth_info(bot_id: int):
 
 
 @router.post("/bot/{bot_id}/refresh", response_model=IntegrationResponse)
-async def refresh_web_url(bot_id: int):
+async def refresh_web_url(bot_id: int, locale: Optional[str] = None):
     """Fetch a new admin panel URL for the bot."""
     if not db.bot_exists(bot_id):
         raise HTTPException(status_code=404, detail="Bot not found")
 
-    bot_name, pass_uuid, _ = db.get_bot_auth(bot_id)
+    bot_name, pass_uuid, _, stored_locale = db.get_bot_auth(bot_id)
+    locale = locale or stored_locale or "en"
 
     integration_request = {
         "externalId": "12",  # TODO replace with bot_id
         "name": str(bot_name),
-        "locale": "ru",
+        "locale": locale,
         "paymentType": "external",
         "status": {"status": "active"},
     }

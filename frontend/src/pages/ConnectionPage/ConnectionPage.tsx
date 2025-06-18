@@ -14,7 +14,7 @@ interface BotInfo {
 }
 
 export const ConnectionPage: React.FC = () => {
-    const { t } = useTranslation();
+    const { t, i18n } = useTranslation();
     const [searchParams] = useSearchParams();
     const [ref, setRef] = React.useState<string>("");
     const [bots, setBots] = React.useState<BotInfo[]>([]);
@@ -70,6 +70,7 @@ export const ConnectionPage: React.FC = () => {
                 body: JSON.stringify({
                     telegram_token: token,
                     owner_uuid: ref,
+                    locale: i18n.language,
                 }),
             });
 

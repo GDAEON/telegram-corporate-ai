@@ -23,6 +23,7 @@ class Bot(Base):
     ownerUuid = Column(LargeBinary, nullable=False)
     passUuid = Column(LargeBinary, nullable=False)
     webUrl = Column(LargeBinary, nullable=False)
+    locale = Column(Text, nullable=False, default="en")
     isVerified = Column(Boolean, default=False, nullable=False)
 
     @hybrid_property
@@ -58,6 +59,12 @@ class Bot(Base):
 
     def get_web_url(self) -> str:
         return cipher.decrypt(self.webUrl).decode()
+
+    def set_locale(self, value: str):
+        self.locale = value
+
+    def get_locale(self) -> str:
+        return self.locale
 
 
 class User(Base):

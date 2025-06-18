@@ -38,7 +38,7 @@ interface DataType {
 type DataIndex = keyof DataType;
 
 export const AdminPanel: React.FC<Props> = ({ onExit, botInfo }) => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [searchText, setSearchText] = useState("");
   const [searchedColumn, setSearchedColumn] = useState<DataIndex | "">("");
   const searchInput = useRef<InputRef>(null);
@@ -91,9 +91,12 @@ export const AdminPanel: React.FC<Props> = ({ onExit, botInfo }) => {
 
   const handleOpenConstructor = async () => {
     try {
-      const response = await fetch(`${BACKEND_IP}/bot/${botId}/refresh`, {
-        method: "POST",
-      });
+      const response = await fetch(
+        `${BACKEND_IP}/bot/${botId}/refresh?locale=${i18n.language}`,
+        {
+          method: "POST",
+        }
+      );
       const data = await response.json();
       if (!response.ok) {
         message.error(data.detail ?? t('failed_request'));
