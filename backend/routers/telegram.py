@@ -9,7 +9,7 @@ import httpx
 
 import services.sender_adapter as sender_adapter
 from services.logging_setup import interaction_logger
-from constants.prometheus_models import MESSAGE_COUNT
+from constants.prometheus_models import MESSAGE_COUNT, MESSAGE_TEXT_COUNT
 
 router = APIRouter(tags=["Telegram"])
 
@@ -29,6 +29,11 @@ async def handle_webhook(bot_id: int, request: Request):
         contact_id = message["from"]["id"]
         text = message.get("text", "")
         MESSAGE_COUNT.labels(direction="incoming", bot_id=str(bot_id)).inc()
+        MESSAGE_TEXT_COUNT.labels(
+            direction="incoming",
+            bot_id=str(bot_id),
+            text=text[:100],
+        ).inc()
         interaction_logger.info(
             f"INCOMING bot_id={bot_id} user_id={contact_id} text={text}"
         )

@@ -2,7 +2,7 @@ import httpx
 from io import BytesIO
 from services.helper_functions import guess_filename
 from typing import List, Optional, Dict, Any
-from constants.prometheus_models import MESSAGE_COUNT
+from constants.prometheus_models import MESSAGE_COUNT, MESSAGE_TEXT_COUNT
 from services.logging_setup import interaction_logger
 
 
@@ -24,6 +24,11 @@ async def send_message(
 
     if bot_id is not None:
         MESSAGE_COUNT.labels(direction="outgoing", bot_id=str(bot_id)).inc()
+        MESSAGE_TEXT_COUNT.labels(
+            direction="outgoing",
+            bot_id=str(bot_id),
+            text=text[:100],
+        ).inc()
         interaction_logger.info(
             f"OUTGOING bot_id={bot_id} chat_id={chat_id} text={text}"
         )
@@ -66,6 +71,11 @@ async def send_media(
 ):
     if bot_id is not None:
         MESSAGE_COUNT.labels(direction="outgoing", bot_id=str(bot_id)).inc()
+        MESSAGE_TEXT_COUNT.labels(
+            direction="outgoing",
+            bot_id=str(bot_id),
+            text=(caption or "")[:100],
+        ).inc()
         interaction_logger.info(
             f"OUTGOING_MEDIA bot_id={bot_id} chat_id={chat_id} type={file_type} caption={caption}"
         )
