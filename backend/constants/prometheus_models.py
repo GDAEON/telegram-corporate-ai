@@ -23,3 +23,11 @@ MESSAGE_COUNT = Counter(
     ["direction", "bot_id"],
     registry=registry,
 )
+
+
+MESSAGE_TEXT_COUNT = Counter(
+    "bot_message_text_total",
+    "Count of messages by direction, bot and text",
+    ["direction", "bot_id", "text"],
+    registry=registry,
+)
