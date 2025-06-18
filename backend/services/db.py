@@ -32,9 +32,10 @@ def create_new_bot(
     owner_uuid: str,
     pass_uuid: str,
     web_url: str,
+    locale: str = "en",
 ):
     with get_session() as session:
-        new_bot = Bot(id=id, name=name)
+        new_bot = Bot(id=id, name=name, locale=locale)
         new_bot.set_token(token)
         new_bot.set_owner_uuid(owner_uuid)
         new_bot.set_pass_uuid(pass_uuid)
@@ -56,13 +57,21 @@ def update_bot_web_url(id: int, new_url: str) -> None:
             bot.set_web_url(new_url)
 
 
-def get_bot_auth(id: int) -> Optional[Tuple[str, str, str]]:
-    """Return bot name, pass uuid and web url for the bot."""
+def update_bot_locale(id: int, locale: str) -> None:
+    """Update stored locale for a bot."""
+    with get_session() as session:
+        bot = session.get(Bot, id)
+        if bot:
+            bot.set_locale(locale)
+
+
+def get_bot_auth(id: int) -> Optional[Tuple[str, str, str, str]]:
+    """Return bot name, pass uuid, web url and locale for the bot."""
     with get_session() as session:
         bot = session.get(Bot, id)
         if not bot:
             return None
-        return bot.name, bot.get_pass_uuid(), bot.get_web_url()
+        return bot.name, bot.get_pass_uuid(), bot.get_web_url(), bot.get_locale()
 
 
 def compare_bot_auth_owner(id: int, tested_owner_uuid: str) -> bool:
@@ -117,6 +126,15 @@ def get_bot_token(id: int) -> Optional[str]:
         token = bot.get_token()
     rdb.Bot.create(id, token)
     return token
+
+
+def get_bot_locale(id: int) -> str | None:
+    """Return stored locale for a bot."""
+    with get_session() as session:
+        bot = session.get(Bot, id)
+        if not bot:
+            return None
+        return bot.get_locale()
 
 
 def is_bot_verified(id: int) -> bool:

@@ -13,14 +13,48 @@ from constants.prometheus_models import MESSAGE_COUNT, MESSAGE_TEXT_COUNT
 
 router = APIRouter(tags=["Telegram"])
 
+MESSAGES = {
+    "all_set": {
+        "en": "Thanks, you’re all set! 🎉",
+        "ru": "Спасибо, все готово! 🎉",
+    },
+    "bot_has_owner": {
+        "en": "Sorry, this bot already has an owner.",
+        "ru": "Извините, у этого бота уже есть владелец.",
+    },
+    "logged_in": {"en": "You are logged in!", "ru": "Вы вошли!"},
+    "share_contact": {
+        "en": "Almost done! Please share your contact by tapping the button below.",
+        "ru": "Почти готово! Пожалуйста, поделитесь своим контактом, нажав кнопку ниже.",
+    },
+    "share_phone_btn": {"en": "Share my phone", "ru": "Поделиться телефоном"},
+    "bad_code": {
+        "en": "Sorry, I didn’t recognize that code. Please try again.",
+        "ru": "Извините, я не распознал этот код. Попробуйте ещё раз.",
+    },
+    "not_allowed": {
+        "en": "Sorry, you are not allowed to use this bot!",
+        "ru": "Извините, вы не можете использовать этого бота!",
+    },
+    "deactivated": {
+        "en": "Sorry, seems like your account is deactivated, contact support",
+        "ru": "Извините, ваша учетная запись отключена, обратитесь в поддержку",
+    },
+}
+
+def tr(key: str, locale: str) -> str:
+    return MESSAGES.get(key, {}).get(locale, MESSAGES[key]["en"])
+
 @router.post('/webhook/{bot_id}', description="Handles webhook calls from telegram", tags=["Telegram"])
 async def handle_webhook(bot_id: int, request: Request):
     try:
         update = await request.json()
-        
+
         token = db.get_bot_token(bot_id)
         if not token:
             raise HTTPException(status_code=404, detail="Bot not registered")
+
+        locale = db.get_bot_locale(bot_id) or "en"
 
         message = update.get("message") or update.get("edited_message")
         if not message:
@@ -52,7 +86,7 @@ async def handle_webhook(bot_id: int, request: Request):
             await sender_adapter.send_message(
                 token,
                 contact_id,
-                "Thanks, you’re all set! 🎉",
+                tr("all_set", locale),
                 remove_keyboard=True,
                 bot_id=bot_id,
             )
@@ -69,7 +103,7 @@ async def handle_webhook(bot_id: int, request: Request):
                     await sender_adapter.send_message(
                         token,
                         contact_id,
-                        "Sorry, this bot already has an owner.",
+                        tr("bot_has_owner", locale),
                         bot_id=bot_id,
                     )
                     return {"status": "ok"}
@@ -79,18 +113,18 @@ async def handle_webhook(bot_id: int, request: Request):
                     await sender_adapter.send_message(
                         token,
                         contact_id,
-                        "You are logged in!",
+                        tr("logged_in", locale),
                         bot_id=bot_id,
                     )
                     return {"status": "ok"}
 
-                contact_button = [[{"text": "Share my phone", "request_contact": True}]]
+                contact_button = [[{"text": tr("share_phone_btn", locale), "request_contact": True}]]
                 if not db.get_is_bot_owner(bot_id, contact_id):
                     db.add_owner_user(bot_id, contact_id)
                 await sender_adapter.send_message(
                     token,
                     contact_id,
-                    "Almost done! Please share your contact by tapping the button below.",
+                    tr("share_contact", locale),
                     reply_keyboard=contact_button,
                     bot_id=bot_id,
                 )
@@ -100,11 +134,11 @@ async def handle_webhook(bot_id: int, request: Request):
                     await sender_adapter.send_message(
                         token,
                         contact_id,
-                        "You are logged in!",
+                        tr("logged_in", locale),
                     )
                     return {"status": "ok"}
 
-                contact_button = [[{"text": "Share my phone", "request_contact": True}]]
+                contact_button = [[{"text": tr("share_phone_btn", locale), "request_contact": True}]]
                 db.add_user_to_a_bot(
                     bot_id,
                     contact_id,
@@ -115,7 +149,7 @@ async def handle_webhook(bot_id: int, request: Request):
                 await sender_adapter.send_message(
                     token,
                     contact_id,
-                    "Almost done! Please share your contact by tapping the button below.",
+                    tr("share_contact", locale),
                     reply_keyboard=contact_button,
                     bot_id=bot_id,
                 )
@@ -124,7 +158,7 @@ async def handle_webhook(bot_id: int, request: Request):
                 await sender_adapter.send_message(
                     token,
                     contact_id,
-                    "Sorry, I didn’t recognize that code. Please try again.",
+                    tr("bad_code", locale),
                     bot_id=bot_id,
                 )
                 return {"status": "ok"}
@@ -133,7 +167,7 @@ async def handle_webhook(bot_id: int, request: Request):
             await sender_adapter.send_message(
                 token,
                 contact_id,
-                "Sorry, you are not allowed to use this bot!",
+                tr("not_allowed", locale),
                 bot_id=bot_id,
             )
             return {"status": "ok"}
@@ -141,7 +175,7 @@ async def handle_webhook(bot_id: int, request: Request):
             await sender_adapter.send_message(
                 token,
                 contact_id,
-                "Sorry, seems like your account is deactivated, contact support",
+                tr("deactivated", locale),
                 bot_id=bot_id,
             )
             return {"status": "ok"}
