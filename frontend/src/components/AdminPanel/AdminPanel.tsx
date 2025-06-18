@@ -50,6 +50,7 @@ export const AdminPanel: React.FC<Props> = ({ onExit, botInfo }) => {
     total: 0,
   });
   const { botId, botName, passUuid } = botInfo;
+  const [ownerName, setOwnerName] = useState("");
   const [inviteCopied, setInviteCopied] = useState(false);
   const inviteTimer = useRef<NodeJS.Timeout | null>(null);
 
@@ -64,6 +65,22 @@ export const AdminPanel: React.FC<Props> = ({ onExit, botInfo }) => {
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, []);
+
+  useEffect(() => {
+    if (!botId) return;
+    const fetchOwner = async () => {
+      try {
+        const res = await fetch(`${BACKEND_IP}/${botId}/owner`);
+        if (res.ok) {
+          const text = await res.json();
+          setOwnerName(text || "");
+        }
+      } catch {
+        // ignore errors
+      }
+    };
+    fetchOwner();
+  }, [botId]);
 
   useEffect(() => {
     return () => {
@@ -410,7 +427,7 @@ export const AdminPanel: React.FC<Props> = ({ onExit, botInfo }) => {
 
   return (
     <div className={s.PanelWrapper}>
-      <h1>{t('hello_owner')}</h1>
+      <h1>{t('hello_owner', { name: ownerName })}</h1>
       <Button block type="primary" size="large" style={{ height: 50 }} onClick={handleOpenConstructor}>
         {t('open_constructor')}
       </Button>

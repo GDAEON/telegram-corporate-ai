@@ -12,7 +12,7 @@
   "tip_search_botfather": "Search for\n<strong>\"BotFather\"</strong>",
   "tip_command": "It's a command",
   "tip_token_example": "The token looks like this\n<strong>123456:ABC–DEF1234ghI–<br />zyx57W2v1u123ew11</strong>",
-  "hello_owner": "Hello OwnerName!",
+  "hello_owner": "Hello {{name}}!",
   "open_constructor": "Open Constructor",
   "invitation_copied": "Invitation Link Copied",
   "invite_user": "Invite user",
