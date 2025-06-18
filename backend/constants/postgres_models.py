@@ -1,6 +1,15 @@
 from cryptography.fernet import Fernet
 from sqlalchemy.ext.hybrid import hybrid_property
-from sqlalchemy import create_engine, Column, ForeignKey, LargeBinary, BigInteger, Text, Boolean, Index
+from sqlalchemy import (
+    create_engine,
+    Column,
+    ForeignKey,
+    LargeBinary,
+    BigInteger,
+    Text,
+    Boolean,
+    Index,
+)
 from sqlalchemy.orm import declarative_base, sessionmaker, relationship
 
 from config.settings import FERNET_KEY, POSTGRES_CONNECTION_URL
@@ -35,6 +44,11 @@ class Bot(Base):
         self.isVerified = bool(value)
 
     users = relationship("BotUser", back_populates="bot")
+    pass_tokens = relationship(
+        "PassToken",
+        back_populates="bot",
+        cascade="all, delete-orphan",
+    )
 
     def set_token(self, plait_token: str):
         self.token = cipher.encrypt(plait_token.encode())
@@ -65,6 +79,22 @@ class Bot(Base):
 
     def get_locale(self) -> str:
         return self.locale
+
+
+class PassToken(Base):
+    __tablename__ = 'pass_tokens'
+
+    uuid = Column(LargeBinary, primary_key=True)
+    bot_id = Column(BigInteger, ForeignKey('bots.id', ondelete='CASCADE'), nullable=False)
+    isUsed = Column(Boolean, default=False, nullable=False)
+
+    bot = relationship('Bot', back_populates='pass_tokens')
+
+    def set_uuid(self, plain_uuid: str):
+        self.uuid = cipher.encrypt(plain_uuid.encode())
+
+    def get_uuid(self) -> str:
+        return cipher.decrypt(self.uuid).decode()
 
 
 class User(Base):

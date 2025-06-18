@@ -49,7 +49,7 @@ export const AdminPanel: React.FC<Props> = ({ onExit, botInfo }) => {
     pageSize: 5,
     total: 0,
   });
-  const { botId, botName, passUuid } = botInfo;
+  const { botId, botName } = botInfo;
   const [ownerName, setOwnerName] = useState("");
   const [inviteCopied, setInviteCopied] = useState(false);
   const inviteTimer = useRef<NodeJS.Timeout | null>(null);
@@ -91,9 +91,17 @@ export const AdminPanel: React.FC<Props> = ({ onExit, botInfo }) => {
   }, []);
 
   const handleInviteUser = async () => {
-    if (!botId || !botName || !passUuid) return;
+    if (!botId || !botName) return;
     try {
-      const link = `https://t.me/${botName}?start=${passUuid}`;
+      const resp = await fetch(`${BACKEND_IP}/bot/${botId}/invite`, {
+        method: "POST",
+      });
+      const data = await resp.json();
+      if (!resp.ok) {
+        message.error(data.detail ?? t('failed_request'));
+        return;
+      }
+      const link = `https://t.me/${botName}?start=${data.passUuid}`;
       await navigator.clipboard.writeText(link);
       message.success(t('invitation_link_copied_message'));
       setInviteCopied(true);
