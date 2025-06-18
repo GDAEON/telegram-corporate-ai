@@ -24,10 +24,7 @@ MESSAGE_COUNT = Counter(
     registry=registry,
 )
 
-# Track each user and bot message by text. This can result in high
-# cardinality if there are many different texts, but provides visibility
-# into message contents for debugging. The text label is truncated to
-# 100 characters to keep label sizes manageable.
+
 MESSAGE_TEXT_COUNT = Counter(
     "bot_message_text_total",
     "Count of messages by direction, bot and text",
