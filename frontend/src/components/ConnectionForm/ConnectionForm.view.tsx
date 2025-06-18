@@ -1,6 +1,7 @@
 import React from "react";
 import type { FormProps } from "antd";
 import { Button, Form, Input } from "antd";
+import { useTranslation } from 'react-i18next';
 import s from "./ConnectionForm.module.css";
 
 type FieldType = {
@@ -14,6 +15,7 @@ const onFinishFailed: FormProps<FieldType>["onFinishFailed"] = (errorInfo) => {
 };
 
 export const ConnectionFormView: React.FC<{ onConnect: (token: string) => void; loading: boolean }> = ({ onConnect, loading }) => {
+  const { t } = useTranslation();
 
   const onFinish: FormProps<FieldType>["onFinish"] = values => {
         onConnect(values.token ?? "");                
@@ -21,7 +23,7 @@ export const ConnectionFormView: React.FC<{ onConnect: (token: string) => void; 
 
   return (
     <div className={s.pageContainer}>
-      <h1 className={s.FormTitle}>Connect Telegram Bot</h1>
+      <h1 className={s.FormTitle}>{t('connect_bot')}</h1>
       <Form
         style={{ width: "100%" }}
         onFinish={onFinish}
@@ -31,35 +33,32 @@ export const ConnectionFormView: React.FC<{ onConnect: (token: string) => void; 
         <Form.Item<FieldType>
           name="token"
           rules={[
-            { required: true, message: "Please input telegram bot token" },
+            { required: true, message: t('token_required') },
           ]}
         >
-          <Input style={{height: "50px"}} placeholder="Paste your bot token here..." disabled={loading} />
+          <Input style={{height: "50px"}} placeholder={t('token_placeholder')} disabled={loading} />
         </Form.Item>
 
         <Form.Item>
           <Button style={{height: "50px"}} block type="primary" size="large" htmlType="submit" loading={loading} disabled={loading}>
-            Connect
+            {t('connect')}
           </Button>
         </Form.Item>
       </Form>
 
       <div className={s.container}>
-      <h3>How to obtain a bot token:</h3>
+      <h3>{t('how_to_obtain')}</h3>
       <ol className={s.list}>
-        <li>On Telegram, open a chat with <br /> the BotFather.</li>
+        <li>{t('step_botfather')}</li>
         <li>
-          Send the <code>/newbot</code> command and <br /> follow the instructions.
+          {t('step_newbot')}
         </li>
-        <li>Copy the token shown <br /> in the response.</li>
+        <li>{t('step_copy_token')}</li>
       </ol>
 
-      <div className={s.tip + " " + s.tip1}>Search for<br /><strong>“BotFather”</strong></div>
-      <div className={s.tip + " " + s.tip2}>It’s a command </div>
-      <div className={s.tip + " " + s.tip3}>
-        The token looks like this<br />
-        <strong>123456:ABC–DEF1234ghI–<br />zyx57W2v1u123ew11</strong>
-      </div>
+      <div className={s.tip + " " + s.tip1} dangerouslySetInnerHTML={{__html: t('tip_search_botfather')}} />
+      <div className={s.tip + " " + s.tip2}>{t('tip_command')}</div>
+      <div className={s.tip + " " + s.tip3} dangerouslySetInnerHTML={{__html: t('tip_token_example')}} />
     </div>
 
     </div>
