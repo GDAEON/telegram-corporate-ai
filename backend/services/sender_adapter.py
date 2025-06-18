@@ -2,6 +2,8 @@ import httpx
 from io import BytesIO
 from services.helper_functions import guess_filename
 from typing import List, Optional, Dict, Any
+from constants.prometheus_models import MESSAGE_COUNT
+from services.logging_setup import interaction_logger
 
 
 async def send_message(
@@ -12,12 +14,19 @@ async def send_message(
     reply_keyboard: Optional[List[List[Dict[str, Any]]]] = None,
     remove_keyboard: bool = False,
     parse_mode: str = "HTML",
+    bot_id: Optional[int] = None,
 ) -> Dict[str, Any]:
     payload: Dict[str, Any] = {
         "chat_id": chat_id,
         "text": text,
         "parse_mode": parse_mode,
     }
+
+    if bot_id is not None:
+        MESSAGE_COUNT.labels(direction="outgoing", bot_id=str(bot_id)).inc()
+        interaction_logger.info(
+            f"OUTGOING bot_id={bot_id} chat_id={chat_id} text={text}"
+        )
 
     if remove_keyboard:
         payload["reply_markup"] = {"remove_keyboard": True}
@@ -35,12 +44,31 @@ async def send_message(
             f"https://api.telegram.org/bot{token}/sendMessage",
             json=payload
         )
-    return {"status_code": resp.status_code, "body": resp.json()}
+
+    result = {"status_code": resp.status_code, "body": resp.json()}
+    if bot_id is not None:
+        interaction_logger.info(
+            f"SENT bot_id={bot_id} status={resp.status_code} response={result['body']}"
+        )
+    return result
 
 
     
     
-async def send_media(token: str, chat_id: int, file_type: str, file_url: str, file_mime: str, caption: str):
+async def send_media(
+    token: str,
+    chat_id: int,
+    file_type: str,
+    file_url: str,
+    file_mime: str,
+    caption: str,
+    bot_id: Optional[int] = None,
+):
+    if bot_id is not None:
+        MESSAGE_COUNT.labels(direction="outgoing", bot_id=str(bot_id)).inc()
+        interaction_logger.info(
+            f"OUTGOING_MEDIA bot_id={bot_id} chat_id={chat_id} type={file_type} caption={caption}"
+        )
     async with httpx.AsyncClient() as client:
         file_response = await client.get(file_url, follow_redirects=True)
         file_response.raise_for_status()
@@ -82,7 +110,12 @@ async def send_media(token: str, chat_id: int, file_type: str, file_url: str, fi
             files=files
         )
 
-        return {
+        result = {
             "status_code": response.status_code,
             "body": response.json()
         }
+        if bot_id is not None:
+            interaction_logger.info(
+                f"SENT_MEDIA bot_id={bot_id} status={response.status_code} response={result['body']}"
+            )
+        return result

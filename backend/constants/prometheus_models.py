@@ -16,3 +16,10 @@ REQUEST_LATENCY = Histogram(
     ["method", "endpoint"],
     registry=registry
 )
+
+MESSAGE_COUNT = Counter(
+    "bot_messages_total",
+    "Total number of processed bot messages",
+    ["direction", "bot_id"],
+    registry=registry,
+)

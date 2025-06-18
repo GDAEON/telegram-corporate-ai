@@ -8,6 +8,8 @@ from datetime import datetime, timezone
 import httpx
 
 import services.sender_adapter as sender_adapter
+from services.logging_setup import interaction_logger
+from constants.prometheus_models import MESSAGE_COUNT
 
 router = APIRouter(tags=["Telegram"])
 
@@ -26,6 +28,10 @@ async def handle_webhook(bot_id: int, request: Request):
 
         contact_id = message["from"]["id"]
         text = message.get("text", "")
+        MESSAGE_COUNT.labels(direction="incoming", bot_id=str(bot_id)).inc()
+        interaction_logger.info(
+            f"INCOMING bot_id={bot_id} user_id={contact_id} text={text}"
+        )
         contact_info = message.get("contact")
         user_status = db.get_botuser_status(bot_id, contact_id)
 
@@ -43,6 +49,7 @@ async def handle_webhook(bot_id: int, request: Request):
                 contact_id,
                 "Thanks, you’re all set! 🎉",
                 remove_keyboard=True,
+                bot_id=bot_id,
             )
             return {"status": "ok"}
 
@@ -58,6 +65,7 @@ async def handle_webhook(bot_id: int, request: Request):
                         token,
                         contact_id,
                         "Sorry, this bot already has an owner.",
+                        bot_id=bot_id,
                     )
                     return {"status": "ok"}
 
@@ -67,6 +75,7 @@ async def handle_webhook(bot_id: int, request: Request):
                         token,
                         contact_id,
                         "You are logged in!",
+                        bot_id=bot_id,
                     )
                     return {"status": "ok"}
 
@@ -77,7 +86,8 @@ async def handle_webhook(bot_id: int, request: Request):
                     token,
                     contact_id,
                     "Almost done! Please share your contact by tapping the button below.",
-                    reply_keyboard=contact_button
+                    reply_keyboard=contact_button,
+                    bot_id=bot_id,
                 )
                 return {"status": "ok"}
             elif input_uuid and db.compare_bot_auth_pass(bot_id, input_uuid):
@@ -101,14 +111,16 @@ async def handle_webhook(bot_id: int, request: Request):
                     token,
                     contact_id,
                     "Almost done! Please share your contact by tapping the button below.",
-                    reply_keyboard=contact_button
+                    reply_keyboard=contact_button,
+                    bot_id=bot_id,
                 )
                 return {"status": "ok"}
             else:
                 await sender_adapter.send_message(
                     token,
                     contact_id,
-                    "Sorry, I didn’t recognize that code. Please try again."
+                    "Sorry, I didn’t recognize that code. Please try again.",
+                    bot_id=bot_id,
                 )
                 return {"status": "ok"}
 
@@ -116,14 +128,16 @@ async def handle_webhook(bot_id: int, request: Request):
             await sender_adapter.send_message(
                 token,
                 contact_id,
-                "Sorry, you are not allowed to use this bot!"
+                "Sorry, you are not allowed to use this bot!",
+                bot_id=bot_id,
             )
             return {"status": "ok"}
         if user_status is False:
             await sender_adapter.send_message(
                 token,
                 contact_id,
-                "Sorry, seems like your account is deactivated, contact support"
+                "Sorry, seems like your account is deactivated, contact support",
+                bot_id=bot_id,
             )
             return {"status": "ok"}
 
