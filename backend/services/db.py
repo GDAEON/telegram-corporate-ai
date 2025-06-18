@@ -5,8 +5,9 @@ from typing import Optional, Tuple
 from sqlalchemy import exists, or_, func, select
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import sessionmaker
-from constants.postgres_models import engine, Bot, User, BotUser
+from constants.postgres_models import engine, Bot, User, BotUser, PassToken
 import constants.redis_models as rdb
+import services.helper_functions as hf
 
 SessionLocal = sessionmaker(bind=engine)
 
@@ -81,10 +82,42 @@ def compare_bot_auth_owner(id: int, tested_owner_uuid: str) -> bool:
 
 
 def compare_bot_auth_pass(id: int, tested_pass_uuid: str) -> bool:
-    """Return True if pass uuid matches the stored value"""
+    """Return True if the token exists and is unused."""
     with get_session() as session:
-        bot = session.get(Bot, id)
-        return bool(bot and bot.get_pass_uuid() == tested_pass_uuid)
+        tokens = (
+            session.query(PassToken)
+            .filter_by(bot_id=id, isUsed=False)
+            .all()
+        )
+        for token in tokens:
+            if token.get_uuid() == tested_pass_uuid:
+                return True
+        return False
+
+
+def create_pass_token(bot_id: int) -> str:
+    """Generate and store a new single-use pass token."""
+    new_uuid = hf.generate_uuid()
+    with get_session() as session:
+        token = PassToken(bot_id=bot_id)
+        token.set_uuid(new_uuid)
+        session.add(token)
+    return new_uuid
+
+
+def mark_pass_token_used(bot_id: int, pass_uuid: str) -> None:
+    """Mark the specified token as used."""
+    with get_session() as session:
+        tokens = (
+            session.query(PassToken)
+            .filter_by(bot_id=bot_id, isUsed=False)
+            .all()
+        )
+        for token in tokens:
+            if token.get_uuid() == pass_uuid:
+                token.isUsed = True
+                session.add(token)
+                break
 
 
 def get_bot_by_owner_uuid(owner_uuid: str) -> Optional[Tuple[int, str, str, str]]:

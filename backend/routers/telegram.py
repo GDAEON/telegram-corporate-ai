@@ -146,6 +146,7 @@ async def handle_webhook(bot_id: int, request: Request):
                     message["from"].get("last_name"),
                     None,
                 )
+                db.mark_pass_token_used(bot_id, input_uuid)
                 await sender_adapter.send_message(
                     token,
                     contact_id,

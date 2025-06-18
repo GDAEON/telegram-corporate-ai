@@ -227,6 +227,18 @@ async def refresh_web_url(bot_id: int, locale: Optional[str] = None):
         raise HTTPException(status_code=500, detail=f"Request failed: {str(e)}")
 
 
+@router.post("/bot/{bot_id}/invite")
+async def generate_invite(bot_id: int):
+    """Generate a single-use pass UUID for inviting a user."""
+    if not db.bot_exists(bot_id):
+        raise HTTPException(status_code=404, detail="Bot not found")
+    try:
+        new_uuid = db.create_pass_token(bot_id)
+        return {"passUuid": new_uuid}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 @router.patch("/bot/{bot_id}/logout")
 async def logout_owner(bot_id: int):
     """Log out owner from admin panel."""
