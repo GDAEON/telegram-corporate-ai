@@ -1,5 +1,6 @@
 import React from "react";
 import { message, Button } from "antd";
+import { useTranslation } from 'react-i18next';
 import { useSearchParams } from "react-router-dom";
 import s from './ConnectionPage.module.css'
 import { ConnectionForm, OwnerQRModal, AdminPanel } from "../../components";
@@ -13,6 +14,7 @@ interface BotInfo {
 }
 
 export const ConnectionPage: React.FC = () => {
+    const { t } = useTranslation();
     const [searchParams] = useSearchParams();
     const [ref, setRef] = React.useState<string>("");
     const [bots, setBots] = React.useState<BotInfo[]>([]);
@@ -74,7 +76,7 @@ export const ConnectionPage: React.FC = () => {
             const data = await response.json();
 
             if (!response.ok) {
-                message.error(data.detail ?? "Request failed");
+                message.error(data.detail ?? t('failed_request'));
                 setLoading(false);
                 return;
             }

@@ -13,6 +13,7 @@ import {
   ShareAltOutlined,
 } from "@ant-design/icons";
 import Highlighter from "react-highlight-words";
+import { useTranslation } from 'react-i18next';
 import s from "./AdminPanel.module.css";
 import { BACKEND_IP } from "../../shared";
 
@@ -37,6 +38,7 @@ interface DataType {
 type DataIndex = keyof DataType;
 
 export const AdminPanel: React.FC<Props> = ({ onExit, botInfo }) => {
+  const { t } = useTranslation();
   const [searchText, setSearchText] = useState("");
   const [searchedColumn, setSearchedColumn] = useState<DataIndex | "">("");
   const searchInput = useRef<InputRef>(null);
@@ -76,7 +78,7 @@ export const AdminPanel: React.FC<Props> = ({ onExit, botInfo }) => {
     try {
       const link = `https://t.me/${botName}?start=${passUuid}`;
       await navigator.clipboard.writeText(link);
-      message.success("Invite link copied");
+      message.success(t('invitation_link_copied_message'));
       setInviteCopied(true);
       if (inviteTimer.current) {
         clearTimeout(inviteTimer.current);
@@ -94,7 +96,7 @@ export const AdminPanel: React.FC<Props> = ({ onExit, botInfo }) => {
       });
       const data = await response.json();
       if (!response.ok) {
-        message.error(data.detail ?? "Request failed");
+        message.error(data.detail ?? t('failed_request'));
         return;
       }
       window.open(data.webUrl, "_blank", "noopener,noreferrer");
@@ -175,7 +177,7 @@ export const AdminPanel: React.FC<Props> = ({ onExit, botInfo }) => {
 
       if (!res.ok) {
         const json = await res.json();
-        message.error(json.detail ?? "Failed to update status");
+        message.error(json.detail ?? t('failed_update_status'));
         return;
       }
 
@@ -184,7 +186,7 @@ export const AdminPanel: React.FC<Props> = ({ onExit, botInfo }) => {
           u.key === userId ? { ...u, status: !currentStatus } : u
         )
       );
-      message.success("Status updated");
+      message.success(t('status_updated'));
     } catch (e) {
       message.error((e as Error).message);
     }
@@ -201,12 +203,12 @@ export const AdminPanel: React.FC<Props> = ({ onExit, botInfo }) => {
 
       if (!res.ok) {
         const json = await res.json();
-        message.error(json.detail ?? "Failed to delete user");
+        message.error(json.detail ?? t('failed_delete_user'));
         return;
       }
 
       setData((prev) => prev.filter((u) => u.key !== userId));
-      message.success("User deleted");
+      message.success(t('user_deleted'));
     } catch (e) {
       message.error((e as Error).message);
     }
@@ -230,7 +232,7 @@ export const AdminPanel: React.FC<Props> = ({ onExit, botInfo }) => {
       <div style={{ padding: 8 }} onKeyDown={(e) => e.stopPropagation()}>
         <Input
           ref={searchInput}
-          placeholder={`Search ${dataIndex}`}
+          placeholder={`${t('search')} ${dataIndex}`}
           value={selectedKeys[0]}
           onChange={(e) =>
             setSelectedKeys(e.target.value ? [e.target.value] : [])
@@ -249,13 +251,13 @@ export const AdminPanel: React.FC<Props> = ({ onExit, botInfo }) => {
               handleSearch(selectedKeys as string[], confirm, dataIndex)
             }
           >
-            Search
+            {t('search')}
           </Button>
           <Button
             size="small"
             onClick={() => clearFilters && handleReset(clearFilters)}
           >
-            Reset
+            {t('reset')}
           </Button>
           <Button
             type="link"
@@ -266,10 +268,10 @@ export const AdminPanel: React.FC<Props> = ({ onExit, botInfo }) => {
               setSearchedColumn(dataIndex);
             }}
           >
-            Filter
+            {t('filter')}
           </Button>
           <Button type="link" size="small" onClick={() => close()}>
-            Close
+            {t('close')}
           </Button>
         </Space>
       </div>
@@ -302,13 +304,13 @@ export const AdminPanel: React.FC<Props> = ({ onExit, botInfo }) => {
 
   const columns: ColumnsType<DataType> = [
     {
-      title: "Name",
+      title: t('name'),
       dataIndex: "name",
       key: "name",
       ...getColumnSearchProps("name"),
     },
     {
-      title: "Phone",
+      title: t('phone'),
       dataIndex: "phone",
       key: "phone",
       ...getColumnSearchProps("phone"),
@@ -324,32 +326,32 @@ export const AdminPanel: React.FC<Props> = ({ onExit, botInfo }) => {
       },
     },
     {
-      title: "Status",
+      title: t('status'),
       dataIndex: "status",
       key: "status",
       align: "center",
       filters: [
-        { text: "Active", value: true },
-        { text: "Not Active", value: false },
+        { text: t('active'), value: true },
+        { text: t('not_active'), value: false },
       ],
       onFilter: (value, record) => record.status === value,
       render: (_, { status }) => (
         <Tag color={status ? "green" : "red"}>
-          {status ? "Active" : "Not Active"}
+          {status ? t('active') : t('not_active')}
         </Tag>
       ),
     },
     {
-      title: "Actions",
+      title: t('actions'),
       key: "actions",
       align: "center",
       render: (_, record) => {
         const { status, isOwner, key } = record;
         if (isOwner) {
-          return <p>You</p>;
+          return <p>{t('you')}</p>;
         }
         const color = status ? "danger" : "green";
-        const text = status ? "Deactivate" : "Activate";
+        const text = status ? t('deactivate') : t('activate');
         const variant = status ? "outlined" : "filled";
         if (isMobile) {
           return (
@@ -362,10 +364,10 @@ export const AdminPanel: React.FC<Props> = ({ onExit, botInfo }) => {
                 onClick={() => handleStatusToggle(key, status)}
               />
               <Popconfirm
-                title="Delete this user?"
+                title={t('delete_user_question')}
                 onConfirm={() => handleDelete(key)}
-                okText="Yes"
-                cancelText="No"
+                okText={t('yes')}
+                cancelText={t('no')}
               >
                 <Button
                   size="small"
@@ -388,13 +390,13 @@ export const AdminPanel: React.FC<Props> = ({ onExit, botInfo }) => {
               {text}
             </Button>
             <Popconfirm
-              title="Delete this user?"
+              title={t('delete_user_question')}
               onConfirm={() => handleDelete(key)}
-              okText="Yes"
-              cancelText="No"
+              okText={t('yes')}
+              cancelText={t('no')}
             >
               <Button variant="solid" color="danger">
-                Delete <DeleteOutlined />
+                {t('delete')} <DeleteOutlined />
               </Button>
             </Popconfirm>
           </Space>
@@ -405,9 +407,9 @@ export const AdminPanel: React.FC<Props> = ({ onExit, botInfo }) => {
 
   return (
     <div className={s.PanelWrapper}>
-      <h1>Hello OwnerName!</h1>
+      <h1>{t('hello_owner')}</h1>
       <Button block type="primary" size="large" style={{ height: 50 }} onClick={handleOpenConstructor}>
-        Open Constructor
+        {t('open_constructor')}
       </Button>
       <Button
         icon={inviteCopied ? <CheckOutlined /> : <ShareAltOutlined />}
@@ -415,9 +417,9 @@ export const AdminPanel: React.FC<Props> = ({ onExit, botInfo }) => {
         type={inviteCopied ? "primary" : "default"}
         style={{ transition: "background-color 0.3s" }}
       >
-        {inviteCopied ? "Invitation Link Copied" : "Invite user"}
+        {inviteCopied ? t('invitation_copied') : t('invite_user')}
       </Button>
-      <Button color="danger" variant="outlined" onClick={onExit}>Exit <CloseOutlined /></Button>
+      <Button color="danger" variant="outlined" onClick={onExit}>{t('exit')} <CloseOutlined /></Button>
       <div className={s.TableWrapper}>
       <Table
         columns={columns}
