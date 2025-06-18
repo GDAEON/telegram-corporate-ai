@@ -175,6 +175,18 @@ async def auth_info(bot_id: int):
         raise HTTPException(status_code=500, detail=str(e))
 
 
+@router.post("/bot/{bot_id}/invite")
+async def create_invite(bot_id: int):
+    """Generate a one-time invitation link for a bot."""
+    if not db.bot_exists(bot_id):
+        raise HTTPException(status_code=404, detail="Bot not found")
+    try:
+        uuid = db.create_invite(bot_id)
+        return {"passUuid": uuid}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 @router.post("/bot/{bot_id}/refresh", response_model=IntegrationResponse)
 async def refresh_web_url(bot_id: int, locale: Optional[str] = None):
     """Fetch a new admin panel URL for the bot."""

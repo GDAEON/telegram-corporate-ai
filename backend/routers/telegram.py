@@ -129,7 +129,7 @@ async def handle_webhook(bot_id: int, request: Request):
                     bot_id=bot_id,
                 )
                 return {"status": "ok"}
-            elif input_uuid and db.compare_bot_auth_pass(bot_id, input_uuid):
+            elif input_uuid:
                 if db.bot_has_user(bot_id, contact_id):
                     await sender_adapter.send_message(
                         token,
@@ -138,22 +138,31 @@ async def handle_webhook(bot_id: int, request: Request):
                     )
                     return {"status": "ok"}
 
-                contact_button = [[{"text": tr("share_phone_btn", locale), "request_contact": True}]]
-                db.add_user_to_a_bot(
-                    bot_id,
-                    contact_id,
-                    message["from"].get("first_name"),
-                    message["from"].get("last_name"),
-                    None,
-                )
-                await sender_adapter.send_message(
-                    token,
-                    contact_id,
-                    tr("share_contact", locale),
-                    reply_keyboard=contact_button,
-                    bot_id=bot_id,
-                )
-                return {"status": "ok"}
+                if db.use_invite(bot_id, input_uuid, contact_id):
+                    contact_button = [[{"text": tr("share_phone_btn", locale), "request_contact": True}]]
+                    db.add_user_to_a_bot(
+                        bot_id,
+                        contact_id,
+                        message["from"].get("first_name"),
+                        message["from"].get("last_name"),
+                        None,
+                    )
+                    await sender_adapter.send_message(
+                        token,
+                        contact_id,
+                        tr("share_contact", locale),
+                        reply_keyboard=contact_button,
+                        bot_id=bot_id,
+                    )
+                    return {"status": "ok"}
+                else:
+                    await sender_adapter.send_message(
+                        token,
+                        contact_id,
+                        tr("bad_code", locale),
+                        bot_id=bot_id,
+                    )
+                    return {"status": "ok"}
             else:
                 await sender_adapter.send_message(
                     token,

@@ -99,4 +99,22 @@ class BotUser(Base):
         Index('ix_bot_user_bot_id_user_id', 'bot_id', 'user_id', unique=True),
     )
 
+
+class Invitation(Base):
+    __tablename__ = 'invitations'
+
+    id = Column(BigInteger, primary_key=True, autoincrement=True)
+    bot_id = Column(BigInteger, ForeignKey('bots.id', ondelete='CASCADE'), nullable=False)
+    passUuid = Column(LargeBinary, nullable=False, unique=True)
+    used_by = Column(BigInteger, ForeignKey('users.id', ondelete='SET NULL'), nullable=True)
+
+    bot = relationship("Bot")
+    user = relationship("User")
+
+    def set_pass_uuid(self, plain_uuid: str):
+        self.passUuid = cipher.encrypt(plain_uuid.encode())
+
+    def get_pass_uuid(self) -> str:
+        return cipher.decrypt(self.passUuid).decode()
+
 Base.metadata.create_all(engine)

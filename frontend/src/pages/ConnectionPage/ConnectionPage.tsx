@@ -8,7 +8,6 @@ import { BACKEND_IP } from "../../shared";
 
 interface BotInfo {
     botName: string;
-    passUuid: string;
     botId: number;
     webUrl: string;
 }
@@ -84,7 +83,6 @@ export const ConnectionPage: React.FC = () => {
 
             const info: BotInfo = {
                 botName: data.botName,
-                passUuid: data.passUuid,
                 botId: data.botId,
                 webUrl: data.webUrl,
             };

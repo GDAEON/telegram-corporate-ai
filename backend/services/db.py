@@ -5,8 +5,9 @@ from typing import Optional, Tuple
 from sqlalchemy import exists, or_, func, select
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import sessionmaker
-from constants.postgres_models import engine, Bot, User, BotUser
+from constants.postgres_models import engine, Bot, User, BotUser, Invitation
 import constants.redis_models as rdb
+import services.helper_functions as hf
 
 SessionLocal = sessionmaker(bind=engine)
 
@@ -80,11 +81,31 @@ def compare_bot_auth_owner(id: int, tested_owner_uuid: str) -> bool:
         return bool(bot and bot.get_owner_uuid() == tested_owner_uuid)
 
 
-def compare_bot_auth_pass(id: int, tested_pass_uuid: str) -> bool:
-    """Return True if pass uuid matches the stored value"""
+def create_invite(bot_id: int) -> str:
+    """Create a new invitation pass uuid for a bot."""
+    new_uuid = hf.generate_uuid()
     with get_session() as session:
-        bot = session.get(Bot, id)
-        return bool(bot and bot.get_pass_uuid() == tested_pass_uuid)
+        invite = Invitation(bot_id=bot_id)
+        invite.set_pass_uuid(new_uuid)
+        session.add(invite)
+    return new_uuid
+
+
+def use_invite(bot_id: int, pass_uuid: str, user_id: int) -> bool:
+    """Validate and mark invitation as used by the user."""
+    with get_session() as session:
+        invites = (
+            session.query(Invitation)
+                   .filter(Invitation.bot_id == bot_id)
+                   .all()
+        )
+        for invite in invites:
+            if invite.get_pass_uuid() == pass_uuid:
+                if invite.used_by is None:
+                    invite.used_by = user_id
+                    return True
+                return False
+        return False
 
 
 def get_bot_by_owner_uuid(owner_uuid: str) -> Optional[Tuple[int, str, str, str]]:
