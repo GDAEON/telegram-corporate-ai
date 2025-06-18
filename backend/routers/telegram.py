@@ -130,7 +130,7 @@ async def handle_webhook(bot_id: int, request: Request):
                 )
                 return {"status": "ok"}
             elif input_uuid:
-                if db.bot_has_user(bot_id, contact_id):
+                if user_status is True:
                     await sender_adapter.send_message(
                         token,
                         contact_id,

@@ -274,6 +274,8 @@ def add_user_to_a_bot(
         )
         if not bu:
             session.add(BotUser(bot_id=bot_id, user_id=user_id, is_active=True))
+        else:
+            bu.is_active = True
         rdb.BotUserStatus.set(bot_id, user_id, True, False)
         rdb.BotUsersPage.invalidate(bot_id)
 

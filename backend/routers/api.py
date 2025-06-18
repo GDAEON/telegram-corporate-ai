@@ -42,6 +42,7 @@ async def integrate_new_user(request: IntegrateRequest):
         locale = request.locale or stored_locale or "en"
         if locale != stored_locale:
             db.update_bot_locale(bot_id, locale)
+        db.bot_set_verified(bot_id, False)
     else:
         pass_uuid = hf.generate_uuid()
 
@@ -101,6 +102,7 @@ async def integrate_new_user(request: IntegrateRequest):
                 web_url,
                 locale,
             )
+        db.bot_set_verified(bot_id, False)
 
         return IntegrationResponse(
             botName=bot_name, passUuid=pass_uuid, webUrl=web_url, botId=bot_id
