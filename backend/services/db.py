@@ -81,6 +81,13 @@ def compare_bot_auth_owner(id: int, tested_owner_uuid: str) -> bool:
         return bool(bot and bot.get_owner_uuid() == tested_owner_uuid)
 
 
+def compare_bot_auth_pass(id: int, tested_pass_uuid: str) -> bool:
+    """Return True if pass uuid matches the stored value"""
+    with get_session() as session:
+        bot = session.get(Bot, id)
+        return bool(bot and bot.get_pass_uuid() == tested_pass_uuid)
+
+
 def create_invite(bot_id: int) -> str:
     """Create a new invitation pass uuid for a bot."""
     new_uuid = hf.generate_uuid()
