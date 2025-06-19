@@ -46,10 +46,14 @@ async def get_status(id: int):
 @router.post('/sendTextMessage', description="Sends message to a chat")
 async def send_message(request: SendTextMessageRequest):
     try:
+        print("sendTextMessage request:", request.dict())
         token = db.get_bot_token(request.chat.messengerId)
         chat_id = request.chat.contact
         text = request.text
         inline_buttons = request.inlineButtons
+
+        if inline_buttons:
+            print("INLINE BUTTONS RECEIVED")
 
         response = await sender_adapter.send_message(
             token,
@@ -80,6 +84,7 @@ async def send_message(request: SendTextMessageRequest):
 @router.post('/sendMediaMessage', description="Sends media message to a chat")
 async def send_media_message(request: SendMediaMessageRequest):
     try:
+        print("sendMediaMessage request:", request.dict())
         token = db.get_bot_token(request.chat.messengerId)
         chat_id = request.chat.contact
         file_type = request.file.type
@@ -87,6 +92,9 @@ async def send_media_message(request: SendMediaMessageRequest):
         file_mime = request.file.mime
         caption = request.caption
         inline_buttons = request.inlineButtons
+
+        if inline_buttons:
+            print("INLINE BUTTONS RECEIVED")
 
         response = await sender_adapter.send_media(
             token,

@@ -49,6 +49,7 @@ def tr(key: str, locale: str) -> str:
 async def handle_webhook(bot_id: int, request: Request):
     try:
         update = await request.json()
+        print("Webhook update:", update)
 
         token = db.get_bot_token(bot_id)
         if not token:
@@ -63,6 +64,7 @@ async def handle_webhook(bot_id: int, request: Request):
             raise HTTPException(status_code=400, detail="Unsupported update type")
 
         if callback:
+            print("Callback query:", callback)
             contact_id = callback["from"]["id"]
             text = callback.get("data", "")
             message = callback.get("message", {})
