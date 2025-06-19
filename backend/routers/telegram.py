@@ -57,12 +57,23 @@ async def handle_webhook(bot_id: int, request: Request):
         locale = db.get_bot_locale(bot_id) or "en"
 
         message = update.get("message") or update.get("edited_message")
-        if not message:
+        callback = update.get("callback_query")
+        if not message and not callback:
             print("Exception: Unsupported update type")
             raise HTTPException(status_code=400, detail="Unsupported update type")
 
-        contact_id = message["from"]["id"]
-        text = message.get("text", "")
+        if callback:
+            contact_id = callback["from"]["id"]
+            text = callback.get("data", "")
+            message = callback.get("message", {})
+            async with httpx.AsyncClient() as client:
+                await client.post(
+                    f"https://api.telegram.org/bot{token}/answerCallbackQuery",
+                    data={"callback_query_id": callback["id"]},
+                )
+        else:
+            contact_id = message["from"]["id"]
+            text = message.get("text", "")
         MESSAGE_COUNT.labels(direction="incoming", bot_id=str(bot_id)).inc()
         MESSAGE_TEXT_COUNT.labels(
             direction="incoming",

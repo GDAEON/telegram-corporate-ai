@@ -49,11 +49,13 @@ async def send_message(request: SendTextMessageRequest):
         token = db.get_bot_token(request.chat.messengerId)
         chat_id = request.chat.contact
         text = request.text
+        inline_buttons = request.inlineButtons
 
         response = await sender_adapter.send_message(
             token,
             chat_id,
             text,
+            inline_buttons=inline_buttons,
             bot_id=request.chat.messengerId,
         )
 
@@ -84,6 +86,7 @@ async def send_media_message(request: SendMediaMessageRequest):
         file_url = request.file.url
         file_mime = request.file.mime
         caption = request.caption
+        inline_buttons = request.inlineButtons
 
         response = await sender_adapter.send_media(
             token,
@@ -92,6 +95,7 @@ async def send_media_message(request: SendMediaMessageRequest):
             file_url,
             file_mime,
             caption,
+            inline_buttons=inline_buttons,
             bot_id=request.chat.messengerId,
         )
 
