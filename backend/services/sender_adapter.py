@@ -69,6 +69,7 @@ async def send_media(
     file_mime: str,
     caption: str,
     inline_buttons: Optional[List[List[Dict[str, Any]]]] = None,
+    reply_keyboard: Optional[List[List[Dict[str, Any]]]] = None,
     bot_id: Optional[int] = None,
 ):
     if bot_id is not None:
@@ -117,6 +118,12 @@ async def send_media(
             data["caption"] = caption[:1024]
         if inline_buttons:
             data["reply_markup"] = json.dumps({"inline_keyboard": inline_buttons})
+        elif reply_keyboard:
+            data["reply_markup"] = json.dumps({
+                "keyboard": reply_keyboard,
+                "resize_keyboard": True,
+                "one_time_keyboard": True,
+            })
 
         response = await client.post(
             f"https://api.telegram.org/bot{token}/{method}",
