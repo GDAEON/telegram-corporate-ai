@@ -59,6 +59,7 @@ services:
     image: prom/prometheus:latest
     volumes:
       - ./backend/config/prometheus.yml:/config/prometheus.yml:ro
+      - ./backend/shared:/etc/prometheus:ro
     command:
       - --config.file=/config/prometheus.yml
     ports:

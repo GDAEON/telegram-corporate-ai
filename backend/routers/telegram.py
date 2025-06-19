@@ -238,7 +238,7 @@ async def handle_webhook(bot_id: int, request: Request):
         }
 
         async with httpx.AsyncClient() as client:
-            response = await client.post(f"{INTEGRATION_URL}/{INTEGRATION_CODE}/12/event", json=request_body, headers=headers)
+            response = await client.post(f"{INTEGRATION_URL}/{INTEGRATION_CODE}/12/event", json=request_body, headers=headers) #TODO replace with bot_id
 
         if response.status_code >= 400:
             raise HTTPException(status_code=response.status_code, detail=response.text)
