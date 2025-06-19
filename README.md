@@ -156,20 +156,22 @@ This project is compatible with **Yandex Cloud API Gateway**. Below is a simplif
 ```yaml
 openapi: 3.0.0
 info:
-  title: Telegram AI Proxy
+  title: Sample API
   version: 1.0.0
 x-yc-apigateway:
   variables:
     service_url:
-      default: your-backend-url.ngrok-free.app
+      default: 5b59-166-1-157-129.ngrok-free.app
+      description: ngrok or backend base URL
     frontend_url:
-      default: your-frontend-url.ngrok-free.app
+      default: 5b59-166-1-157-129.ngrok-free.app
+      description: ngrok or frontend base URL
 servers:
-- url: https://<gateway-domain>.apigw.yandexcloud.net
+- url: https://d5d1dfaumqfvtppjsai1.ubofext2.apigw.yandexcloud.net
 paths:
   /{proxy+}:
     get:
-      summary: Serve SPA
+      summary: Serve React SPA
       parameters:
         - name: proxy
           in: path
@@ -182,20 +184,738 @@ paths:
         url: http://${var.frontend_url}/{proxy}
         headers:
           Host: ${var.frontend_url}
-  /webhook/{bot_id}:
-    post:
-      x-yc-apigateway-integration:
-        type: http
-        method: POST
-        url: http://${var.service_url}/webhook/{bot_id}
-        headers:
-          Host: ${var.service_url}
-  /docs:
+      responses:
+        '200':
+          description: OK
+
+  /:
     get:
+      summary: Serve React root
       x-yc-apigateway-integration:
         type: http
         method: GET
+        url: http://${var.frontend_url}/
+        headers:
+          Host: ${var.frontend_url}
+      responses:
+        '200':
+          description: OK
+    options:
+      x-yc-apigateway-integration:
+        type: dummy
+        http_code: 204
+        content:
+          application/json: ''
+        http_headers:
+          Access-Control-Allow-Origin: '*'
+          Access-Control-Allow-Methods: GET, POST, PATCH, DELETE, OPTIONS
+          Access-Control-Allow-Headers: '*'
+          Access-Control-Max-Age: '3600'
+  /docs:
+    get:
+      x-yc-apigateway-integration:
+        headers:
+          Host: ${var.service_url}
+        method: get
+        type: http
         url: http://${var.service_url}/docs
+    options:
+      x-yc-apigateway-integration:
+        type: dummy
+        http_code: 204
+        content:
+          application/json: ''
+        http_headers:
+          Access-Control-Allow-Origin: '*'
+          Access-Control-Allow-Methods: GET, POST, PATCH, DELETE, OPTIONS
+          Access-Control-Allow-Headers: '*'
+          Access-Control-Max-Age: '3600'
+  /openapi.json:
+    get:
+      x-yc-apigateway-integration:
+        headers:
+          Host: ${var.service_url}
+        method: get
+        type: http
+        url: http://${var.service_url}/openapi.json
+    options:
+      x-yc-apigateway-integration:
+        type: dummy
+        http_code: 204
+        content:
+          application/json: ''
+        http_headers:
+          Access-Control-Allow-Origin: '*'
+          Access-Control-Allow-Methods: GET, POST, PATCH, DELETE, OPTIONS
+          Access-Control-Allow-Headers: '*'
+          Access-Control-Max-Age: '3600'
+  /webhook/{bot_id}:
+    post:
+      summary: Webhook for specific bot
+      parameters:
+      - name: bot_id
+        in: path
+        required: true
+        schema:
+          type: integer
+      x-yc-apigateway-integration:
+        type: http
+        method: post
+        url: http://${var.service_url}/webhook/{bot_id}
+        headers:
+          Host: ${var.service_url}
+          '*': '*'
+        query:
+          '*': '*'
+      responses:
+        '200':
+          description: OK
+    options:
+      x-yc-apigateway-integration:
+        type: dummy
+        http_code: 204
+        content:
+          application/json: ''
+        http_headers:
+          Access-Control-Allow-Origin: '*'
+          Access-Control-Allow-Methods: GET, POST, PATCH, DELETE, OPTIONS
+          Access-Control-Allow-Headers: '*'
+          Access-Control-Max-Age: '3600'
+      parameters:
+      - name: bot_id
+        in: path
+        required: true
+        schema:
+          type: string
+  /bot:
+    post:
+      x-yc-apigateway-integration:
+        headers:
+          Host: ${var.service_url}
+          '*': '*'
+        method: post
+        query:
+          '*': '*'
+        type: http
+        url: http://${var.service_url}/bot
+    delete:
+      x-yc-apigateway-integration:
+        headers:
+          Host: ${var.service_url}
+          '*': '*'
+        method: delete
+        query:
+          '*': '*'
+        type: http
+        url: http://${var.service_url}/bot
+    options:
+      x-yc-apigateway-integration:
+        type: dummy
+        http_code: 204
+        content:
+          application/json: ''
+        http_headers:
+          Access-Control-Allow-Origin: '*'
+          Access-Control-Allow-Methods: GET, POST, PATCH, DELETE, OPTIONS
+          Access-Control-Allow-Headers: '*'
+          Access-Control-Max-Age: '3600'
+  /schema:
+    get:
+      x-yc-apigateway-integration:
+        headers:
+          Host: ${var.service_url}
+          '*': '*'
+        method: get
+        query:
+          '*': '*'
+        type: http
+        url: http://${var.service_url}/schema
+    options:
+      x-yc-apigateway-integration:
+        type: dummy
+        http_code: 204
+        content:
+          application/json: ''
+        http_headers:
+          Access-Control-Allow-Origin: '*'
+          Access-Control-Allow-Methods: GET, POST, PATCH, DELETE, OPTIONS
+          Access-Control-Allow-Headers: '*'
+          Access-Control-Max-Age: '3600'
+  /extraVariables:
+    get:
+      x-yc-apigateway-integration:
+        http_code: 200
+        type: dummy
+        content:
+          application/json: '[]'
+    options:
+      x-yc-apigateway-integration:
+        type: dummy
+        http_code: 204
+        content:
+          application/json: ''
+        http_headers:
+          Access-Control-Allow-Origin: '*'
+          Access-Control-Allow-Methods: GET, POST, PATCH, DELETE, OPTIONS
+          Access-Control-Allow-Headers: '*'
+          Access-Control-Max-Age: '3600'
+  /messengers:
+    get:
+      x-yc-apigateway-integration:
+        headers:
+          '*': '*'
+        method: get
+        query:
+          '*': '*'
+        type: http
+        url: http://${var.service_url}/messengers
+    options:
+      x-yc-apigateway-integration:
+        type: dummy
+        http_code: 204
+        content:
+          application/json: ''
+        http_headers:
+          Access-Control-Allow-Origin: '*'
+          Access-Control-Allow-Methods: GET, POST, PATCH, DELETE, OPTIONS
+          Access-Control-Allow-Headers: '*'
+          Access-Control-Max-Age: '3600'
+  /sendTextMessage:
+    post:
+      x-yc-apigateway-integration:
+        headers:
+          '*': '*'
+        method: post
+        query:
+          '*': '*'
+        type: http
+        url: http://${var.service_url}/sendTextMessage
+    options:
+      x-yc-apigateway-integration:
+        type: dummy
+        http_code: 204
+        content:
+          application/json: ''
+        http_headers:
+          Access-Control-Allow-Origin: '*'
+          Access-Control-Allow-Methods: GET, POST, PATCH, DELETE, OPTIONS
+          Access-Control-Allow-Headers: '*'
+          Access-Control-Max-Age: '3600'
+  /sendMediaMessage:
+    post:
+      x-yc-apigateway-integration:
+        headers:
+          '*': '*'
+        method: post
+        query:
+          '*': '*'
+        type: http
+        url: http://${var.service_url}/sendMediaMessage
+    options:
+      x-yc-apigateway-integration:
+        type: dummy
+        http_code: 204
+        content:
+          application/json: ''
+        http_headers:
+          Access-Control-Allow-Origin: '*'
+          Access-Control-Allow-Methods: GET, POST, PATCH, DELETE, OPTIONS
+          Access-Control-Allow-Headers: '*'
+          Access-Control-Max-Age: '3600'
+  /api/bot:
+    post:
+      x-yc-apigateway-integration:
+        headers:
+          Host: ${var.service_url}
+          '*': '*'
+        method: post
+        query:
+          '*': '*'
+        type: http
+        url: http://${var.service_url}/api/bot
+    options:
+      x-yc-apigateway-integration:
+        type: dummy
+        http_code: 204
+        content:
+          application/json: ''
+        http_headers:
+          Access-Control-Allow-Origin: '*'
+          Access-Control-Allow-Methods: GET, POST, PATCH, DELETE, OPTIONS
+          Access-Control-Allow-Headers: '*'
+          Access-Control-Max-Age: '3600'
+  /api/owner/{owner_uuid}/bots:
+    get:
+      parameters:
+      - name: owner_uuid
+        in: path
+        required: true
+        schema:
+          type: string
+      x-yc-apigateway-integration:
+        headers:
+          Host: ${var.service_url}
+          '*': '*'
+        method: get
+        query:
+          '*': '*'
+        type: http
+        url: http://${var.service_url}/api/owner/{owner_uuid}/bots
+    options:
+      x-yc-apigateway-integration:
+        type: dummy
+        http_code: 204
+        content:
+          application/json: ''
+        http_headers:
+          Access-Control-Allow-Origin: '*'
+          Access-Control-Allow-Methods: GET, POST, PATCH, DELETE, OPTIONS
+          Access-Control-Allow-Headers: '*'
+          Access-Control-Max-Age: '3600'
+      parameters:
+      - name: owner_uuid
+        in: path
+        required: true
+        schema:
+          type: string
+  /api/{bot_id}/isVerified:
+    get:
+      parameters:
+      - name: bot_id
+        in: path
+        required: true
+        schema:
+          type: integer
+      x-yc-apigateway-integration:
+        headers:
+          Host: ${var.service_url}
+          '*': '*'
+        method: get
+        query:
+          '*': '*'
+        type: http
+        url: http://${var.service_url}/api/{bot_id}/isVerified
+    options:
+      x-yc-apigateway-integration:
+        type: dummy
+        http_code: 204
+        content:
+          application/json: ''
+        http_headers:
+          Access-Control-Allow-Origin: '*'
+          Access-Control-Allow-Methods: GET, POST, PATCH, DELETE, OPTIONS
+          Access-Control-Allow-Headers: '*'
+          Access-Control-Max-Age: '3600'
+      parameters:
+      - name: bot_id
+        in: path
+        required: true
+        schema:
+          type: string
+  /api/{bot_id}/users:
+    get:
+      parameters:
+      - name: bot_id
+        in: path
+        required: true
+        schema:
+          type: integer
+      x-yc-apigateway-integration:
+        headers:
+          Host: ${var.service_url}
+          '*': '*'
+        method: get
+        query:
+          '*': '*'
+        type: http
+        url: http://${var.service_url}/api/{bot_id}/users
+    options:
+      x-yc-apigateway-integration:
+        type: dummy
+        http_code: 204
+        content:
+          application/json: ''
+        http_headers:
+          Access-Control-Allow-Origin: '*'
+          Access-Control-Allow-Methods: GET, POST, PATCH, DELETE, OPTIONS
+          Access-Control-Allow-Headers: '*'
+          Access-Control-Max-Age: '3600'
+      parameters:
+      - name: bot_id
+        in: path
+        required: true
+        schema:
+          type: string
+  /api/{bot_id}/owner:
+    get:
+      parameters:
+      - name: bot_id
+        in: path
+        required: true
+        schema:
+          type: integer
+      x-yc-apigateway-integration:
+        headers:
+          Host: ${var.service_url}
+          '*': '*'
+        method: get
+        query:
+          '*': '*'
+        type: http
+        url: http://${var.service_url}/api/{bot_id}/owner
+    options:
+      x-yc-apigateway-integration:
+        type: dummy
+        http_code: 204
+        content:
+          application/json: ''
+        http_headers:
+          Access-Control-Allow-Origin: '*'
+          Access-Control-Allow-Methods: GET, POST, PATCH, DELETE, OPTIONS
+          Access-Control-Allow-Headers: '*'
+          Access-Control-Max-Age: '3600'
+      parameters:
+      - name: bot_id
+        in: path
+        required: true
+        schema:
+          type: string
+  /api/{bot_id}/authInfo:
+    get:
+      parameters:
+      - name: bot_id
+        in: path
+        required: true
+        schema:
+          type: integer
+      x-yc-apigateway-integration:
+        headers:
+          Host: ${var.service_url}
+          '*': '*'
+        method: get
+        query:
+          '*': '*'
+        type: http
+        url: http://${var.service_url}/api/{bot_id}/authInfo
+    options:
+      x-yc-apigateway-integration:
+        type: dummy
+        http_code: 204
+        content:
+          application/json: ''
+        http_headers:
+          Access-Control-Allow-Origin: '*'
+          Access-Control-Allow-Methods: GET, POST, PATCH, DELETE, OPTIONS
+          Access-Control-Allow-Headers: '*'
+          Access-Control-Max-Age: '3600'
+      parameters:
+      - name: bot_id
+        in: path
+        required: true
+        schema:
+          type: string
+  /api/bot/{bot_id}/refresh:
+    post:
+      parameters:
+      - name: bot_id
+        in: path
+        required: true
+        schema:
+          type: integer
+      x-yc-apigateway-integration:
+        headers:
+          Host: ${var.service_url}
+          '*': '*'
+        method: post
+        query:
+          '*': '*'
+        type: http
+        url: http://${var.service_url}/api/bot/{bot_id}/refresh
+    options:
+      x-yc-apigateway-integration:
+        type: dummy
+        http_code: 204
+        content:
+          application/json: ''
+        http_headers:
+          Access-Control-Allow-Origin: '*'
+          Access-Control-Allow-Methods: GET, POST, PATCH, DELETE, OPTIONS
+          Access-Control-Allow-Headers: '*'
+          Access-Control-Max-Age: '3600'
+      parameters:
+      - name: bot_id
+        in: path
+        required: true
+        schema:
+          type: string
+  /api/bot/{bot_id}/logout:
+    patch:
+      parameters:
+      - name: bot_id
+        in: path
+        required: true
+        schema:
+          type: integer
+      x-yc-apigateway-integration:
+        headers:
+          Host: ${var.service_url}
+          '*': '*'
+        method: patch
+        query:
+          '*': '*'
+        type: http
+        url: http://${var.service_url}/api/bot/{bot_id}/logout
+    options:
+      x-yc-apigateway-integration:
+        type: dummy
+        http_code: 204
+        content:
+          application/json: ''
+        http_headers:
+          Access-Control-Allow-Origin: '*'
+          Access-Control-Allow-Methods: GET, POST, PATCH, DELETE, OPTIONS
+          Access-Control-Allow-Headers: '*'
+          Access-Control-Max-Age: '3600'
+      parameters:
+      - name: bot_id
+        in: path
+        required: true
+        schema:
+          type: string
+  /api/bot/{bot_id}/invite:
+    post:
+      parameters:
+      - name: bot_id
+        in: path
+        required: true
+        schema:
+          type: integer
+      x-yc-apigateway-integration:
+        headers:
+          Host: ${var.service_url}
+          '*': '*'
+        method: post
+        query:
+          '*': '*'
+        type: http
+        url: http://${var.service_url}/api/bot/{bot_id}/invite
+    options:
+      x-yc-apigateway-integration:
+        type: dummy
+        http_code: 204
+        content:
+          application/json: ''
+        http_headers:
+          Access-Control-Allow-Origin: '*'
+          Access-Control-Allow-Methods: GET, POST, PATCH, DELETE, OPTIONS
+          Access-Control-Allow-Headers: '*'
+          Access-Control-Max-Age: '3600'
+      parameters:
+      - name: bot_id
+        in: path
+        required: true
+        schema:
+          type: string
+  /api/bot/{bot_id}/user/{user_id}:
+    patch:
+      parameters:
+      - name: bot_id
+        in: path
+        required: true
+        schema:
+          type: integer
+      - name: user_id
+        in: path
+        required: true
+        schema:
+          type: integer
+      x-yc-apigateway-integration:
+        headers:
+          Host: ${var.service_url}
+          '*': '*'
+        method: patch
+        query:
+          '*': '*'
+        type: http
+        url: http://${var.service_url}/api/bot/{bot_id}/user/{user_id}
+    delete:
+      parameters:
+      - name: bot_id
+        in: path
+        required: true
+        schema:
+          type: integer
+      - name: user_id
+        in: path
+        required: true
+        schema:
+          type: integer
+      x-yc-apigateway-integration:
+        headers:
+          Host: ${var.service_url}
+          '*': '*'
+        method: delete
+        query:
+          '*': '*'
+        type: http
+        url: http://${var.service_url}/api/bot/{bot_id}/user/{user_id}
+    options:
+      x-yc-apigateway-integration:
+        type: dummy
+        http_code: 204
+        content:
+          application/json: ''
+        http_headers:
+          Access-Control-Allow-Origin: '*'
+          Access-Control-Allow-Methods: GET, POST, PATCH, DELETE, OPTIONS
+          Access-Control-Allow-Headers: '*'
+          Access-Control-Max-Age: '3600'
+      parameters:
+      - name: bot_id
+        in: path
+        required: true
+        schema:
+          type: string
+      - name: user_id
+        in: path
+        required: true
+        schema:
+          type: string
+  /metrics/:
+    get:
+      x-yc-apigateway-integration:
+        headers:
+          Host: ${var.service_url}
+          '*': '*'
+        method: get
+        query:
+          '*': '*'
+        type: http
+        url: http://${var.service_url}/metrics/
+    options:
+      x-yc-apigateway-integration:
+        type: dummy
+        http_code: 204
+        content:
+          application/json: ''
+        http_headers:
+          Access-Control-Allow-Origin: '*'
+          Access-Control-Allow-Methods: GET, POST, PATCH, DELETE, OPTIONS
+          Access-Control-Allow-Headers: '*'
+          Access-Control-Max-Age: '3600'
+  /metrics/jobs:
+    get:
+      x-yc-apigateway-integration:
+        headers:
+          Host: ${var.service_url}
+          '*': '*'
+        method: get
+        query:
+          '*': '*'
+        type: http
+        url: http://${var.service_url}/metrics/jobs
+    options:
+      x-yc-apigateway-integration:
+        type: dummy
+        http_code: 204
+        content:
+          application/json: ''
+        http_headers:
+          Access-Control-Allow-Origin: '*'
+          Access-Control-Allow-Methods: GET, POST, PATCH, DELETE, OPTIONS
+          Access-Control-Allow-Headers: '*'
+          Access-Control-Max-Age: '3600'
+  /metrics/job:
+    post:
+      x-yc-apigateway-integration:
+        headers:
+          Host: ${var.service_url}
+          '*': '*'
+        method: post
+        query:
+          '*': '*'
+        type: http
+        url: http://${var.service_url}/metrics/job
+    options:
+      x-yc-apigateway-integration:
+        type: dummy
+        http_code: 204
+        content:
+          application/json: ''
+        http_headers:
+          Access-Control-Allow-Origin: '*'
+          Access-Control-Allow-Methods: GET, POST, PATCH, DELETE, OPTIONS
+          Access-Control-Allow-Headers: '*'
+          Access-Control-Max-Age: '3600'
+  /metrics/job/{name}:
+    delete:
+      parameters:
+      - name: name
+        in: path
+        required: true
+        schema:
+          type: string
+      x-yc-apigateway-integration:
+        headers:
+          Host: ${var.service_url}
+          '*': '*'
+        method: delete
+        query:
+          '*': '*'
+        type: http
+        url: http://${var.service_url}/metrics/job/{name}
+    options:
+      x-yc-apigateway-integration:
+        type: dummy
+        http_code: 204
+        content:
+          application/json: ''
+        http_headers:
+          Access-Control-Allow-Origin: '*'
+          Access-Control-Allow-Methods: GET, POST, PATCH, DELETE, OPTIONS
+          Access-Control-Allow-Headers: '*'
+          Access-Control-Max-Age: '3600'
+      parameters:
+      - name: name
+        in: path
+        required: true
+        schema:
+          type: string
+  /{id}/status:
+    get:
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+      x-yc-apigateway-integration:
+        headers:
+          Host: ${var.service_url}
+          '*': '*'
+        method: get
+        query:
+          '*': '*'
+        type: http
+        url: http://${var.service_url}/{id}/status
+    options:
+      x-yc-apigateway-integration:
+        type: dummy
+        http_code: 204
+        content:
+          application/json: ''
+        http_headers:
+          Access-Control-Allow-Origin: '*'
+          Access-Control-Allow-Methods: GET, POST, PATCH, DELETE, OPTIONS
+          Access-Control-Allow-Headers: '*'
+          Access-Control-Max-Age: '3600'
+      parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+
 ```
 
 > **Note**: Full CORS support is included via `options` dummy integrations.
