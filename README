@@ -6,15 +6,15 @@ This repository contains a full-stack application for integrating **Telegram bot
 
 ## Contents
 
-* [Architecture](#architecture)
-* [Prerequisites](#prerequisites)
-* [Quick Start](#quick-start)
-* [Environment Variables](#environment-variables)
-* [Backend Overview](#backend-overview)
-* [Frontend Overview](#frontend-overview)
-* [Development Scripts](#development-scripts)
-* [API Gateway Usage](#api-gateway-usage)
-* [License](#license)
+- [Architecture](#architecture)
+- [Prerequisites](#prerequisites)
+- [Quick Start](#quick-start)
+- [Environment Variables](#environment-variables)
+- [Backend Overview](#backend-overview)
+- [Frontend Overview](#frontend-overview)
+- [Development Scripts](#development-scripts)
+- [API Gateway Usage](#api-gateway-usage)
+- [License](#license)
 
 ---
 
@@ -30,19 +30,19 @@ telegram-corporate-ai/
 
 ### Services
 
-* **backend** – FastAPI API server
-* **frontend** – React development server
-* **postgres** – PostgreSQL database
-* **redis** – Redis for caching
-* **prometheus** – Metric collection service
-* **grafana** – Visualization dashboard
+- **backend** – FastAPI API server
+- **frontend** – React development server
+- **postgres** – PostgreSQL database
+- **redis** – Redis for caching
+- **prometheus** – Metric collection service
+- **grafana** – Visualization dashboard
 
 ---
 
 ## Prerequisites
 
-* [Docker](https://docs.docker.com/get-docker/) and [docker-compose](https://docs.docker.com/compose/)
-* Optional: `node` and `npm` for running the frontend outside Docker
+- [Docker](https://docs.docker.com/get-docker/) and [docker-compose](https://docs.docker.com/compose/)
+- Optional: `node` and `npm` for running the frontend outside Docker
 
 ---
 
@@ -56,32 +56,31 @@ docker-compose up --build
 ```
 
 3. Access the application:
-
-   * Frontend: [http://localhost:3000](http://localhost:3000)
-   * Backend API: [http://localhost:8000](http://localhost:8000)
-   * Swagger Docs: [http://localhost:8000/docs](http://localhost:8000/docs)
-   * Prometheus: [http://localhost:9090](http://localhost:9090)
-   * Grafana: [http://localhost:3001](http://localhost:3001)
+   - Frontend: [http://localhost:3000](http://localhost:3000)
+   - Backend API: [http://localhost:8000](http://localhost:8000)
+   - Swagger Docs: [http://localhost:8000/docs](http://localhost:8000/docs)
+   - Prometheus: [http://localhost:9090](http://localhost:9090)
+   - Grafana: [http://localhost:3001](http://localhost:3001)
 
 ---
 
 ## Environment Variables
 
-| Variable               | Description                         |
-| ---------------------- | ----------------------------------- |
-| `REACT_APP_BACKEND_IP` | Base API URL used by React          |
-| `WEBHOOK_URL`          | Telegram webhook URL                |
-| `INTEGRATION_URL`      | Corporate service URL               |
-| `INTEGRATION_CODE`     | Integration code                    |
-| `INTEGRATION_TOKEN`    | Bearer token for API access         |
-| `POSTGRES_URL`         | PostgreSQL hostname                 |
-| `POSTGRES_USER`        | PostgreSQL user                     |
-| `POSTGRES_PASSWORD`    | PostgreSQL password                 |
-| `POSTGRES_DB`          | PostgreSQL DB name                  |
-| `FERNET_KEY`           | Key for encrypting sensitive fields |
-| `REDIS_URL`            | Redis hostname                      |
-| `REDIS_PASSWORD`       | Redis password                      |
-| `REDIS_CACHE_TIME`     | TTL for Redis cache (in seconds)    |
+| Variable | Description |
+|----------|-------------|
+| `REACT_APP_BACKEND_IP` | Base API URL used by React |
+| `WEBHOOK_URL` | Telegram webhook URL |
+| `INTEGRATION_URL` | Corporate service URL |
+| `INTEGRATION_CODE` | Integration code |
+| `INTEGRATION_TOKEN` | Bearer token for API access |
+| `POSTGRES_URL` | PostgreSQL hostname |
+| `POSTGRES_USER` | PostgreSQL user |
+| `POSTGRES_PASSWORD` | PostgreSQL password |
+| `POSTGRES_DB` | PostgreSQL DB name |
+| `FERNET_KEY` | Key for encrypting sensitive fields |
+| `REDIS_URL` | Redis hostname |
+| `REDIS_PASSWORD` | Redis password |
+| `REDIS_CACHE_TIME` | TTL for Redis cache (in seconds) |
 | `PROMETHEUS_JOBS_PATH` | Path to Prometheus jobs config file |
 
 ---
@@ -91,35 +90,30 @@ docker-compose up --build
 Located in the `backend/` directory. The main features:
 
 ### Telegram Webhook
-
-* `POST /webhook/{bot_id}` – Handles Telegram updates and forwards to the corporate service.
+- `POST /webhook/{bot_id}` – Handles Telegram updates and forwards to the corporate service.
 
 ### Constructor API
-
-* `GET /schema`
-* `GET /messengers`
-* `POST /sendTextMessage`
-* `POST /sendMediaMessage`
+- `GET /schema`
+- `GET /messengers`
+- `POST /sendTextMessage`
+- `POST /sendMediaMessage`
 
 ### Integration API (`/api` prefix)
-
-* Register and manage bots and their owners
-* Manage bot users
-* Generate invite tokens, refresh URLs, verify statuses
+- Register and manage bots and their owners
+- Manage bot users
+- Generate invite tokens, refresh URLs, verify statuses
 
 ### Metrics API
-
-* `GET /metrics`
-* `GET /metrics/jobs`
-* `POST /metrics/job`
-* `DELETE /metrics/job/{name}`
+- `GET /metrics`
+- `GET /metrics/jobs`
+- `POST /metrics/job`
+- `DELETE /metrics/job/{name}`
 
 ### Data Persistence
-
-* PostgreSQL models: `backend/constants/postgres_models.py`
-* Redis models: `backend/constants/redis_models.py`
-* Prometheus metrics: `backend/constants/prometheus_models.py`
-* Logs: `logs/interactions.log`
+- PostgreSQL models: `backend/constants/postgres_models.py`
+- Redis models: `backend/constants/redis_models.py`
+- Prometheus metrics: `backend/constants/prometheus_models.py`
+- Logs: `logs/interactions.log`
 
 ---
 
@@ -127,10 +121,10 @@ Located in the `backend/` directory. The main features:
 
 Located in the `frontend/` directory. Main React pages/components:
 
-* **ConnectionPage** – Connect or select bots
-* **ConnectionForm** – Input Telegram bot token
-* **OwnerQRModal** – QR code for verifying ownership
-* **AdminPanel** – User management, messaging, and invitations
+- **ConnectionPage** – Connect or select bots
+- **ConnectionForm** – Input Telegram bot token
+- **OwnerQRModal** – QR code for verifying ownership
+- **AdminPanel** – User management, messaging, and invitations
 
 Supports i18n with `react-i18next` (English and Russian). Backend URL comes from `REACT_APP_BACKEND_IP`.
 
@@ -141,14 +135,12 @@ Supports i18n with `react-i18next` (English and Russian). Backend URL comes from
 Each service has its own helpers:
 
 ### Backend
-
 ```bash
 ./backend/run.sh  # Launch with Uvicorn
 pytest            # Run backend tests
 ```
 
 ### Frontend
-
 ```bash
 npm start         # Run development server
 npm run build     # Build production version
