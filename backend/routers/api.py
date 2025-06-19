@@ -22,8 +22,15 @@ from services.webhook_server import get_bot_name, get_bot_id, set_webhook
 router = APIRouter(prefix="/api", tags=["API"])
 
 
-@router.post("/bot", response_model=IntegrationResponse)
+@router.post(
+    "/bot",
+    response_model=IntegrationResponse,
+    description=(
+        "Register a Telegram bot in the corporate service. "
+        "Expects IntegrateRequest with the bot token and owner UUID."),
+)
 async def integrate_new_user(request: IntegrateRequest):
+    """Integrate a new bot or update an existing one."""
     token = request.telegram_token.get_secret_value()
     owner_uuid = request.owner_uuid.get_secret_value()
     locale = request.locale or "en"
@@ -110,9 +117,12 @@ async def integrate_new_user(request: IntegrateRequest):
         raise HTTPException(status_code=500, detail=f"Request failed: {str(e)}")
 
 
-@router.get("/owner/{owner_uuid}/bots")
+@router.get(
+    "/owner/{owner_uuid}/bots",
+    description="List all bots registered by the given owner UUID",
+)
 async def bots_by_owner(owner_uuid: str):
-    """Return list of bots for given owner uuid."""
+    """Return list of bots for a given owner."""
     try:
         infos = db.get_bots_by_owner_uuid(owner_uuid)
         return [
@@ -128,12 +138,21 @@ async def bots_by_owner(owner_uuid: str):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.get("/{bot_id}/isVerified")
+@router.get(
+    "/{bot_id}/isVerified",
+    description="Check if a bot was verified by its owner",
+)
 async def is_bot_verified(bot_id: int):
+    """Return verification status of the bot."""
     return db.is_bot_verified(bot_id)
 
 
-@router.get("/{bot_id}/users", response_model=UsersPageResponse)
+@router.get(
+    "/{bot_id}/users",
+    response_model=UsersPageResponse,
+    description=(
+        "List bot users. Supports pagination, search and status filtering."),
+)
 async def list_bot_users(
     bot_id: int,
     page: int = 1,
@@ -141,6 +160,7 @@ async def list_bot_users(
     search: Optional[str] = None,
     status: Optional[bool] = None,
 ):
+    """Return paginated users for the given bot."""
     try:
         users, total = db.get_bot_users(
             bot_id=bot_id,
@@ -155,8 +175,12 @@ async def list_bot_users(
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.get("/{bot_id}/owner")
+@router.get(
+    "/{bot_id}/owner",
+    description="Return stored owner name for the bot",
+)
 async def owner_name(bot_id: int) -> str:
+    """Return bot owner's display name."""
     try:
         owner_name = db.get_owner_name(bot_id)
 
@@ -165,8 +189,12 @@ async def owner_name(bot_id: int) -> str:
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.get("/{bot_id}/authInfo")
+@router.get(
+    "/{bot_id}/authInfo",
+    description="Return authentication info for admin panel login",
+)
 async def auth_info(bot_id: int):
+    """Return bot name, pass token and admin panel url."""
     try:
         bot_name, pass_uuid, web_url, _ = db.get_bot_auth(bot_id)
 
@@ -175,7 +203,11 @@ async def auth_info(bot_id: int):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.post("/bot/{bot_id}/refresh", response_model=IntegrationResponse)
+@router.post(
+    "/bot/{bot_id}/refresh",
+    response_model=IntegrationResponse,
+    description="Request a new admin panel URL for the bot",
+)
 async def refresh_web_url(bot_id: int, locale: Optional[str] = None):
     """Fetch a new admin panel URL for the bot."""
     if not db.bot_exists(bot_id):
@@ -227,7 +259,10 @@ async def refresh_web_url(bot_id: int, locale: Optional[str] = None):
         raise HTTPException(status_code=500, detail=f"Request failed: {str(e)}")
 
 
-@router.post("/bot/{bot_id}/invite")
+@router.post(
+    "/bot/{bot_id}/invite",
+    description="Generate a single use invitation token for a bot",
+)
 async def generate_invite(bot_id: int):
     """Generate a single-use pass UUID for inviting a user."""
     if not db.bot_exists(bot_id):
@@ -239,7 +274,10 @@ async def generate_invite(bot_id: int):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.patch("/bot/{bot_id}/logout")
+@router.patch(
+    "/bot/{bot_id}/logout",
+    description="Mark bot as unverified forcing owner to login again",
+)
 async def logout_owner(bot_id: int):
     """Log out owner from admin panel."""
     try:
@@ -249,8 +287,12 @@ async def logout_owner(bot_id: int):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.patch("/bot/{bot_id}/user/{user_id}")
+@router.patch(
+    "/bot/{bot_id}/user/{user_id}",
+    description="Change active status of a bot user",
+)
 async def switch_activness(bot_id: int, user_id: int, new_status: bool):
+    """Activate or deactivate a user."""
     try:
         db.set_botuser_status(bot_id, user_id, new_status)
         return {"user_id": user_id, "is_active": new_status}
@@ -258,8 +300,12 @@ async def switch_activness(bot_id: int, user_id: int, new_status: bool):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.delete("/bot/{bot_id}/user/{user_id}")
+@router.delete(
+    "/bot/{bot_id}/user/{user_id}",
+    description="Remove a user from a bot and delete all data",
+)
 async def delete_user(bot_id: int, user_id: int):
+    """Delete a user from the database."""
     try:
         db.delete_user_by_id(user_id)
         return Response(status_code=204)

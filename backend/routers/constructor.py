@@ -8,12 +8,14 @@ import services.db as db
 router = APIRouter(tags=["Constructor"])
 
 
-@router.get("/schema")
+@router.get("/schema", description="Return integration JSON schema")
 async def get_schema():
+    """Return the constructor schema used by the admin panel."""
     return JSONResponse(content=SCHEME)
 
-@router.get("/messengers")
+@router.get("/messengers", description="List all available messenger contacts")
 async def list_messengers():
+    """Return all users grouped as messenger contacts."""
     try:
         bot_users = db.get_all_bot_users()
         items = [
@@ -34,8 +36,9 @@ async def list_messengers():
             status_code=500,
         )
 
-@router.get("/{id}/status")
+@router.get("/{id}/status", description="Return integration status for bot")
 async def get_status(id: int):
+    """Return status information for the bot."""
     return {
     "status": "active",
     "paymentStatus": "trial",
@@ -43,8 +46,9 @@ async def get_status(id: int):
     }
 
 
-@router.post('/sendTextMessage', description="Sends message to a chat")
+@router.post('/sendTextMessage', description="Send a text message to a chat")
 async def send_message(request: SendTextMessageRequest):
+    """Send text with optional buttons and quick replies."""
     try:
         token = db.get_bot_token(request.chat.messengerId)
         chat_id = request.chat.contact
@@ -94,8 +98,9 @@ async def send_message(request: SendTextMessageRequest):
         )
 
 
-@router.post('/sendMediaMessage', description="Sends media message to a chat")
+@router.post('/sendMediaMessage', description="Send a media message to a chat")
 async def send_media_message(request: SendMediaMessageRequest):
+    """Send files such as images or audio with optional caption."""
     try:
         token = db.get_bot_token(request.chat.messengerId)
         chat_id = request.chat.contact
