@@ -1,4 +1,5 @@
 import httpx
+import json
 from io import BytesIO
 from services.helper_functions import guess_filename
 from typing import List, Optional, Dict, Any
@@ -67,6 +68,9 @@ async def send_media(
     file_url: str,
     file_mime: str,
     caption: str,
+    inline_buttons: Optional[List[List[Dict[str, Any]]]] = None,
+    reply_keyboard: Optional[List[List[Dict[str, Any]]]] = None,
+    remove_keyboard: bool = False,
     bot_id: Optional[int] = None,
 ):
     if bot_id is not None:
@@ -113,6 +117,16 @@ async def send_media(
         }
         if caption and file_type in ["image", "video", "document"]:
             data["caption"] = caption[:1024]
+        if inline_buttons:
+            data["reply_markup"] = json.dumps({"inline_keyboard": inline_buttons})
+        elif reply_keyboard:
+            data["reply_markup"] = json.dumps({
+                "keyboard": reply_keyboard,
+                "resize_keyboard": True,
+                "one_time_keyboard": True,
+            })
+        elif remove_keyboard:
+            data["reply_markup"] = json.dumps({"remove_keyboard": True})
 
         response = await client.post(
             f"https://api.telegram.org/bot{token}/{method}",

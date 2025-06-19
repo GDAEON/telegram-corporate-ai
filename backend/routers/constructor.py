@@ -26,7 +26,7 @@ async def list_messengers():
             }
             for bot_id, user_id, name, surname in bot_users
         ]
-        print(items)
+
         return {"items": items}
     except Exception as e:
         return JSONResponse(
@@ -49,11 +49,30 @@ async def send_message(request: SendTextMessageRequest):
         token = db.get_bot_token(request.chat.messengerId)
         chat_id = request.chat.contact
         text = request.text
+        inline_buttons = request.inlineButtons
+        quick_replies = request.quickReplies
+
+        reply_keyboard = None
+        if quick_replies:
+            reply_keyboard = [
+                [
+                    {
+                        **{"text": qr.text},
+                        **({"request_contact": True} if qr.type.lower() == "phone" else {}),
+                        **({"request_location": True} if qr.type.lower() in {"geolocation", "location"} else {}),
+                    }
+                    for qr in row
+                ]
+                for row in quick_replies
+            ]
 
         response = await sender_adapter.send_message(
             token,
             chat_id,
             text,
+            inline_buttons=inline_buttons,
+            reply_keyboard=reply_keyboard,
+            remove_keyboard=not inline_buttons and not quick_replies,
             bot_id=request.chat.messengerId,
         )
 
@@ -84,6 +103,22 @@ async def send_media_message(request: SendMediaMessageRequest):
         file_url = request.file.url
         file_mime = request.file.mime
         caption = request.caption
+        inline_buttons = request.inlineButtons
+        quick_replies = request.quickReplies
+
+        reply_keyboard = None
+        if quick_replies:
+            reply_keyboard = [
+                [
+                    {
+                        **{"text": qr.text},
+                        **({"request_contact": True} if qr.type.lower() == "phone" else {}),
+                        **({"request_location": True} if qr.type.lower() in {"geolocation", "location"} else {}),
+                    }
+                    for qr in row
+                ]
+                for row in quick_replies
+            ]
 
         response = await sender_adapter.send_media(
             token,
@@ -92,6 +127,9 @@ async def send_media_message(request: SendMediaMessageRequest):
             file_url,
             file_mime,
             caption,
+            inline_buttons=inline_buttons,
+            reply_keyboard=reply_keyboard,
+            remove_keyboard=not inline_buttons and not quick_replies,
             bot_id=request.chat.messengerId,
         )
 
