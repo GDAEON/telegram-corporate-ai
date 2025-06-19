@@ -1,1 +1,1 @@
-export const BACKEND_IP = "https://d5d1dfaumqfvtppjsai1.ubofext2.apigw.yandexcloud.net/api";
+export const BACKEND_IP = process.env.REACT_APP_BACKEND_IP ?? "http://localhost:8000/api";
