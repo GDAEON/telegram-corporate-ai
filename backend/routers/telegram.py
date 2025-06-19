@@ -45,8 +45,13 @@ MESSAGES = {
 def tr(key: str, locale: str) -> str:
     return MESSAGES.get(key, {}).get(locale, MESSAGES[key]["en"])
 
-@router.post('/webhook/{bot_id}', description="Handles webhook calls from telegram", tags=["Telegram"])
+@router.post(
+    '/webhook/{bot_id}',
+    description='Handle incoming Telegram updates for the bot',
+    tags=["Telegram"],
+)
 async def handle_webhook(bot_id: int, request: Request):
+    """Process Telegram webhook updates and forward messages."""
     try:
         update = await request.json()
 

@@ -9,14 +9,16 @@ import os
 
 router = APIRouter(prefix="/metrics", tags=['Metrics'])
 
-@router.get("/")
+@router.get("/", description="Prometheus metrics endpoint")
 async def metrics():
+    """Expose application metrics in Prometheus format."""
     data = generate_latest(registry)
     return Response(content=data, media_type=CONTENT_TYPE_LATEST)
 
 
-@router.get("/jobs")
+@router.get("/jobs", description="List scraping jobs configured for Prometheus")
 async def get_jobs():
+    """Return list of configured Prometheus jobs."""
     if not os.path.exists(PROMETHEUS_JOBS_PATH):
         return []
 
@@ -35,8 +37,9 @@ async def get_jobs():
     ]
 
 
-@router.post("/job")
+@router.post("/job", description="Add a new Prometheus scraping job")
 async def add_job(job: Job):
+    """Add a scraping job to jobs.json if it does not exist."""
     jobs = []
 
     if os.path.exists(PROMETHEUS_JOBS_PATH):
@@ -58,8 +61,9 @@ async def add_job(job: Job):
     return {"status": "added", "job": job.job}
 
 
-@router.delete("/job/{name}")
+@router.delete("/job/{name}", description="Delete a Prometheus scraping job")
 async def delete_job(name: str):
+    """Remove job entry from jobs.json."""
     if not os.path.exists(PROMETHEUS_JOBS_PATH):
         raise HTTPException(status_code=404, detail="jobs.json not found")
 
