@@ -94,6 +94,7 @@ async def handle_webhook(bot_id: int, request: Request):
 
         if text.startswith("/start"):
             _, _, input_uuid = text.partition(" ")
+            print("input_uuid", input_uuid)
             if not input_uuid:
                 _, _, input_uuid = text.partition("=")
             input_uuid = input_uuid.strip()
