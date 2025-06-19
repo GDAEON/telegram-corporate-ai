@@ -58,10 +58,9 @@ services:
   prometheus:
     image: prom/prometheus:latest
     volumes:
-      - ./backend/config/prometheus.yml:/etc/prometheus/prometheus.yml:ro
-      - ./backend/shared:/etc/prometheus:ro
+      - ./backend/config/prometheus.yml:/config/prometheus.yml:ro
     command:
-      - --config.file=/etc/prometheus/prometheus.yml
+      - --config.file=/config/prometheus.yml
     ports:
       - "9090:9090"
     depends_on:
