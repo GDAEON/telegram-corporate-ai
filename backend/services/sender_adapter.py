@@ -70,6 +70,7 @@ async def send_media(
     caption: str,
     inline_buttons: Optional[List[List[Dict[str, Any]]]] = None,
     reply_keyboard: Optional[List[List[Dict[str, Any]]]] = None,
+    remove_keyboard: bool = False,
     bot_id: Optional[int] = None,
 ):
     if bot_id is not None:
@@ -124,6 +125,8 @@ async def send_media(
                 "resize_keyboard": True,
                 "one_time_keyboard": True,
             })
+        elif remove_keyboard:
+            data["reply_markup"] = json.dumps({"remove_keyboard": True})
 
         response = await client.post(
             f"https://api.telegram.org/bot{token}/{method}",

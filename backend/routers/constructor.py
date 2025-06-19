@@ -76,6 +76,7 @@ async def send_message(request: SendTextMessageRequest):
             text,
             inline_buttons=inline_buttons,
             reply_keyboard=reply_keyboard,
+            remove_keyboard=not inline_buttons and not quick_replies,
             bot_id=request.chat.messengerId,
         )
 
@@ -136,6 +137,7 @@ async def send_media_message(request: SendMediaMessageRequest):
             caption,
             inline_buttons=inline_buttons,
             reply_keyboard=reply_keyboard,
+            remove_keyboard=not inline_buttons and not quick_replies,
             bot_id=request.chat.messengerId,
         )
 
