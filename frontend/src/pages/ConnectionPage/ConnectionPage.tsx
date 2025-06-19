@@ -61,7 +61,7 @@ export const ConnectionPage: React.FC = () => {
         }
     };
 
-    const handleConnect = async (token: string) => {
+    const handleConnect = async (token: string): Promise<string | null> => {
         setLoading(true);
         try {
             const response = await fetch(`${BACKEND_IP}/bot`, {
@@ -77,9 +77,13 @@ export const ConnectionPage: React.FC = () => {
             const data = await response.json();
 
             if (!response.ok) {
-                message.error(data.detail ?? t('failed_request'));
+                let err = data.detail ?? t('failed_request');
+                if (response.status === 401) {
+                    err = t('invalid_token');
+                }
+                message.error(err);
                 setLoading(false);
-                return;
+                return err;
             }
 
             const info: BotInfo = {
@@ -94,9 +98,12 @@ export const ConnectionPage: React.FC = () => {
             });
             setLoading(false);
             selectBot(info);
+            return null;
         } catch (e) {
-            message.error((e as Error).message);
+            const err = (e as Error).message;
+            message.error(err);
             setLoading(false);
+            return err;
         }
     };
 

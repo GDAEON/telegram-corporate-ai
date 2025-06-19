@@ -14,17 +14,29 @@ const onFinishFailed: FormProps<FieldType>["onFinishFailed"] = (errorInfo) => {
   console.log("Failed:", errorInfo);
 };
 
-export const ConnectionFormView: React.FC<{ onConnect: (token: string) => void; loading: boolean }> = ({ onConnect, loading }) => {
+export const ConnectionFormView: React.FC<{ onConnect: (token: string) => Promise<string | null>; loading: boolean }> = ({ onConnect, loading }) => {
   const { t } = useTranslation();
+  const [form] = Form.useForm();
 
-  const onFinish: FormProps<FieldType>["onFinish"] = values => {
-        onConnect(values.token ?? "");                
+  const onFinish: FormProps<FieldType>["onFinish"] = async values => {
+    const err = await onConnect(values.token ?? "");
+    if (err) {
+      const info = {
+        values,
+        errorFields: [{ name: ["token"], errors: [err] }],
+        outOfDate: false,
+      };
+      form.setFields(info.errorFields);
+      onFinishFailed(info);
+    }
   };
+
 
   return (
     <div className={s.pageContainer}>
       <h1 className={s.FormTitle}>{t('connect_bot')}</h1>
       <Form
+        form={form}
         style={{ width: "100%" }}
         onFinish={onFinish}
         onFinishFailed={onFinishFailed}

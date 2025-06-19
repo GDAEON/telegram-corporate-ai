@@ -35,6 +35,7 @@
   "failed_request": "Request failed",
   "failed_update_status": "Failed to update status",
   "failed_delete_user": "Failed to delete user",
+  "invalid_token": "The token is invalid, please input valid token",
   "search": "Search",
   "reset": "Reset",
   "filter": "Filter",

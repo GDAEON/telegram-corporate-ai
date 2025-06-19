@@ -2,7 +2,7 @@ import React from "react";
 import { ConnectionFormView } from "./ConnectionForm.view";
 
 type Props = {
-    onConnect: (token: string) => void;
+    onConnect: (token: string) => Promise<string | null>;
     loading: boolean;
 };
 
