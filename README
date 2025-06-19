@@ -1,0 +1,219 @@
+# Telegram Corporate AI Integration
+
+This repository contains a full-stack application for integrating **Telegram bots** with a corporate messaging service. It consists of a **FastAPI** backend and a **React** frontend. Infrastructure services such as PostgreSQL, Redis, Prometheus, and Grafana are orchestrated via **Docker Compose**.
+
+---
+
+## Contents
+
+* [Architecture](#architecture)
+* [Prerequisites](#prerequisites)
+* [Quick Start](#quick-start)
+* [Environment Variables](#environment-variables)
+* [Backend Overview](#backend-overview)
+* [Frontend Overview](#frontend-overview)
+* [Development Scripts](#development-scripts)
+* [API Gateway Usage](#api-gateway-usage)
+* [License](#license)
+
+---
+
+## Architecture
+
+```
+telegram-corporate-ai/
+├── backend/        # FastAPI application
+├── frontend/       # React single-page application
+├── docker-compose.yml
+└── ...
+```
+
+### Services
+
+* **backend** – FastAPI API server
+* **frontend** – React development server
+* **postgres** – PostgreSQL database
+* **redis** – Redis for caching
+* **prometheus** – Metric collection service
+* **grafana** – Visualization dashboard
+
+---
+
+## Prerequisites
+
+* [Docker](https://docs.docker.com/get-docker/) and [docker-compose](https://docs.docker.com/compose/)
+* Optional: `node` and `npm` for running the frontend outside Docker
+
+---
+
+## Quick Start
+
+1. Create a `.env` file in the root directory and define the environment variables (see below).
+2. Start the services:
+
+```bash
+docker-compose up --build
+```
+
+3. Access the application:
+
+   * Frontend: [http://localhost:3000](http://localhost:3000)
+   * Backend API: [http://localhost:8000](http://localhost:8000)
+   * Swagger Docs: [http://localhost:8000/docs](http://localhost:8000/docs)
+   * Prometheus: [http://localhost:9090](http://localhost:9090)
+   * Grafana: [http://localhost:3001](http://localhost:3001)
+
+---
+
+## Environment Variables
+
+| Variable               | Description                         |
+| ---------------------- | ----------------------------------- |
+| `REACT_APP_BACKEND_IP` | Base API URL used by React          |
+| `WEBHOOK_URL`          | Telegram webhook URL                |
+| `INTEGRATION_URL`      | Corporate service URL               |
+| `INTEGRATION_CODE`     | Integration code                    |
+| `INTEGRATION_TOKEN`    | Bearer token for API access         |
+| `POSTGRES_URL`         | PostgreSQL hostname                 |
+| `POSTGRES_USER`        | PostgreSQL user                     |
+| `POSTGRES_PASSWORD`    | PostgreSQL password                 |
+| `POSTGRES_DB`          | PostgreSQL DB name                  |
+| `FERNET_KEY`           | Key for encrypting sensitive fields |
+| `REDIS_URL`            | Redis hostname                      |
+| `REDIS_PASSWORD`       | Redis password                      |
+| `REDIS_CACHE_TIME`     | TTL for Redis cache (in seconds)    |
+| `PROMETHEUS_JOBS_PATH` | Path to Prometheus jobs config file |
+
+---
+
+## Backend Overview
+
+Located in the `backend/` directory. The main features:
+
+### Telegram Webhook
+
+* `POST /webhook/{bot_id}` – Handles Telegram updates and forwards to the corporate service.
+
+### Constructor API
+
+* `GET /schema`
+* `GET /messengers`
+* `POST /sendTextMessage`
+* `POST /sendMediaMessage`
+
+### Integration API (`/api` prefix)
+
+* Register and manage bots and their owners
+* Manage bot users
+* Generate invite tokens, refresh URLs, verify statuses
+
+### Metrics API
+
+* `GET /metrics`
+* `GET /metrics/jobs`
+* `POST /metrics/job`
+* `DELETE /metrics/job/{name}`
+
+### Data Persistence
+
+* PostgreSQL models: `backend/constants/postgres_models.py`
+* Redis models: `backend/constants/redis_models.py`
+* Prometheus metrics: `backend/constants/prometheus_models.py`
+* Logs: `logs/interactions.log`
+
+---
+
+## Frontend Overview
+
+Located in the `frontend/` directory. Main React pages/components:
+
+* **ConnectionPage** – Connect or select bots
+* **ConnectionForm** – Input Telegram bot token
+* **OwnerQRModal** – QR code for verifying ownership
+* **AdminPanel** – User management, messaging, and invitations
+
+Supports i18n with `react-i18next` (English and Russian). Backend URL comes from `REACT_APP_BACKEND_IP`.
+
+---
+
+## Development Scripts
+
+Each service has its own helpers:
+
+### Backend
+
+```bash
+./backend/run.sh  # Launch with Uvicorn
+pytest            # Run backend tests
+```
+
+### Frontend
+
+```bash
+npm start         # Run development server
+npm run build     # Build production version
+npm test          # Run tests
+```
+
+---
+
+## API Gateway Usage
+
+This project is compatible with **Yandex Cloud API Gateway**. Below is a simplified example of the OpenAPI configuration:
+
+```yaml
+openapi: 3.0.0
+info:
+  title: Telegram AI Proxy
+  version: 1.0.0
+x-yc-apigateway:
+  variables:
+    service_url:
+      default: your-backend-url.ngrok-free.app
+    frontend_url:
+      default: your-frontend-url.ngrok-free.app
+servers:
+- url: https://<gateway-domain>.apigw.yandexcloud.net
+paths:
+  /{proxy+}:
+    get:
+      summary: Serve SPA
+      parameters:
+        - name: proxy
+          in: path
+          required: true
+          schema:
+            type: string
+      x-yc-apigateway-integration:
+        type: http
+        method: GET
+        url: http://${var.frontend_url}/{proxy}
+        headers:
+          Host: ${var.frontend_url}
+  /webhook/{bot_id}:
+    post:
+      x-yc-apigateway-integration:
+        type: http
+        method: POST
+        url: http://${var.service_url}/webhook/{bot_id}
+        headers:
+          Host: ${var.service_url}
+  /docs:
+    get:
+      x-yc-apigateway-integration:
+        type: http
+        method: GET
+        url: http://${var.service_url}/docs
+```
+
+> **Note**: Full CORS support is included via `options` dummy integrations.
+
+---
+
+## License
+
+Distributed under the [MIT License](LICENSE).
+
+---
+
+For detailed API Gateway configuration, refer to `api-gateway.yaml` inside the project.
