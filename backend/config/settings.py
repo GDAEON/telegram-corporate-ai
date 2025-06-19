@@ -29,8 +29,3 @@ REDIS_CONNECTION_URL = f"redis://:{REDIS_PASSWORD}@{REDIS_URL}"
 
 PROMETHEUS_JOBS_PATH = os.getenv("PROMETHEUS_JOBS_PATH", "/app/shared/jobs.json")
 
-#TODO Remove when get from constructor db
-
-USER_NAME=os.getenv("USER_NAME")
-USER_EMAIL=os.getenv("USER_EMAIL")
-
