@@ -49,7 +49,6 @@ def tr(key: str, locale: str) -> str:
 async def handle_webhook(bot_id: int, request: Request):
     try:
         update = await request.json()
-        print("Webhook update:", update)
 
         token = db.get_bot_token(bot_id)
         if not token:
@@ -60,11 +59,9 @@ async def handle_webhook(bot_id: int, request: Request):
         message = update.get("message") or update.get("edited_message")
         callback = update.get("callback_query")
         if not message and not callback:
-            print("Exception: Unsupported update type")
             raise HTTPException(status_code=400, detail="Unsupported update type")
 
         if callback:
-            print("Callback query:", callback)
             contact_id = callback["from"]["id"]
             text = callback.get("data", "")
             message = callback.get("message", {})
@@ -255,7 +252,6 @@ async def handle_webhook(bot_id: int, request: Request):
             response = await client.post(f"{INTEGRATION_URL}/{INTEGRATION_CODE}/12/event", json=request_body, headers=headers) #TODO replace with bot_id
 
         if response.status_code >= 400:
-            print("Exception", response.text)
             raise HTTPException(status_code=response.status_code, detail=response.text)
 
         if response.content:
@@ -267,5 +263,4 @@ async def handle_webhook(bot_id: int, request: Request):
             return {"status": "ok", "message": "No content"}
     
     except Exception as e:
-        print("Exception", e)
         return JSONResponse(content={"ok": False, "error": str(e)}, status_code=400)

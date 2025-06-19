@@ -26,7 +26,7 @@ async def list_messengers():
             }
             for bot_id, user_id, name, surname in bot_users
         ]
-        print(items)
+
         return {"items": items}
     except Exception as e:
         return JSONResponse(
@@ -46,15 +46,11 @@ async def get_status(id: int):
 @router.post('/sendTextMessage', description="Sends message to a chat")
 async def send_message(request: SendTextMessageRequest):
     try:
-        print("sendTextMessage request:", request.dict())
         token = db.get_bot_token(request.chat.messengerId)
         chat_id = request.chat.contact
         text = request.text
         inline_buttons = request.inlineButtons
         quick_replies = request.quickReplies
-
-        if inline_buttons or quick_replies:
-            print("INLINE BUTTONS RECEIVED")
 
         reply_keyboard = None
         if quick_replies:
@@ -101,7 +97,6 @@ async def send_message(request: SendTextMessageRequest):
 @router.post('/sendMediaMessage', description="Sends media message to a chat")
 async def send_media_message(request: SendMediaMessageRequest):
     try:
-        print("sendMediaMessage request:", request.dict())
         token = db.get_bot_token(request.chat.messengerId)
         chat_id = request.chat.contact
         file_type = request.file.type
@@ -110,9 +105,6 @@ async def send_media_message(request: SendMediaMessageRequest):
         caption = request.caption
         inline_buttons = request.inlineButtons
         quick_replies = request.quickReplies
-
-        if inline_buttons or quick_replies:
-            print("INLINE BUTTONS RECEIVED")
 
         reply_keyboard = None
         if quick_replies:
