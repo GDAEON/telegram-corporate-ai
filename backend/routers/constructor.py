@@ -15,16 +15,18 @@ async def get_schema():
 @router.get("/messengers")
 async def list_messengers():
     try:
-        bots = db.get_all_bots()
+        bot_users = db.get_all_bot_users()
         items = [
             {
                 "externalType": "telegram",
-                "externalId": bot_id,
-                "name": name,
-                "messengerId": bot_id,
+                "externalId": f"{user_id}",
+                "name": f"{name or ''} {surname or ''}".strip(),
+                "messengerId": f"12", # TODO replace with bot id
+                "internalType": "Telegram",
             }
-            for bot_id, name in bots
+            for bot_id, user_id, name, surname in bot_users
         ]
+        print(items)
         return {"items": items}
     except Exception as e:
         return JSONResponse(

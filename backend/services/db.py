@@ -147,6 +147,19 @@ def get_all_bots() -> list[Tuple[int, str]]:
         rows = session.query(Bot.id, Bot.name).order_by(Bot.id).all()
         return [(bot_id, name) for bot_id, name in rows]
 
+def get_all_bot_users() -> list[Tuple[int, int, str | None, str | None]]:
+    """Return list of bot id, user id and user names for all bot users."""
+    with get_session() as session:
+        rows = (
+            session.query(BotUser.bot_id, User.id, User.name, User.surname)
+            .join(User, BotUser.user_id == User.id)
+            .order_by(BotUser.bot_id, User.id)
+            .all()
+        )
+        return [
+            (bot_id, user_id, name, surname)
+            for bot_id, user_id, name, surname in rows
+        ]
 
 def get_bot_token(id: int) -> Optional[str]:
     token = rdb.Bot.get(id)
