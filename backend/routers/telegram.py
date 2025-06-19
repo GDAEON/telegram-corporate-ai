@@ -58,6 +58,7 @@ async def handle_webhook(bot_id: int, request: Request):
 
         message = update.get("message") or update.get("edited_message")
         if not message:
+            print("Exception: Unsupported update type")
             raise HTTPException(status_code=400, detail="Unsupported update type")
 
         contact_id = message["from"]["id"]
@@ -94,7 +95,6 @@ async def handle_webhook(bot_id: int, request: Request):
 
         if text.startswith("/start"):
             _, _, input_uuid = text.partition(" ")
-            print("input_uuid", input_uuid)
             if not input_uuid:
                 _, _, input_uuid = text.partition("=")
             input_uuid = input_uuid.strip()
@@ -242,6 +242,7 @@ async def handle_webhook(bot_id: int, request: Request):
             response = await client.post(f"{INTEGRATION_URL}/{INTEGRATION_CODE}/12/event", json=request_body, headers=headers) #TODO replace with bot_id
 
         if response.status_code >= 400:
+            print("Exception", response.text)
             raise HTTPException(status_code=response.status_code, detail=response.text)
 
         if response.content:
@@ -253,4 +254,5 @@ async def handle_webhook(bot_id: int, request: Request):
             return {"status": "ok", "message": "No content"}
     
     except Exception as e:
+        print("Exception", e)
         return JSONResponse(content={"ok": False, "error": str(e)}, status_code=400)
