@@ -1,8 +1,12 @@
 {
+  "actions": {
+      "send_system_message": {
+        "supported": true
+      }
+    },
   "messenger_types": {
-    "telegram": {
-      "name": "Telegram",
-      "internal_type": "telegram",
+    "employees": {
+      "name": "Сотрудники",
       "quick_replies": {
         "text": true,
         "text_max_length": 20,

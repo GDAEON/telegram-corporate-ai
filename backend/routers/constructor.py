@@ -20,11 +20,10 @@ async def list_messengers():
         bot_users = db.get_all_bot_users()
         items = [
             {
-                "externalType": "telegram",
+                "externalType": "employees",
                 "externalId": f"{user_id}",
                 "name": f"{name or ''} {surname or ''}".strip(),
                 "messengerId": f"12", # TODO replace with bot id
-                "internalType": "Telegram",
             }
             for bot_id, user_id, name, surname in bot_users
         ]
