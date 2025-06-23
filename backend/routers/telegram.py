@@ -214,13 +214,12 @@ async def handle_webhook(bot_id: int, request: Request):
             "timestamp": ts,
             "chat": {
                 "externalId": f"{contact_id}",
-                "messengerInstance": "12", # TODO replace with bot_id
-                "messengerId": f"{bot_id}",
+                "messengerInstance": f"{contact_id}",
+                "messengerId": f"{contact_id}",
                 "contact": {
                     "externalId": f"{contact_id}"
                 }
             },
-            "participant": participant_name,
             "message": {
                 "externalId": "146379262", # TODO replace with message_id
                 "text": f"{text}",
