@@ -45,21 +45,11 @@
       "type": "logs",
       "title": "Interaction Logs",
       "gridPos": {"x": 12, "y": 8, "w": 12, "h": 8},
-      "datasource": "Prometheus",
+      "datasource": "Loki",
       "targets": [
         {
-          "expr": "increase(bot_message_text_total[1m])",
-          "legendFormat": "{{direction}}",
-          "format": "table",
-          "instant": true
-        }
-      ],
-      "transformations": [
-        {
-          "id": "labelsToFields",
-          "options": {
-            "mode": "labels"
-          }
+          "expr": "{app=\"telegram-corp-ai\"}",
+          "refId": "A"
         }
       ]
     },

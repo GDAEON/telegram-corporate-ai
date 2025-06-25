@@ -1,6 +1,6 @@
 # Telegram Corporate AI Integration
 
-This repository contains a full-stack application for integrating **Telegram bots** with a corporate messaging service. It consists of a **FastAPI** backend and a **React** frontend. Infrastructure services such as PostgreSQL, Redis, Prometheus, and Grafana are orchestrated via **Docker Compose**.
+This repository contains a full-stack application for integrating **Telegram bots** with a corporate messaging service. It consists of a **FastAPI** backend and a **React** frontend. Infrastructure services such as PostgreSQL, Redis, Prometheus, Loki, and Grafana are orchestrated via **Docker Compose**.
 
 ---
 
@@ -36,6 +36,7 @@ telegram-corporate-ai/
 - **redis** – Redis for caching
 - **prometheus** – Metric collection service
 - **grafana** – Visualization dashboard
+- **loki** – Log aggregation service
 
 ---
 
@@ -61,6 +62,7 @@ docker-compose up --build
    - Swagger Docs: [http://localhost:8000/docs](http://localhost:8000/docs)
    - Prometheus: [http://localhost:9090](http://localhost:9090)
    - Grafana: [http://localhost:3001](http://localhost:3001)
+   - Loki: [http://localhost:3100](http://localhost:3100)
 
 ---
 
@@ -82,6 +84,7 @@ docker-compose up --build
 | `REDIS_PASSWORD` | Redis password |
 | `REDIS_CACHE_TIME` | TTL for Redis cache (in seconds) |
 | `PROMETHEUS_JOBS_PATH` | Path to Prometheus jobs config file |
+| `LOKI_URL` | URL for Loki log ingestion |
 
 ---
 
@@ -114,6 +117,7 @@ Located in the `backend/` directory. The main features:
 - Redis models: `backend/constants/redis_models.py`
 - Prometheus metrics: `backend/constants/prometheus_models.py`
 - Logs: `logs/interactions.log`
+- Logs forwarded to Loki
 
 ---
 

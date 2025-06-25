@@ -4,6 +4,7 @@ from constants.request_models import SendTextMessageRequest, SendMediaMessageReq
 from config.settings import SCHEME
 import services.sender_adapter as sender_adapter
 import services.db as db
+from services.logging_setup import interaction_logger
 
 router = APIRouter(tags=["Constructor"])
 
@@ -49,6 +50,9 @@ async def get_status(id: int):
 async def send_message(request: SendTextMessageRequest):
     """Send text with optional buttons and quick replies."""
     try:
+        interaction_logger.info(
+            f"Sending text message to {request.chat.contact} via bot {request.chat.messengerId}"
+        )
         token = db.get_bot_token(request.chat.messengerId)
         chat_id = request.chat.contact
         text = request.text
@@ -80,10 +84,15 @@ async def send_message(request: SendTextMessageRequest):
         )
 
         if response["status_code"] == 200:
-
             messenger_id = request.chat.messengerId
+            interaction_logger.info(
+                f"Text message sent to {chat_id} via bot {messenger_id}"
+            )
             return {"externalId": chat_id, "messengerId": messenger_id}
         else:
+            interaction_logger.error(
+                f"Failed to send text message via bot {request.chat.messengerId}: {response['body']}"
+            )
             return JSONResponse(
                 content={"message": str(e), "code": "feature_not_supported"},
                 status_code=202
@@ -91,6 +100,7 @@ async def send_message(request: SendTextMessageRequest):
 
         
     except Exception as e:
+        interaction_logger.error(f"Text send failed: {e}")
         return JSONResponse(
             content={"message": str(e), "code": "internal_server_error"},
             status_code=202
@@ -101,6 +111,9 @@ async def send_message(request: SendTextMessageRequest):
 async def send_media_message(request: SendMediaMessageRequest):
     """Send files such as images or audio with optional caption."""
     try:
+        interaction_logger.info(
+            f"Sending media message to {request.chat.contact} via bot {request.chat.messengerId}"
+        )
         token = db.get_bot_token(request.chat.messengerId)
         chat_id = request.chat.contact
         file_type = request.file.type
@@ -139,11 +152,18 @@ async def send_media_message(request: SendMediaMessageRequest):
 
         if response["status_code"] == 200:
             messenger_id = request.chat.messengerId
+            interaction_logger.info(
+                f"Media message sent to {chat_id} via bot {messenger_id}"
+            )
             return {"externalId": chat_id, "messengerId": messenger_id}
         else:
+            interaction_logger.error(
+                f"Failed to send media via bot {request.chat.messengerId}: {response['body']}"
+            )
             return {"message": response['body'], "code": "feature_not_supported"}
 
     except Exception as e:
+        interaction_logger.error(f"Media send failed: {e}")
         return JSONResponse(
             content={"message": str(e), "code": "internal_server_error"},
             status_code=202
