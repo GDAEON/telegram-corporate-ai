@@ -136,6 +136,7 @@ class Project(Base):
     __tablename__ = 'projects'
 
     id = Column(BigInteger, primary_key=True)
+    name = Column(Text, nullable=False)
     code = Column(Text, nullable=False)
 
     bots = relationship("BotProject", back_populates="project")
