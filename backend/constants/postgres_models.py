@@ -22,6 +22,7 @@ session = Session()
 
 Base = declarative_base()
 
+
 class Bot(Base):
     __tablename__ = 'bots'
 
