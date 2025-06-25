@@ -65,7 +65,8 @@ async def handle_webhook(bot_id: int, request: Request):
         message = update.get("message") or update.get("edited_message")
         callback = update.get("callback_query")
         if not message and not callback:
-            raise HTTPException(status_code=400, detail="Unsupported update type")
+            return JSONResponse(content={"ok": False, "error": "Unsupported update type"}, status_code=200)
+
 
         if callback:
             contact_id = callback["from"]["id"]
@@ -209,6 +210,7 @@ async def handle_webhook(bot_id: int, request: Request):
                 part for part in [user_info.get("first_name"), user_info.get("last_name")] if part
             )
         )
+        message_id = str(message.get("message_id"))
 
         request_body = {
             "eventType": "InboxReceived",
@@ -221,8 +223,9 @@ async def handle_webhook(bot_id: int, request: Request):
                     "externalId": f"{contact_id}"
                 }
             },
+            "participant": participant_name,
             "message": {
-                "externalId": "146379262", # TODO replace with message_id
+                "externalId": message_id,
                 "text": f"{text}",
                 "date": f"{date}"
             }
@@ -257,7 +260,7 @@ async def handle_webhook(bot_id: int, request: Request):
             response = await client.post(f"{INTEGRATION_URL}/{INTEGRATION_CODE}/12/event", json=request_body, headers=headers) #TODO replace with bot_id
 
         if response.status_code >= 400:
-            raise HTTPException(status_code=response.status_code, detail=response.text)
+            return JSONResponse(content={"ok": False, "error": response.text}, status_code=200)
 
         if response.content:
             try:
@@ -269,4 +272,4 @@ async def handle_webhook(bot_id: int, request: Request):
     
     except Exception as e:
         interaction_logger.error(f"Webhook handling failed for bot_id={bot_id}: {e}")
-        return JSONResponse(content={"ok": False, "error": str(e)}, status_code=400)
+        return JSONResponse(content={"ok": False, "error": str(e)}, status_code=200)
