@@ -20,7 +20,6 @@ engine = create_engine(POSTGRES_CONNECTION_URL)
 Session = sessionmaker(bind=engine)
 session = Session()
 
-
 Base = declarative_base()
 
 
