@@ -45,6 +45,7 @@ class Bot(Base):
         self.isVerified = bool(value)
 
     users = relationship("BotUser", back_populates="bot")
+    projects = relationship("BotProject", back_populates="bot")
     pass_tokens = relationship(
         "PassToken",
         back_populates="bot",
@@ -107,6 +108,7 @@ class User(Base):
     phone = Column(LargeBinary, nullable=True)
 
     bots = relationship("BotUser", back_populates="user")
+    projects = relationship("UserProjectSelection", back_populates="user")
 
     def set_phone(self, plain_phone: str):
         self.phone = cipher.encrypt(plain_phone.encode())
@@ -129,5 +131,44 @@ class BotUser(Base):
     __table_args__ = (
         Index('ix_bot_user_bot_id_user_id', 'bot_id', 'user_id', unique=True),
     )
+
+class Project(Base):
+    __tablename__ = 'projects'
+
+    id = Column(BigInteger, primary_key=True)
+    name = Column(Text, nullable=False)
+
+    bots = relationship("BotProject", back_populates="project")
+    users = relationship("UserProjectSelection", back_populates="project")
+
+
+class BotProject(Base):
+    __tablename__ = 'bot_project'
+
+    bot_id = Column(BigInteger, ForeignKey('bots.id', ondelete='CASCADE'), primary_key=True)
+    project_id = Column(BigInteger, ForeignKey('projects.id', ondelete='CASCADE'), primary_key=True)
+    is_main = Column(Boolean, default=False, nullable=False)
+
+    bot = relationship("Bot", back_populates="projects")
+    project = relationship("Project", back_populates="bots")
+
+    __table_args__ = (
+        Index('ix_bot_project_bot_id_project_id', 'bot_id', 'project_id', unique=True),
+    )
+
+class UserProjectSelection(Base):
+    __tablename__ = 'user_project_selection'
+
+    user_id = Column(BigInteger, ForeignKey('users.id', ondelete='CASCADE'), primary_key=True)
+    project_id = Column(BigInteger, ForeignKey('projects.id', ondelete='CASCADE'), primary_key=True)
+    is_selected = Column(Boolean, default=False, nullable=False)
+
+    user = relationship("User", back_populates="projects")
+    project = relationship("Project", back_populates="users")
+
+    __table_args__ = (
+        Index('ix_user_project_selection_user_id_project_id', 'user_id', 'project_id', unique=True),
+    )
+
 
 Base.metadata.create_all(engine)
