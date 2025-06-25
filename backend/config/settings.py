@@ -10,8 +10,8 @@ INTEGRATION_URL = os.getenv("INTEGRATION_URL")
 INTEGRATION_CODE = os.getenv("INTEGRATION_CODE")
 INTEGRATION_TOKEN = os.getenv("INTEGRATION_TOKEN")
 
-with open('config/scheme.json', 'r', encoding='utf-8') as f:
-    SCHEME = json.load(f)
+# with open('config/scheme.json', 'r', encoding='utf-8') as f:
+#     SCHEME = json.load(f)
 
 
 POSTGRES_URL=os.getenv("POSTGRES_URL")
