@@ -135,7 +135,7 @@ class BotUser(Base):
 class Project(Base):
     __tablename__ = 'projects'
 
-    id = Column(BigInteger, primary_key=True)
+    id = Column(BigInteger, primary_key=True, autoincrement=True)
     name = Column(Text, nullable=False)
     code = Column(Text, nullable=False)
 
