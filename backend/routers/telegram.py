@@ -53,6 +53,7 @@ def tr(key: str, locale: str) -> str:
 async def handle_webhook(bot_id: int, request: Request):
     """Process Telegram webhook updates and forward messages."""
     try:
+        interaction_logger.info(f"Webhook call for bot_id={bot_id}")
         update = await request.json()
 
         token = db.get_bot_token(bot_id)
@@ -267,4 +268,5 @@ async def handle_webhook(bot_id: int, request: Request):
             return {"status": "ok", "message": "No content"}
     
     except Exception as e:
+        interaction_logger.error(f"Webhook handling failed for bot_id={bot_id}: {e}")
         return JSONResponse(content={"ok": False, "error": str(e)}, status_code=400)

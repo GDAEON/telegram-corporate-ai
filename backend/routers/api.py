@@ -18,6 +18,7 @@ import httpx
 import services.helper_functions as hf
 import services.db as db
 from services.webhook_server import get_bot_name, get_bot_id, set_webhook
+from services.logging_setup import interaction_logger
 
 router = APIRouter(prefix="/api", tags=["API"])
 
@@ -37,6 +38,9 @@ async def integrate_new_user(request: IntegrateRequest):
 
     bot_id = await get_bot_id(token)
     bot_name = await get_bot_name(token)
+    interaction_logger.info(
+        f"Integrating bot '{bot_name}' ({bot_id}) for owner {owner_uuid}"
+    )
 
     if not bot_id or not bot_name:
         raise HTTPException(status_code=401, detail="Invalid bot token")
@@ -109,11 +113,15 @@ async def integrate_new_user(request: IntegrateRequest):
                 locale,
             )
 
+        interaction_logger.info(
+            f"Integration completed bot_id={bot_id} url={web_url}"
+        )
         return IntegrationResponse(
             botName=bot_name, passUuid=pass_uuid, webUrl=web_url, botId=bot_id
         )
 
     except Exception as e:
+        interaction_logger.error(f"Integration failed: {e}")
         raise HTTPException(status_code=500, detail=f"Request failed: {str(e)}")
 
 
@@ -211,6 +219,7 @@ async def auth_info(bot_id: int):
 async def refresh_web_url(bot_id: int, locale: Optional[str] = None):
     """Fetch a new admin panel URL for the bot."""
     if not db.bot_exists(bot_id):
+        interaction_logger.error(f"Bot {bot_id} not found for refresh")
         raise HTTPException(status_code=404, detail="Bot not found")
 
     bot_name, pass_uuid, _, stored_locale = db.get_bot_auth(bot_id)
@@ -250,12 +259,16 @@ async def refresh_web_url(bot_id: int, locale: Optional[str] = None):
 
         web_url = data["webUrl"]
         db.update_bot_web_url(bot_id, web_url)
+        interaction_logger.info(
+            f"Web URL refreshed for bot_id={bot_id} url={web_url}"
+        )
 
         return IntegrationResponse(
             botName=bot_name, passUuid=pass_uuid, webUrl=web_url, botId=bot_id
         )
 
     except Exception as e:
+        interaction_logger.error(f"Refresh failed for bot_id={bot_id}: {e}")
         raise HTTPException(status_code=500, detail=f"Request failed: {str(e)}")
 
 
@@ -266,11 +279,16 @@ async def refresh_web_url(bot_id: int, locale: Optional[str] = None):
 async def generate_invite(bot_id: int):
     """Generate a single-use pass UUID for inviting a user."""
     if not db.bot_exists(bot_id):
+        interaction_logger.error(f"Bot {bot_id} not found for invite")
         raise HTTPException(status_code=404, detail="Bot not found")
     try:
         new_uuid = db.create_pass_token(bot_id)
+        interaction_logger.info(
+            f"Invite token created for bot_id={bot_id} uuid={new_uuid}"
+        )
         return {"passUuid": new_uuid}
     except Exception as e:
+        interaction_logger.error(f"Invite creation failed for bot_id={bot_id}: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -282,8 +300,10 @@ async def logout_owner(bot_id: int):
     """Log out owner from admin panel."""
     try:
         db.bot_set_verified(bot_id, False)
+        interaction_logger.info(f"Owner logged out for bot_id={bot_id}")
         return {"botId": bot_id, "verified": False}
     except Exception as e:
+        interaction_logger.error(f"Logout failed for bot_id={bot_id}: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -295,8 +315,14 @@ async def switch_activness(bot_id: int, user_id: int, new_status: bool):
     """Activate or deactivate a user."""
     try:
         db.set_botuser_status(bot_id, user_id, new_status)
+        interaction_logger.info(
+            f"User {user_id} status for bot {bot_id} set to {new_status}"
+        )
         return {"user_id": user_id, "is_active": new_status}
     except Exception as e:
+        interaction_logger.error(
+            f"Failed to set status for user {user_id} in bot {bot_id}: {e}"
+        )
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -308,6 +334,12 @@ async def delete_user(bot_id: int, user_id: int):
     """Delete a user from the database."""
     try:
         db.delete_user_by_id(user_id)
+        interaction_logger.info(
+            f"Deleted user {user_id} from bot {bot_id}"
+        )
         return Response(status_code=204)
     except Exception as e:
+        interaction_logger.error(
+            f"Failed to delete user {user_id} from bot {bot_id}: {e}"
+        )
         raise HTTPException(status_code=500, detail=str(e))

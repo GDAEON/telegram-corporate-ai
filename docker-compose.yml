@@ -31,9 +31,11 @@ services:
       REDIS_PASSWORD: ${REDIS_PASSWORD}
       REDIS_CACHE_TIME: ${REDIS_CACHE_TIME}
       PROMETHEUS_JOBS_PATH: /app/shared/jobs.json
+      LOKI_URL: http://loki:3100
     depends_on:
       - postgres
       - redis
+      - loki
     ports:
       - "8000:8000"
 
@@ -58,6 +60,12 @@ services:
     ports:
       - "6379:6379"
 
+  loki:
+    image: grafana/loki:2.9.7
+    command: -config.file=/etc/loki/local-config.yaml
+    ports:
+      - "3100:3100"
+
   prometheus:
     image: prom/prometheus:latest
     volumes:
@@ -79,6 +87,7 @@ services:
       - "3001:3000"
     depends_on:
       - prometheus
+      - loki
 
 volumes:
   postgres_data:
