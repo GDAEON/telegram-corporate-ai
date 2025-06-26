@@ -1,9 +1,3 @@
-import sys
-import os
-
-# Add the root project directory to sys.path
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-
 from contextlib import contextmanager
 from cryptography.fernet import InvalidToken
 from typing import Optional, Tuple
@@ -479,7 +473,7 @@ def delete_botuser(bot_id: int, user_id: int) -> None:
     rdb.BotOwner.delete(bot_id)
 
 
-def set_selected_bot(bot_id: int, user_id: int) -> None:
+def set_main_as_selected(bot_id: int, user_id: int) -> None:
     with get_session() as session:
         project = (
             session.query(BotProject.project_id)
@@ -528,8 +522,3 @@ def is_project_selected(project_id: int, user_id: int) -> bool:
         )
         return bool(row and row[0])
 
-if __name__ == "__main__":
-    
-    # print(is_project_selected(1, 449299865))
-    # print(get_selected_project(449299865))
-    set_selected_bot(7922062448, 449299865)
