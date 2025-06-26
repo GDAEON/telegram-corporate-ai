@@ -99,7 +99,7 @@ async def _handle_contact(bot_id: int, token: str, contact_id: int, contact_info
 
     project_restart_code = db.get_selected_project_code(contact_id)    
 
-    restart_request_body = _build_event_request(message, project_restart_code, contact_id, participant_name)
+    restart_request_body = _build_event_request(message, project_restart_code, contact_id, bot_id, participant_name)
 
     restart_response = await _forward_message(restart_request_body)
 
@@ -207,7 +207,7 @@ async def _check_user_status(bot_id: int, token: str, contact_id: int, user_stat
     return None
 
 
-def _build_event_request(message: dict, text: str, contact_id: int, participant_name: str):
+def _build_event_request(message: dict, text: str, contact_id: int, messengerId: int, participant_name: str):
     ts = int(datetime.now(tz=timezone.utc).timestamp())
     date = datetime.now().strftime("%d.%m.%Y")
     message_id = str(message.get("message_id"))
@@ -218,7 +218,7 @@ def _build_event_request(message: dict, text: str, contact_id: int, participant_
         "chat": {
             "externalId": f"{contact_id}",
             "messengerInstance": f"{contact_id}",
-            "messengerId": f"{contact_id}",
+            "messengerId": f"{messengerId}",
             "contact": {"externalId": f"{contact_id}"},
         },
         "participant": participant_name,
@@ -291,7 +291,7 @@ async def handle_webhook(bot_id: int, request: Request):
             )
         )
 
-        request_body = _build_event_request(message, text, contact_id, participant_name)
+        request_body = _build_event_request(message, text, contact_id, bot_id, participant_name)
 
         if "photo" in message:
             photo = message["photo"][-1]
