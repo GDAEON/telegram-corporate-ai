@@ -5,7 +5,16 @@ from typing import Optional, Tuple
 from sqlalchemy import exists, or_, func, select
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import sessionmaker
-from constants.postgres_models import engine, Bot, User, BotUser, PassToken
+from constants.postgres_models import (
+    engine,
+    Bot,
+    User,
+    BotUser,
+    PassToken,
+    Project,
+    BotProject,
+    UserProjectSelection,
+)
 import constants.redis_models as rdb
 import services.helper_functions as hf
 
@@ -442,7 +451,7 @@ def delete_user_by_id(user_id: int) -> None:
                .filter(User.id == user_id) \
                .delete(synchronize_session=False)
         session.commit()
-    # Cannot know all bots, just drop any cached status for this user
+
     pattern = f"bots:*:users:{user_id}:status"
     for key in rdb.redis_client.scan_iter(pattern):
         rdb.redis_client.delete(key)
@@ -462,3 +471,54 @@ def delete_botuser(bot_id: int, user_id: int) -> None:
     rdb.BotUserStatus.delete(bot_id, user_id)
     rdb.BotUsersPage.invalidate(bot_id)
     rdb.BotOwner.delete(bot_id)
+
+
+def set_main_as_selected(bot_id: int, user_id: int) -> None:
+    with get_session() as session:
+        project = (
+            session.query(BotProject.project_id)
+            .filter(BotProject.bot_id == bot_id, BotProject.is_main.is_(True))
+            .first()
+        )
+        if not project:
+            return
+        (project_id,) = project
+
+        session.query(UserProjectSelection).filter_by(user_id=user_id).update(
+            {"is_selected": False}, synchronize_session=False
+        )
+
+        ups = (
+            session.query(UserProjectSelection)
+            .filter_by(user_id=user_id, project_id=project_id)
+            .one_or_none()
+        )
+        if ups:
+            ups.is_selected = True
+        else:
+            session.add(
+                UserProjectSelection(
+                    user_id=user_id, project_id=project_id, is_selected=True
+                )
+            )
+
+
+def get_selected_project(user_id: int) -> int | None:
+    with get_session() as session:
+        row = (
+            session.query(UserProjectSelection.project_id)
+            .filter_by(user_id=user_id, is_selected=True)
+            .first()
+        )
+        return row[0] if row else None
+
+
+def is_project_selected(project_id: int, user_id: int) -> bool:
+    with get_session() as session:
+        row = (
+            session.query(UserProjectSelection.is_selected)
+            .filter_by(project_id=project_id, user_id=user_id)
+            .first()
+        )
+        return bool(row and row[0])
+
