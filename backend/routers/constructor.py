@@ -94,7 +94,8 @@ async def send_message(request: SendTextMessageRequest):
                 f"Failed to send text message via bot {request.chat.messengerId}: {response['body']}"
             )
             return JSONResponse(
-                content={"message": str(e), "code": "feature_not_supported"},
+                content={"message": f"Failed to send text message via bot {request.chat.messengerId}: {response['body']}",
+                          "code": "feature_not_supported"},
                 status_code=202
             )
 
