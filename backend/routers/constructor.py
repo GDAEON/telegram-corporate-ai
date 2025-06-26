@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse
-from constants.request_models import SendTextMessageRequest, SendMediaMessageRequest
+from constants.request_models import SendTextMessageRequest, SendMediaMessageRequest, SendSystemMessageRequest
 from config.settings import SCHEME
 import services.sender_adapter as sender_adapter
 import services.db as db
@@ -164,6 +164,29 @@ async def send_media_message(request: SendMediaMessageRequest):
 
     except Exception as e:
         interaction_logger.error(f"Media send failed: {e}")
+        return JSONResponse(
+            content={"message": str(e), "code": "internal_server_error"},
+            status_code=202
+        )
+    
+
+@router.post('/sendSystemMessage', description="Send a message message")
+async def send_system_message(request: SendSystemMessageRequest):
+    try:
+        interaction_logger.info(
+            f"Receiving system message from {request.chat.contact} from bot {request.chat.messengerId}"
+        )
+        token = db.get_bot_token(request.chat.messengerId)
+        chat_id = request.chat.contact
+        messenger_id = request.chat.messengerId
+        text = request.text
+
+        #TODO Set Scenario Started/Stopped with {req_id, session_id} 
+
+        return {"externalId": chat_id, "messengerId": messenger_id}
+
+    except Exception as e:
+        interaction_logger.error(f"System message failed: {e}")
         return JSONResponse(
             content={"message": str(e), "code": "internal_server_error"},
             status_code=202

@@ -44,6 +44,10 @@ class SendMediaMessageRequest(BaseModel):
     file: File
     caption: Optional[str] = None
 
+class SendSystemMessageRequest(BaseModel):
+    chat: Chat
+    text: str
+
 
 class IntegrateRequest(BaseModel):
     telegram_token: SecretStr

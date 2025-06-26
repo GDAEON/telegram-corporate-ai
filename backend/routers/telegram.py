@@ -96,6 +96,9 @@ async def _handle_contact(bot_id: int, token: str, contact_id: int, contact_info
         remove_keyboard=True,
         bot_id=bot_id,
     )
+
+    # TODO Start default scenario with sending message with code restart-****
+
     return {"status": "ok"}
 
 

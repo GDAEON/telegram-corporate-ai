@@ -149,6 +149,7 @@ class BotProject(Base):
     bot_id = Column(BigInteger, ForeignKey('bots.id', ondelete='CASCADE'), primary_key=True)
     project_id = Column(BigInteger, ForeignKey('projects.id', ondelete='CASCADE'), primary_key=True)
     is_main = Column(Boolean, default=False, nullable=False)
+    
 
     bot = relationship("Bot", back_populates="projects")
     project = relationship("Project", back_populates="bots")
