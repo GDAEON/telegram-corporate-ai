@@ -181,7 +181,7 @@ async def send_system_message(request: SendSystemMessageRequest):
         messenger_id = request.chat.messengerId
         text = request.text
 
-        #TODO Set Scenario Started/Stopped with {req_id, session_id} 
+        interaction_logger.info(text) 
 
         return {"externalId": chat_id, "messengerId": messenger_id}
 

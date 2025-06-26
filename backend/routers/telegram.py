@@ -80,7 +80,7 @@ def _update_metrics(bot_id: int, text: str, contact_id: int):
     )
 
 
-async def _handle_contact(bot_id: int, token: str, contact_id: int, contact_info: dict, locale: str):
+async def _handle_contact(bot_id: int, token: str, contact_id: int, contact_info: dict, locale: str, message:dict, participant_name: str):
     db.update_user(
         contact_id,
         contact_info.get("first_name"),
@@ -97,7 +97,15 @@ async def _handle_contact(bot_id: int, token: str, contact_id: int, contact_info
         bot_id=bot_id,
     )
 
-    # TODO Start default scenario with sending message with code restart-****
+    project_restart_code = db.get_selected_project_code(contact_id)    
+
+    restart_request_body = _build_event_request(message, project_restart_code, contact_id, participant_name)
+
+    restart_response = await _forward_message(restart_request_body)
+
+    if restart_response.status_code > 202:
+        interaction_logger.error(f"Failed to restart sesstion: {restart_response.content}")
+        return JSONResponse(content={"ok": False, "error": str(restart_response.content)}, status_code=200)
 
     return {"status": "ok"}
 
@@ -265,7 +273,7 @@ async def handle_webhook(bot_id: int, request: Request):
         user_status = db.get_botuser_status(bot_id, contact_id)
 
         if contact_info and db.bot_has_user(bot_id, contact_id):
-            return await _handle_contact(bot_id, token, contact_id, contact_info, locale)
+            return await _handle_contact(bot_id, token, contact_id, contact_info, locale, message, participant_name)
 
         start_resp = await _handle_start(bot_id, token, contact_id, text, message, locale)
         if start_resp:

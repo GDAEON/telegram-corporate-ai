@@ -503,14 +503,15 @@ def set_main_as_selected(bot_id: int, user_id: int) -> None:
             )
 
 
-def get_selected_project(user_id: int) -> int | None:
+def get_selected_project_code(user_id: int) -> str | None:
     with get_session() as session:
-        row = (
-            session.query(UserProjectSelection.project_id)
-            .filter_by(user_id=user_id, is_selected=True)
+        result = (
+            session.query(Project.code)
+            .join(UserProjectSelection, Project.id == UserProjectSelection.project_id)
+            .filter(UserProjectSelection.user_id == user_id, UserProjectSelection.is_selected == True)
             .first()
         )
-        return row[0] if row else None
+        return result[0] if result else None
 
 
 def is_project_selected(project_id: int, user_id: int) -> bool:
