@@ -537,3 +537,20 @@ def no_project_selected(bot_id: int, user_id: int) -> bool:
             .first()
         )
         return not bool(row and row[0])
+
+def get_selected_project_id(user_id: int) -> int | None:
+    with get_session() as session:
+        result = (
+            session.query(Project.id)
+            .join(UserProjectSelection, Project.id == UserProjectSelection.project_id)
+            .filter(UserProjectSelection.user_id == user_id, UserProjectSelection.is_selected == True)
+            .first()
+        )
+        return result[0] if result else None
+
+def deselect_project(project_id: int, user_id: int) -> None:
+    """Set ``is_selected`` to False for the given user's project."""
+    with get_session() as session:
+        session.query(UserProjectSelection).filter_by(
+            project_id=project_id, user_id=user_id
+        ).update({"is_selected": False}, synchronize_session=False)

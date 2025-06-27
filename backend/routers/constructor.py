@@ -198,6 +198,23 @@ async def send_system_message(request: SendSystemMessageRequest):
                 await sa._forward_message(request_body)
                 rdb.Message.delete(messenger_id, chat_id, message_id)
 
+            session_id = project_data.get("session_id")
+            if session_id:
+                selected_project_id = db.get_selected_project_id(chat_id)
+                if selected_project_id:
+                    rdb.Session.set(messenger_id, chat_id, session_id, selected_project_id)
+        
+        elif event == "stopped":
+            session_id = project_data.get("session_id")
+
+            if session_id:
+                project_id = rdb.Session.get(messenger_id, chat_id, session_id)
+
+                db.deselect_project(project_id, chat_id)
+
+                rdb.Session.delete(messenger_id, chat_id, session_id)
+        
+
         return {"externalId": chat_id, "messengerId": messenger_id}
 
     except Exception as e:

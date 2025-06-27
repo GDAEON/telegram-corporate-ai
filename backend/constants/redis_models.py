@@ -159,3 +159,21 @@ class Message:
         redis_client.delete(key)
         key = f"bots:{bot_id}:users:{user_id}:messages:{message_id}:participant"
         redis_client.delete(key)
+
+class Session:
+
+    @staticmethod
+    def set(bot_id: int, user_id: int, session_id: str, project_id: int) -> None:
+        key = f"bots:{bot_id}:users:{user_id}:session:{session_id}:project"
+        redis_client.set(key, project_id, ex=int(eval(REDIS_CACHE_TIME)))
+    
+    @staticmethod
+    def get(bot_id: int, user_id: int, session_id: str) -> int | None:
+        key = f"bots:{bot_id}:users:{user_id}:session:{session_id}:project"
+        project_id = redis_client.get(key)
+        return project_id if project_id is not None else None
+
+    @staticmethod
+    def delete(bot_id: int, user_id: int, session_id: str) -> None:
+        key = f"bots:{bot_id}:users:{user_id}:session:{session_id}"
+        redis_client.delete(key)
