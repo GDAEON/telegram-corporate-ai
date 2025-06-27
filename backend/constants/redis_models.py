@@ -1,5 +1,5 @@
 import json
-from typing import List
+from typing import Optional, Tuple
 import redis
 from cryptography.fernet import Fernet
 
@@ -144,14 +144,14 @@ class Message:
         redis_client.set(key, participant, ex=int(eval(REDIS_CACHE_TIME)))
 
     @staticmethod
-    def get(bot_id: int, user_id: int, message_id: int) -> List[str, str]:
+    def get(bot_id: int, user_id: int, message_id: int) -> Optional[Tuple[str, str]]:
         key = f"bots:{bot_id}:users:{user_id}:messages:{message_id}:text"
         text = redis_client.get(key)
 
         key = f"bots:{bot_id}:users:{user_id}:messages:{message_id}:participant"
         participant = redis_client.get(key)
 
-        return [text, participant] if text is not None and participant is not None else None
+        return (text, participant) if text is not None and participant is not None else None
 
     @staticmethod
     def delete(bot_id: int, user_id: int, message_id: int) -> None:
