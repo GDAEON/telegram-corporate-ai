@@ -163,7 +163,7 @@ def _build_event_request(message_id: int, text: str, contact_id: int, messengerI
         },
         "participant": participant_name,
         "message": {
-            "externalId": message_id,
+            "externalId": f"{message_id}",
             "text": f"{text}",
             "date": f"{date}",
             "attachments": [],
