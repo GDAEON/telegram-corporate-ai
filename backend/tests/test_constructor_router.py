@@ -24,6 +24,6 @@ async def test_send_message(monkeypatch):
     monkeypatch.setattr(constructor.db, "get_bot_token", lambda bot_id: "token")
     async def fake_send(*args, **kwargs):
         return {"status_code": 200, "body": {}}
-    monkeypatch.setattr(constructor.sender_adapter, "send_message", fake_send)
+    monkeypatch.setattr(constructor.sa, "send_message", fake_send)
     result = await constructor.send_message(req)
     assert result["externalId"] == "1"

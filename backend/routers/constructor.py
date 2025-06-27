@@ -2,9 +2,12 @@ from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse
 from constants.request_models import SendTextMessageRequest, SendMediaMessageRequest, SendSystemMessageRequest
 from config.settings import SCHEME
-import services.sender_adapter as sender_adapter
+import services.sender_adapter as sa
 import services.db as db
 from services.logging_setup import interaction_logger
+import constants.redis_models as rdb
+import services.sender_adapter as sa
+import json
 
 router = APIRouter(tags=["Constructor"])
 
@@ -73,7 +76,7 @@ async def send_message(request: SendTextMessageRequest):
                 for row in quick_replies
             ]
 
-        response = await sender_adapter.send_message(
+        response = await sa.send_message(
             token,
             chat_id,
             text,
@@ -138,7 +141,7 @@ async def send_media_message(request: SendMediaMessageRequest):
                 for row in quick_replies
             ]
 
-        response = await sender_adapter.send_media(
+        response = await sa.send_media(
             token,
             chat_id,
             file_type,
@@ -177,12 +180,23 @@ async def send_system_message(request: SendSystemMessageRequest):
         interaction_logger.info(
             f"Receiving system message from {request.chat.contact} from bot {request.chat.messengerId}"
         )
-        token = db.get_bot_token(request.chat.messengerId)
         chat_id = request.chat.contact
         messenger_id = request.chat.messengerId
         text = request.text
 
         interaction_logger.info(text) 
+
+        project_data = json.loads(text)
+
+        event = project_data.get("event")
+
+        if event == "started":
+            message_id = project_data.get("req_id")
+            if message_id:
+                text, participant = rdb.Message.get(messenger_id, chat_id, message_id)
+                request_body = sa._build_event_request(message_id, text, chat_id, message_id, participant)
+                await sa._forward_message(request_body)
+                rdb.Message.delete(messenger_id, chat_id, message_id)
 
         return {"externalId": chat_id, "messengerId": messenger_id}
 

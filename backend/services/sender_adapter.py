@@ -1,9 +1,12 @@
 import httpx
 import json
 from io import BytesIO
+from datetime import datetime
+from datetime import datetime, timezone
 from services.helper_functions import guess_filename
 from typing import List, Optional, Dict, Any
 from constants.prometheus_models import MESSAGE_COUNT, MESSAGE_TEXT_COUNT
+from config.settings import INTEGRATION_URL, INTEGRATION_CODE, INTEGRATION_TOKEN
 from services.logging_setup import interaction_logger
 
 
@@ -143,3 +146,39 @@ async def send_media(
                 f"SENT_MEDIA bot_id={bot_id} status={response.status_code} response={result['body']}"
             )
         return result
+
+
+def _build_event_request(message_id: int, text: str, contact_id: int, messengerId: int, participant_name: str):
+    ts = int(datetime.now(tz=timezone.utc).timestamp())
+    date = datetime.now().strftime("%d.%m.%Y")
+
+    return {
+        "eventType": "InboxReceived",
+        "timestamp": ts,
+        "chat": {
+            "externalId": f"{contact_id}",
+            "messengerInstance": f"{contact_id}",
+            "messengerId": f"{messengerId}",
+            "contact": {"externalId": f"{contact_id}"},
+        },
+        "participant": participant_name,
+        "message": {
+            "externalId": message_id,
+            "text": f"{text}",
+            "date": f"{date}",
+            "attachments": [],
+        },
+        "externalItem": {"extraData": {}},
+    }
+
+async def _forward_message(request_body: dict):
+    headers = {
+        "Authorization": f"Bearer {INTEGRATION_TOKEN}",
+        "Content-Type": "application/json",
+    }
+    async with httpx.AsyncClient() as client:
+        return await client.post(
+            f"{INTEGRATION_URL}/{INTEGRATION_CODE}/12/event",
+            json=request_body,
+            headers=headers,
+        )

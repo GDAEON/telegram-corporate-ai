@@ -1,4 +1,5 @@
 import json
+from typing import List
 import redis
 from cryptography.fernet import Fernet
 
@@ -136,17 +137,25 @@ class Message:
     """Cache message for sending later."""
 
     @staticmethod
-    def set(bot_id: int, user_id: int, message_id: int, message: str) -> None:
-        key = f"bots:{bot_id}:users:{user_id}:messages:{message_id}"
+    def set(bot_id: int, user_id: int, message_id: int, message: str, participant: str) -> None:
+        key = f"bots:{bot_id}:users:{user_id}:messages:{message_id}:text"
         redis_client.set(key, message, ex=int(eval(REDIS_CACHE_TIME)))
+        key = f"bots:{bot_id}:users:{user_id}:messages:{message_id}:participant"
+        redis_client.set(key, participant, ex=int(eval(REDIS_CACHE_TIME)))
 
     @staticmethod
-    def get(bot_id: int, user_id: int, message_id: int) -> str:
-        key = f"bots:{bot_id}:users:{user_id}:messages:{message_id}"
-        value = redis_client.get(key)
-        return value if value is not None else None
+    def get(bot_id: int, user_id: int, message_id: int) -> List[str, str]:
+        key = f"bots:{bot_id}:users:{user_id}:messages:{message_id}:text"
+        text = redis_client.get(key)
+
+        key = f"bots:{bot_id}:users:{user_id}:messages:{message_id}:participant"
+        participant = redis_client.get(key)
+
+        return [text, participant] if text is not None and participant is not None else None
 
     @staticmethod
     def delete(bot_id: int, user_id: int, message_id: int) -> None:
-        key = f"bots:{bot_id}:users:{user_id}:messages:{message_id}"
+        key = f"bots:{bot_id}:users:{user_id}:messages:{message_id}:text"
+        redis_client.delete(key)
+        key = f"bots:{bot_id}:users:{user_id}:messages:{message_id}:participant"
         redis_client.delete(key)

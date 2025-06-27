@@ -1,14 +1,10 @@
 from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse
 from fastapi.exceptions import HTTPException
-from config.settings import INTEGRATION_URL, INTEGRATION_CODE, INTEGRATION_TOKEN
 import services.db as db
 import constants.redis_models as rdb
-from datetime import datetime
-from datetime import datetime, timezone
 import httpx
-
-import services.sender_adapter as sender_adapter
+import services.sender_adapter as sa
 from services.logging_setup import interaction_logger
 from constants.prometheus_models import MESSAGE_COUNT, MESSAGE_TEXT_COUNT
 
@@ -81,7 +77,7 @@ def _update_metrics(bot_id: int, text: str, contact_id: int):
     )
 
 
-async def _handle_contact(bot_id: int, token: str, contact_id: int, contact_info: dict, locale: str, message:dict, participant_name: str):
+async def _handle_contact(bot_id: int, token: str, contact_id: int, contact_info: dict, locale: str, message_id: int, participant_name: str):
     db.update_user(
         contact_id,
         contact_info.get("first_name"),
@@ -90,7 +86,7 @@ async def _handle_contact(bot_id: int, token: str, contact_id: int, contact_info
     )
     if db.get_is_bot_owner(bot_id, contact_id):
         db.bot_set_verified(bot_id, True)
-    await sender_adapter.send_message(
+    await sa.send_message(
         token,
         contact_id,
         tr("all_set", locale),
@@ -103,9 +99,9 @@ async def _handle_contact(bot_id: int, token: str, contact_id: int, contact_info
         db.set_main_as_selected(bot_id, contact_id)
         project_restart_code = db.get_selected_project_code(contact_id)
 
-    restart_request_body = _build_event_request(message, project_restart_code, contact_id, bot_id, participant_name)
+    restart_request_body = sa._build_event_request(message_id, project_restart_code, contact_id, bot_id, participant_name)
 
-    restart_response = await _forward_message(restart_request_body)
+    restart_response = await sa._forward_message(restart_request_body)
 
     if restart_response.status_code > 202:
         interaction_logger.error(f"Failed to restart sesstion: {restart_response.content}")
@@ -125,7 +121,7 @@ async def _handle_start(bot_id: int, token: str, contact_id: int, text: str, mes
     if input_uuid and db.compare_bot_auth_owner(bot_id, input_uuid):
         existing_owner = db.get_bot_owner_id(bot_id)
         if existing_owner and existing_owner != contact_id:
-            await sender_adapter.send_message(
+            await sa.send_message(
                 token,
                 contact_id,
                 tr("bot_has_owner", locale),
@@ -135,7 +131,7 @@ async def _handle_start(bot_id: int, token: str, contact_id: int, text: str, mes
 
         if db.get_is_bot_owner(bot_id, contact_id) and db.owner_has_contact(bot_id, contact_id):
             db.bot_set_verified(bot_id, True)
-            await sender_adapter.send_message(
+            await sa.send_message(
                 token,
                 contact_id,
                 tr("logged_in", locale),
@@ -146,7 +142,7 @@ async def _handle_start(bot_id: int, token: str, contact_id: int, text: str, mes
         contact_button = [[{"text": tr("share_phone_btn", locale), "request_contact": True}]]
         if not db.get_is_bot_owner(bot_id, contact_id):
             db.add_owner_user(bot_id, contact_id)
-        await sender_adapter.send_message(
+        await sa.send_message(
             token,
             contact_id,
             tr("share_contact", locale),
@@ -157,7 +153,7 @@ async def _handle_start(bot_id: int, token: str, contact_id: int, text: str, mes
 
     if input_uuid and db.compare_bot_auth_pass(bot_id, input_uuid):
         if db.bot_has_user(bot_id, contact_id):
-            await sender_adapter.send_message(
+            await sa.send_message(
                 token,
                 contact_id,
                 tr("logged_in", locale),
@@ -173,7 +169,7 @@ async def _handle_start(bot_id: int, token: str, contact_id: int, text: str, mes
             None,
         )
         db.mark_pass_token_used(bot_id, input_uuid)
-        await sender_adapter.send_message(
+        await sa.send_message(
             token,
             contact_id,
             tr("share_contact", locale),
@@ -182,7 +178,7 @@ async def _handle_start(bot_id: int, token: str, contact_id: int, text: str, mes
         )
         return {"status": "ok"}
 
-    await sender_adapter.send_message(
+    await sa.send_message(
         token,
         contact_id,
         tr("bad_code", locale),
@@ -193,7 +189,7 @@ async def _handle_start(bot_id: int, token: str, contact_id: int, text: str, mes
 
 async def _check_user_status(bot_id: int, token: str, contact_id: int, user_status, locale: str):
     if user_status is None:
-        await sender_adapter.send_message(
+        await sa.send_message(
             token,
             contact_id,
             tr("not_allowed", locale),
@@ -201,7 +197,7 @@ async def _check_user_status(bot_id: int, token: str, contact_id: int, user_stat
         )
         return {"status": "ok"}
     if user_status is False:
-        await sender_adapter.send_message(
+        await sa.send_message(
             token,
             contact_id,
             tr("deactivated", locale),
@@ -209,44 +205,6 @@ async def _check_user_status(bot_id: int, token: str, contact_id: int, user_stat
         )
         return {"status": "ok"}
     return None
-
-
-def _build_event_request(message: dict, text: str, contact_id: int, messengerId: int, participant_name: str):
-    ts = int(datetime.now(tz=timezone.utc).timestamp())
-    date = datetime.now().strftime("%d.%m.%Y")
-    message_id = str(message.get("message_id"))
-
-    return {
-        "eventType": "InboxReceived",
-        "timestamp": ts,
-        "chat": {
-            "externalId": f"{contact_id}",
-            "messengerInstance": f"{contact_id}",
-            "messengerId": f"{messengerId}",
-            "contact": {"externalId": f"{contact_id}"},
-        },
-        "participant": participant_name,
-        "message": {
-            "externalId": message_id,
-            "text": f"{text}",
-            "date": f"{date}",
-            "attachments": [],
-        },
-        "externalItem": {"extraData": {}},
-    }
-
-
-async def _forward_message(request_body: dict):
-    headers = {
-        "Authorization": f"Bearer {INTEGRATION_TOKEN}",
-        "Content-Type": "application/json",
-    }
-    async with httpx.AsyncClient() as client:
-        return await client.post(
-            f"{INTEGRATION_URL}/{INTEGRATION_CODE}/12/event",
-            json=request_body,
-            headers=headers,
-        )
 
 
 @router.post(
@@ -294,21 +252,21 @@ async def handle_webhook(bot_id: int, request: Request):
                 part for part in [user_info.get("first_name"), user_info.get("last_name")] if part
             )
         )
+        message_id = message.get("message_id")
 
         if db.no_project_selected(bot_id, contact_id):
             db.set_main_as_selected(bot_id, contact_id)
             project_restart_code = db.get_selected_project_code(contact_id)
-            message_id = message.get("message_id")
             project_restart_code += f"_{message_id}"
-            restart_request_body = _build_event_request(message, project_restart_code, contact_id, bot_id, participant_name)
-            rdb.Message.set(bot_id, contact_id, message_id, text)
-            restart_response = await _forward_message(restart_request_body)
+            restart_request_body = sa._build_event_request(message_id, project_restart_code, contact_id, bot_id, participant_name)
+            rdb.Message.set(bot_id, contact_id, message_id, text, participant_name)
+            restart_response = await sa._forward_message(restart_request_body)
             interaction_logger.info(restart_response.text)
 
             return {"status": "ok", "raw_response": restart_response.text}
 
 
-        request_body = _build_event_request(message, text, contact_id, bot_id, participant_name)
+        request_body = sa._build_event_request(message_id, text, contact_id, bot_id, participant_name)
 
         if "photo" in message:
             photo = message["photo"][-1]
@@ -329,7 +287,7 @@ async def handle_webhook(bot_id: int, request: Request):
             })
             request_body["externalItem"]["extraData"]["messageType"] = "voice"
 
-        response = await _forward_message(request_body)
+        response = await sa._forward_message(request_body)
 
         if response.status_code >= 400:
             return JSONResponse(content={"ok": False, "error": response.text}, status_code=200)
