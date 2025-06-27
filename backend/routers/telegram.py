@@ -116,7 +116,7 @@ async def _handle_contact(bot_id: int, token: str, contact_id: int, contact_info
 
     commands = hf.clean_commands(commands)
 
-    set_command_response = ws.set_bot_commands(token, commands)
+    set_command_response = await ws.set_bot_commands(token, commands)
 
     if set_command_response.status_code > 202:
         interaction_logger.error(f"Failed to set telegram commands: {set_command_response.content}")
@@ -279,6 +279,20 @@ async def handle_webhook(bot_id: int, request: Request):
             interaction_logger.info(restart_response.text)
 
             return {"status": "ok", "raw_response": restart_response.text}
+
+        
+        projects = db.get_not_main_projects(bot_id, contact_id)
+        commands = {"commands": []}
+        for project in projects:
+            commands["commands"].append({"command": project, "description": project})
+
+        commands = hf.clean_commands(commands)
+
+        set_command_response = await ws.set_bot_commands(token, commands)
+
+        if set_command_response.status_code > 202:
+            interaction_logger.error(f"Failed to set telegram commands: {set_command_response.content}")
+            return JSONResponse(content={"ok": False, "error": str(set_command_response.content)}, status_code=200)
 
 
         request_body = sa._build_event_request(message_id, text, contact_id, bot_id, participant_name)
