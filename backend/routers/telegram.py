@@ -118,9 +118,9 @@ async def _handle_contact(bot_id: int, token: str, contact_id: int, contact_info
 
     set_command_response = await ws.set_bot_commands(token, commands)
 
-    if set_command_response.status_code > 202:
-        interaction_logger.error(f"Failed to set telegram commands: {set_command_response.content}")
-        return JSONResponse(content={"ok": False, "error": str(set_command_response.content)}, status_code=200)
+    if set_command_response['status_code'] > 202:
+        interaction_logger.error(f"Failed to set telegram commands: {set_command_response['body']}")
+        return JSONResponse(content={"ok": False, "error": str(set_command_response['body'])}, status_code=200)
 
     return {"status": "ok"}
 
@@ -290,9 +290,9 @@ async def handle_webhook(bot_id: int, request: Request):
 
         set_command_response = await ws.set_bot_commands(token, commands)
 
-        if set_command_response.status_code > 202:
-            interaction_logger.error(f"Failed to set telegram commands: {set_command_response.content}")
-            return JSONResponse(content={"ok": False, "error": str(set_command_response.content)}, status_code=200)
+        if set_command_response["status_code"] > 202:
+            interaction_logger.error(f"Failed to set telegram commands: {set_command_response['body']}")
+            return JSONResponse(content={"ok": False, "error": str(set_command_response["body"])}, status_code=200)
 
 
         request_body = sa._build_event_request(message_id, text, contact_id, bot_id, participant_name)
