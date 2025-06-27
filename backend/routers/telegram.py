@@ -305,7 +305,7 @@ async def handle_webhook(bot_id: int, request: Request):
             restart_response = await _forward_message(restart_request_body)
             interaction_logger.info(restart_response.text)
 
-            return {"status": "ok", "raw_response": response.text}
+            return {"status": "ok", "raw_response": restart_response.text}
 
 
         request_body = _build_event_request(message, text, contact_id, bot_id, participant_name)
