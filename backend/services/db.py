@@ -554,3 +554,20 @@ def deselect_project(project_id: int, user_id: int) -> None:
         session.query(UserProjectSelection).filter_by(
             project_id=project_id, user_id=user_id
         ).update({"is_selected": False}, synchronize_session=False)
+
+def get_not_main_projects(bot_id: int, user_id: int) -> list[str]:
+    """Return names of the user's projects that are not main for the bot."""
+    with get_session() as session:
+        rows = (
+            session.query(Project.name)
+            .join(UserProjectSelection, Project.id == UserProjectSelection.project_id)
+            .join(BotProject, BotProject.project_id == Project.id)
+            .filter(
+                BotProject.bot_id == bot_id,
+                UserProjectSelection.user_id == user_id,
+                BotProject.is_main.is_(False),
+            )
+            .order_by(Project.id)
+            .all()
+        )
+        return [name for (name,) in rows]

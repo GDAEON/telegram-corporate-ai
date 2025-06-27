@@ -59,3 +59,17 @@ async def delete_webhook(token: str) -> Dict[str, Any]:
             "status_code": response.status_code,
             "body": response.json()
         }
+    
+async def set_bot_commands(token: str, commands: dict) -> Dict[str, Any]:
+    url = f"https://api.telegram.org/bot{token}/setMyCommands"
+    async with httpx.AsyncClient() as client:
+        response = await client.post(url, json=commands)
+    
+    interaction_logger.info(
+        f"Commands {commands} were setted."
+    )
+
+    return {
+        "status_code": response.status_code,
+        "body": response.json()
+    }

@@ -5,6 +5,8 @@ import services.db as db
 import constants.redis_models as rdb
 import httpx
 import services.sender_adapter as sa
+import services.helper_functions as hf
+import services.webhook_server as ws
 from services.logging_setup import interaction_logger
 from constants.prometheus_models import MESSAGE_COUNT, MESSAGE_TEXT_COUNT
 
@@ -106,6 +108,19 @@ async def _handle_contact(bot_id: int, token: str, contact_id: int, contact_info
     if restart_response.status_code > 202:
         interaction_logger.error(f"Failed to restart sesstion: {restart_response.content}")
         return JSONResponse(content={"ok": False, "error": str(restart_response.content)}, status_code=200)
+    
+    projects = db.get_not_main_projects(bot_id, contact_id)
+    commands = {"commands": []}
+    for project in projects:
+        commands["commands"].append({"command": project, "description": project})
+
+    commands = hf.clean_commands(commands)
+
+    set_command_response = ws.set_bot_commands(token, commands)
+
+    if set_command_response.status_code > 202:
+        interaction_logger.error(f"Failed to set telegram commands: {set_command_response.content}")
+        return JSONResponse(content={"ok": False, "error": str(set_command_response.content)}, status_code=200)
 
     return {"status": "ok"}
 
