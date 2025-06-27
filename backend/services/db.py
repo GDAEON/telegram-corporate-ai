@@ -523,3 +523,17 @@ def is_project_selected(project_id: int, user_id: int) -> bool:
         )
         return bool(row and row[0])
 
+def no_project_selected(bot_id: int, user_id: int) -> bool:
+    """Return True if user has no selected project for the given bot."""
+    with get_session() as session:
+        row = (
+            session.query(UserProjectSelection.is_selected)
+            .join(BotProject, BotProject.project_id == UserProjectSelection.project_id)
+            .filter(
+                BotProject.bot_id == bot_id,
+                UserProjectSelection.user_id == user_id,
+                UserProjectSelection.is_selected.is_(True),
+            )
+            .first()
+        )
+        return not bool(row and row[0])

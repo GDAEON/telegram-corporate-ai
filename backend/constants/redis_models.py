@@ -130,4 +130,23 @@ class BotUsersPage:
         pattern = f"bots:{bot_id}:users-page:*"
         for key in redis_client.scan_iter(pattern):
             redis_client.delete(key)
-    
+
+
+class Message:
+    """Cache message for sending later."""
+
+    @staticmethod
+    def set(bot_id: int, user_id: int, message_id: int, message: str) -> None:
+        key = f"bots:{bot_id}:users:{user_id}:messages:{message_id}"
+        redis_client.set(key, message, ex=int(eval(REDIS_CACHE_TIME)))
+
+    @staticmethod
+    def get(bot_id: int, user_id: int, message_id: int) -> str:
+        key = f"bots:{bot_id}:users:{user_id}:messages:{message_id}"
+        value = redis_client.get(key)
+        return value if value is not None else None
+
+    @staticmethod
+    def delete(bot_id: int, user_id: int, message_id: int) -> None:
+        key = f"bots:{bot_id}:users:{user_id}:messages:{message_id}"
+        redis_client.delete(key)

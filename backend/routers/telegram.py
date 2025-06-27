@@ -3,6 +3,7 @@ from fastapi.responses import JSONResponse
 from fastapi.exceptions import HTTPException
 from config.settings import INTEGRATION_URL, INTEGRATION_CODE, INTEGRATION_TOKEN
 import services.db as db
+import constants.redis_models as rdb
 from datetime import datetime
 from datetime import datetime, timezone
 import httpx
@@ -97,7 +98,10 @@ async def _handle_contact(bot_id: int, token: str, contact_id: int, contact_info
         bot_id=bot_id,
     )
 
-    project_restart_code = db.get_selected_project_code(contact_id)    
+    project_restart_code = db.get_selected_project_code(contact_id)
+    if project_restart_code is None:
+        db.set_main_as_selected(bot_id, contact_id)
+        project_restart_code = db.get_selected_project_code(contact_id)
 
     restart_request_body = _build_event_request(message, project_restart_code, contact_id, bot_id, participant_name)
 
@@ -290,6 +294,19 @@ async def handle_webhook(bot_id: int, request: Request):
                 part for part in [user_info.get("first_name"), user_info.get("last_name")] if part
             )
         )
+
+        if db.no_project_selected(bot_id, contact_id):
+            db.set_main_as_selected(bot_id, contact_id)
+            project_restart_code = db.get_selected_project_code(contact_id)
+            message_id = message.get("message_id")
+            project_restart_code += f"_{message_id}"
+            restart_request_body = _build_event_request(message, project_restart_code, contact_id, bot_id, participant_name)
+            rdb.Message.set(bot_id, contact_id, message_id, text)
+            restart_response = await _forward_message(restart_request_body)
+            interaction_logger.info(restart_response.text)
+
+            return {"status": "ok", "raw_response": response.text}
+
 
         request_body = _build_event_request(message, text, contact_id, bot_id, participant_name)
 
