@@ -194,7 +194,7 @@ async def send_system_message(request: SendSystemMessageRequest):
             message_id = project_data.get("req_id")
             if message_id:
                 text, participant = rdb.Message.get(messenger_id, chat_id, message_id)
-                request_body = sa._build_event_request(message_id, text, chat_id, message_id, participant)
+                request_body = sa._build_event_request(message_id, text, chat_id, messenger_id, participant)
                 await sa._forward_message(request_body)
                 rdb.Message.delete(messenger_id, chat_id, message_id)
 
