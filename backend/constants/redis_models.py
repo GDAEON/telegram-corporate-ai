@@ -205,5 +205,5 @@ class Session:
 
     @staticmethod
     def delete(bot_id: int, user_id: int, session_id: str) -> None:
-        key = f"bots:{bot_id}:users:{user_id}:session:{session_id}"
+        key = f"bots:{bot_id}:users:{user_id}:session:{session_id}:project"
         redis_client.delete(key)
