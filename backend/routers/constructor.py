@@ -222,7 +222,7 @@ async def send_system_message(request: SendSystemMessageRequest):
 
                 db.deselect_project(project_id, messenger_id, chat_id)
 
-                rdb.Session.delete(messenger_id, chat_id, session_id)
+                # rdb.Session.delete(messenger_id, chat_id, session_id)
         
 
         return {"externalId": chat_id, "messengerId": messenger_id}
