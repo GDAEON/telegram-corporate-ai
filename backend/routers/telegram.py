@@ -316,6 +316,24 @@ async def handle_webhook(bot_id: int, request: Request):
             if project_match:
                 project_id, project_code = project_match
                 db.set_project_selected(bot_id, project_id, contact_id)
+
+                stop_request_body = sa._build_event_request(
+                    message_id,
+                    "stop",
+                    contact_id,
+                    bot_id,
+                    participant_name,
+                )
+                stop_response = await sa._forward_message(stop_request_body)
+                if stop_response.status_code > 202:
+                    interaction_logger.error(
+                        f"Failed to stop session: {stop_response.content}"
+                    )
+                    return JSONResponse(
+                        content={"ok": False, "error": str(stop_response.content)},
+                        status_code=200,
+                    )
+
                 restart_request_body = sa._build_event_request(
                     message_id,
                     project_code,
