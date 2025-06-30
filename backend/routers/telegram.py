@@ -276,7 +276,6 @@ async def handle_webhook(bot_id: int, request: Request):
             restart_request_body = sa._build_event_request(message_id, project_restart_code, contact_id, bot_id, participant_name)
             rdb.Message.set(bot_id, contact_id, message_id, text, participant_name)
             restart_response = await sa._forward_message(restart_request_body)
-            interaction_logger.info(f"Session restarted with response: {restart_response.json}")
 
             return {"status": "ok", "raw_response": restart_response.text}
 

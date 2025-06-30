@@ -176,6 +176,7 @@ async def _forward_message(request_body: dict):
         "Authorization": f"Bearer {INTEGRATION_TOKEN}",
         "Content-Type": "application/json",
     }
+    interaction_logger.info(f"Sent: {request_body}")
     async with httpx.AsyncClient() as client:
         return await client.post(
             f"{INTEGRATION_URL}/{INTEGRATION_CODE}/12/event",
