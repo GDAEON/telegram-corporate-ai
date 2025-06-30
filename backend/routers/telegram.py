@@ -293,6 +293,31 @@ async def handle_webhook(bot_id: int, request: Request):
             interaction_logger.error(f"Failed to set telegram commands: {set_command_response['body']}")
             return JSONResponse(content={"ok": False, "error": str(set_command_response["body"])}, status_code=200)
 
+        if text.startswith("/"):
+            command_text = text[1:].split()[0]
+            command_text = command_text.split("@")[0]
+            project_match = db.find_project_by_command(bot_id, contact_id, command_text)
+            if project_match:
+                project_id, project_code = project_match
+                db.set_project_selected(project_id, contact_id)
+                restart_request_body = sa._build_event_request(
+                    message_id,
+                    project_code,
+                    contact_id,
+                    bot_id,
+                    participant_name,
+                )
+                restart_response = await sa._forward_message(restart_request_body)
+                if restart_response.status_code > 202:
+                    interaction_logger.error(
+                        f"Failed to restart sesstion: {restart_response.content}"
+                    )
+                    return JSONResponse(
+                        content={"ok": False, "error": str(restart_response.content)},
+                        status_code=200,
+                    )
+                return {"status": "ok"}
+
 
         request_body = sa._build_event_request(message_id, text, contact_id, bot_id, participant_name)
 

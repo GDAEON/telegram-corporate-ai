@@ -571,3 +571,43 @@ def get_not_main_projects(bot_id: int, user_id: int) -> list[str]:
             .all()
         )
         return [name for (name,) in rows]
+
+def set_project_selected(project_id: int, user_id: int) -> None:
+    """Mark the specified project as selected for the user."""
+    with get_session() as session:
+        session.query(UserProjectSelection).filter_by(user_id=user_id).update(
+            {"is_selected": False}, synchronize_session=False
+        )
+
+        ups = (
+            session.query(UserProjectSelection)
+            .filter_by(user_id=user_id, project_id=project_id)
+            .one_or_none()
+        )
+        if ups:
+            ups.is_selected = True
+        else:
+            session.add(
+                UserProjectSelection(
+                    user_id=user_id, project_id=project_id, is_selected=True
+                )
+            )
+
+
+def find_project_by_command(
+    bot_id: int, user_id: int, command: str
+) -> tuple[int, str] | None:
+    """Return project id and code matching the normalized command."""
+    normalized = hf.normalize_command(command)
+    with get_session() as session:
+        rows = (
+            session.query(Project.id, Project.name, Project.code)
+            .join(BotProject, BotProject.project_id == Project.id)
+            .filter(BotProject.bot_id == bot_id)
+            .all()
+        )
+
+        for pid, name, code in rows:
+            if hf.normalize_command(name) == normalized:
+                return pid, code
+    return None
