@@ -163,13 +163,20 @@ class UserProjectSelection(Base):
 
     user_id = Column(BigInteger, ForeignKey('users.id', ondelete='CASCADE'), primary_key=True)
     project_id = Column(BigInteger, ForeignKey('projects.id', ondelete='CASCADE'), primary_key=True)
+    bot_id = Column(BigInteger, ForeignKey('bots.id', ondelete='CASCADE'), primary_key=True)
     is_selected = Column(Boolean, default=False, nullable=False)
 
     user = relationship("User", back_populates="projects")
     project = relationship("Project", back_populates="users")
 
     __table_args__ = (
-        Index('ix_user_project_selection_user_id_project_id', 'user_id', 'project_id', unique=True),
+        Index(
+            'ix_user_project_selection',
+            'user_id',
+            'project_id',
+            'bot_id',
+            unique=True,
+        ),
     )
 
 

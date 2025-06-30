@@ -484,13 +484,13 @@ def set_main_as_selected(bot_id: int, user_id: int) -> None:
             return
         (project_id,) = project
 
-        session.query(UserProjectSelection).filter_by(user_id=user_id).update(
-            {"is_selected": False}, synchronize_session=False
-        )
+        session.query(UserProjectSelection).filter_by(
+            user_id=user_id, bot_id=bot_id
+        ).update({"is_selected": False}, synchronize_session=False)
 
         ups = (
             session.query(UserProjectSelection)
-            .filter_by(user_id=user_id, project_id=project_id)
+            .filter_by(user_id=user_id, project_id=project_id, bot_id=bot_id)
             .one_or_none()
         )
         if ups:
@@ -498,27 +498,34 @@ def set_main_as_selected(bot_id: int, user_id: int) -> None:
         else:
             session.add(
                 UserProjectSelection(
-                    user_id=user_id, project_id=project_id, is_selected=True
+                    user_id=user_id,
+                    project_id=project_id,
+                    bot_id=bot_id,
+                    is_selected=True,
                 )
             )
 
 
-def get_selected_project_code(user_id: int) -> str | None:
+def get_selected_project_code(bot_id: int, user_id: int) -> str | None:
     with get_session() as session:
         result = (
             session.query(Project.code)
             .join(UserProjectSelection, Project.id == UserProjectSelection.project_id)
-            .filter(UserProjectSelection.user_id == user_id, UserProjectSelection.is_selected == True)
+            .filter(
+                UserProjectSelection.user_id == user_id,
+                UserProjectSelection.bot_id == bot_id,
+                UserProjectSelection.is_selected.is_(True),
+            )
             .first()
         )
         return result[0] if result else None
 
 
-def is_project_selected(project_id: int, user_id: int) -> bool:
+def is_project_selected(project_id: int, bot_id: int, user_id: int) -> bool:
     with get_session() as session:
         row = (
             session.query(UserProjectSelection.is_selected)
-            .filter_by(project_id=project_id, user_id=user_id)
+            .filter_by(project_id=project_id, user_id=user_id, bot_id=bot_id)
             .first()
         )
         return bool(row and row[0])
@@ -528,9 +535,8 @@ def no_project_selected(bot_id: int, user_id: int) -> bool:
     with get_session() as session:
         row = (
             session.query(UserProjectSelection.is_selected)
-            .join(BotProject, BotProject.project_id == UserProjectSelection.project_id)
             .filter(
-                BotProject.bot_id == bot_id,
+                UserProjectSelection.bot_id == bot_id,
                 UserProjectSelection.user_id == user_id,
                 UserProjectSelection.is_selected.is_(True),
             )
@@ -538,21 +544,25 @@ def no_project_selected(bot_id: int, user_id: int) -> bool:
         )
         return not bool(row and row[0])
 
-def get_selected_project_id(user_id: int) -> int | None:
+def get_selected_project_id(bot_id: int, user_id: int) -> int | None:
     with get_session() as session:
         result = (
             session.query(Project.id)
             .join(UserProjectSelection, Project.id == UserProjectSelection.project_id)
-            .filter(UserProjectSelection.user_id == user_id, UserProjectSelection.is_selected == True)
+            .filter(
+                UserProjectSelection.user_id == user_id,
+                UserProjectSelection.bot_id == bot_id,
+                UserProjectSelection.is_selected.is_(True),
+            )
             .first()
         )
         return result[0] if result else None
 
-def deselect_project(project_id: int, user_id: int) -> None:
+def deselect_project(project_id: int, bot_id: int, user_id: int) -> None:
     """Set ``is_selected`` to False for the given user's project."""
     with get_session() as session:
         session.query(UserProjectSelection).filter_by(
-            project_id=project_id, user_id=user_id
+            project_id=project_id, user_id=user_id, bot_id=bot_id
         ).update({"is_selected": False}, synchronize_session=False)
 
 def get_not_main_projects(bot_id: int, user_id: int) -> list[str]:
@@ -565,6 +575,7 @@ def get_not_main_projects(bot_id: int, user_id: int) -> list[str]:
             .filter(
                 BotProject.bot_id == bot_id,
                 UserProjectSelection.user_id == user_id,
+                UserProjectSelection.bot_id == bot_id,
                 BotProject.is_main.is_(False),
             )
             .order_by(Project.id)
@@ -572,16 +583,16 @@ def get_not_main_projects(bot_id: int, user_id: int) -> list[str]:
         )
         return [name for (name,) in rows]
 
-def set_project_selected(project_id: int, user_id: int) -> None:
+def set_project_selected(bot_id: int, project_id: int, user_id: int) -> None:
     """Mark the specified project as selected for the user."""
     with get_session() as session:
-        session.query(UserProjectSelection).filter_by(user_id=user_id).update(
-            {"is_selected": False}, synchronize_session=False
-        )
+        session.query(UserProjectSelection).filter_by(
+            user_id=user_id, bot_id=bot_id
+        ).update({"is_selected": False}, synchronize_session=False)
 
         ups = (
             session.query(UserProjectSelection)
-            .filter_by(user_id=user_id, project_id=project_id)
+            .filter_by(user_id=user_id, project_id=project_id, bot_id=bot_id)
             .one_or_none()
         )
         if ups:
@@ -589,7 +600,10 @@ def set_project_selected(project_id: int, user_id: int) -> None:
         else:
             session.add(
                 UserProjectSelection(
-                    user_id=user_id, project_id=project_id, is_selected=True
+                    user_id=user_id,
+                    project_id=project_id,
+                    bot_id=bot_id,
+                    is_selected=True,
                 )
             )
 
