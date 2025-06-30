@@ -246,11 +246,20 @@ async def handle_webhook(bot_id: int, request: Request):
 
         _update_metrics(bot_id, text, contact_id)
 
+        user_info = message.get("from", {})
+        participant_name = (
+            user_info.get("username")
+            or " ".join(
+                part for part in [user_info.get("first_name"), user_info.get("last_name")] if part
+            )
+        )
+        message_id = message.get("message_id")
+
         contact_info = message.get("contact")
         user_status = db.get_botuser_status(bot_id, contact_id)
 
         if contact_info and db.bot_has_user(bot_id, contact_id):
-            return await _handle_contact(bot_id, token, contact_id, contact_info, locale, message, participant_name)
+            return await _handle_contact(bot_id, token, contact_id, contact_info, locale, message_id, participant_name)
 
         start_resp = await _handle_start(bot_id, token, contact_id, text, message, locale)
         if start_resp:
@@ -260,14 +269,6 @@ async def handle_webhook(bot_id: int, request: Request):
         if status_resp:
             return status_resp
 
-        user_info = message.get("from", {})
-        participant_name = (
-            user_info.get("username")
-            or " ".join(
-                part for part in [user_info.get("first_name"), user_info.get("last_name")] if part
-            )
-        )
-        message_id = message.get("message_id")
         attachments, message_type = hf.extract_telegram_attachments(message, token)
 
         if db.no_project_selected(bot_id, contact_id):
