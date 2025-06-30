@@ -210,7 +210,7 @@ async def send_system_message(request: SendSystemMessageRequest):
 
             session_id = project_data.get("session_id")
             if session_id:
-                selected_project_id = db.get_selected_project_id(chat_id)
+                selected_project_id = db.get_selected_project_id(messenger_id, chat_id)
                 if selected_project_id:
                     rdb.Session.set(messenger_id, chat_id, session_id, selected_project_id)
         
@@ -220,7 +220,7 @@ async def send_system_message(request: SendSystemMessageRequest):
             if session_id:
                 project_id = rdb.Session.get(messenger_id, chat_id, session_id)
 
-                db.deselect_project(project_id, chat_id)
+                db.deselect_project(project_id, messenger_id, chat_id)
 
                 rdb.Session.delete(messenger_id, chat_id, session_id)
         
