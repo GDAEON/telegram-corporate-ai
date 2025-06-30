@@ -1,5 +1,9 @@
 import re
-from backend.services.helper_functions import guess_filename, generate_uuid
+from backend.services.helper_functions import (
+    guess_filename,
+    generate_uuid,
+    extract_telegram_attachments,
+)
 
 
 def test_guess_filename_content_disposition():
@@ -18,3 +22,10 @@ def test_generate_uuid_unique():
     assert uuid1 != uuid2
     assert pattern.match(uuid1)
     assert pattern.match(uuid2)
+
+
+def test_extract_telegram_attachments_photo():
+    message = {"photo": [{"file_id": "1"}, {"file_id": "2"}]}
+    attachments, mtype = extract_telegram_attachments(message, "token")
+    assert mtype == "photo"
+    assert attachments[0]["type"] == "Image"

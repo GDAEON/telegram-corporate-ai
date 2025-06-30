@@ -134,31 +134,61 @@ class BotUsersPage:
 
 
 class Message:
-    """Cache message for sending later."""
+    """Cache message for sending later, including attachments."""
 
     @staticmethod
-    def set(bot_id: int, user_id: int, message_id: int, message: str, participant: str) -> None:
+    def set(
+        bot_id: int,
+        user_id: int,
+        message_id: int,
+        message: str,
+        participant: str,
+        attachments: list | None = None,
+        message_type: str | None = None,
+    ) -> None:
         key = f"bots:{bot_id}:users:{user_id}:messages:{message_id}:text"
         redis_client.set(key, message, ex=int(eval(REDIS_CACHE_TIME)))
         key = f"bots:{bot_id}:users:{user_id}:messages:{message_id}:participant"
         redis_client.set(key, participant, ex=int(eval(REDIS_CACHE_TIME)))
+        key = f"bots:{bot_id}:users:{user_id}:messages:{message_id}:attachments"
+        redis_client.set(key, json.dumps(attachments or []), ex=int(eval(REDIS_CACHE_TIME)))
+        key = f"bots:{bot_id}:users:{user_id}:messages:{message_id}:message_type"
+        if message_type is not None:
+            redis_client.set(key, message_type, ex=int(eval(REDIS_CACHE_TIME)))
+        else:
+            redis_client.delete(key)
 
     @staticmethod
-    def get(bot_id: int, user_id: int, message_id: int) -> Optional[Tuple[str, str]]:
+    def get(
+        bot_id: int,
+        user_id: int,
+        message_id: int,
+    ) -> Optional[Tuple[str, str, list, str | None]]:
         key = f"bots:{bot_id}:users:{user_id}:messages:{message_id}:text"
         text = redis_client.get(key)
 
         key = f"bots:{bot_id}:users:{user_id}:messages:{message_id}:participant"
         participant = redis_client.get(key)
 
-        return (text, participant) if text is not None and participant is not None else None
+        key = f"bots:{bot_id}:users:{user_id}:messages:{message_id}:attachments"
+        attachments_raw = redis_client.get(key)
+        attachments = json.loads(attachments_raw) if attachments_raw else []
+
+        key = f"bots:{bot_id}:users:{user_id}:messages:{message_id}:message_type"
+        message_type = redis_client.get(key)
+
+        return (
+            text,
+            participant,
+            attachments,
+            message_type,
+        ) if text is not None and participant is not None else None
 
     @staticmethod
     def delete(bot_id: int, user_id: int, message_id: int) -> None:
-        key = f"bots:{bot_id}:users:{user_id}:messages:{message_id}:text"
-        redis_client.delete(key)
-        key = f"bots:{bot_id}:users:{user_id}:messages:{message_id}:participant"
-        redis_client.delete(key)
+        for suffix in ["text", "participant", "attachments", "message_type"]:
+            key = f"bots:{bot_id}:users:{user_id}:messages:{message_id}:{suffix}"
+            redis_client.delete(key)
 
 class Session:
 

@@ -193,9 +193,19 @@ async def send_system_message(request: SendSystemMessageRequest):
         if event == "started":
             message_id = project_data.get("req_id")
             if message_id:
-                text, participant = rdb.Message.get(messenger_id, chat_id, message_id)
-                request_body = sa._build_event_request(str(int(message_id) * 10), text, chat_id, messenger_id, participant)
-                await sa._forward_message(request_body)
+                cached = rdb.Message.get(messenger_id, chat_id, message_id)
+                if cached:
+                    text, participant, attachments, message_type = cached
+                    request_body = sa._build_event_request(
+                        str(int(message_id) * 10),
+                        text,
+                        chat_id,
+                        messenger_id,
+                        participant,
+                        attachments,
+                        message_type,
+                    )
+                    await sa._forward_message(request_body)
                 rdb.Message.delete(messenger_id, chat_id, message_id)
 
             session_id = project_data.get("session_id")

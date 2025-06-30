@@ -148,11 +148,19 @@ async def send_media(
         return result
 
 
-def _build_event_request(message_id: int, text: str, contact_id: int, messengerId: int, participant_name: str):
+def _build_event_request(
+    message_id: int,
+    text: str,
+    contact_id: int,
+    messengerId: int,
+    participant_name: str,
+    attachments: list | None = None,
+    message_type: str | None = None,
+):
     ts = int(datetime.now(tz=timezone.utc).timestamp())
     date = datetime.now().strftime("%d.%m.%Y")
 
-    return {
+    result = {
         "eventType": "InboxReceived",
         "timestamp": ts,
         "chat": {
@@ -166,10 +174,15 @@ def _build_event_request(message_id: int, text: str, contact_id: int, messengerI
             "externalId": f"{message_id}",
             "text": f"{text}",
             "date": f"{date}",
-            "attachments": [],
+            "attachments": attachments or [],
         },
         "externalItem": {"extraData": {}},
     }
+
+    if message_type:
+        result["externalItem"]["extraData"]["messageType"] = message_type
+
+    return result
 
 async def _forward_message(request_body: dict):
     headers = {
