@@ -6,7 +6,7 @@ import services.sender_adapter as sa
 import services.db as db
 from services.logging_setup import interaction_logger
 import constants.redis_models as rdb
-import services.sender_adapter as sa
+import services.helper_functions as hf
 import json
 
 router = APIRouter(tags=["Constructor"])
@@ -197,7 +197,7 @@ async def send_system_message(request: SendSystemMessageRequest):
                 if cached:
                     text, participant, attachments, message_type = cached
                     request_body = sa._build_event_request(
-                        str(int(message_id) * 10),
+                        hf.generate_message_id(),
                         text,
                         chat_id,
                         messenger_id,
