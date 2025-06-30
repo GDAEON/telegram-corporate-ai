@@ -273,7 +273,7 @@ async def handle_webhook(bot_id: int, request: Request):
             db.set_main_as_selected(bot_id, contact_id)
             project_restart_code = db.get_selected_project_code(contact_id)
             project_restart_code += f"_{message_id}"
-            restart_request_body = sa._build_event_request(1, project_restart_code, contact_id, bot_id, participant_name)
+            restart_request_body = sa._build_event_request(message_id, project_restart_code, contact_id, bot_id, participant_name)
             rdb.Message.set(bot_id, contact_id, message_id, text, participant_name)
             restart_response = await sa._forward_message(restart_request_body)
 
