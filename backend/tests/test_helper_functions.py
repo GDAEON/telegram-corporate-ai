@@ -2,6 +2,7 @@ import re
 from backend.services.helper_functions import (
     guess_filename,
     generate_uuid,
+    generate_message_id,
     extract_telegram_attachments,
 )
 
@@ -22,6 +23,14 @@ def test_generate_uuid_unique():
     assert uuid1 != uuid2
     assert pattern.match(uuid1)
     assert pattern.match(uuid2)
+
+
+def test_generate_message_id_numeric_and_unique():
+    mid1 = generate_message_id()
+    mid2 = generate_message_id()
+    assert mid1 != mid2
+    assert mid1.isdigit()
+    assert mid2.isdigit()
 
 
 def test_extract_telegram_attachments_photo():

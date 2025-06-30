@@ -17,6 +17,11 @@ def generate_uuid():
     return str(uuid.uuid4())
 
 
+def generate_message_id() -> str:
+    """Return a numeric string suitable for message IDs."""
+    return str(uuid.uuid4().int >> 64)
+
+
 translit_map = {
     'а': 'a', 'б': 'b', 'в': 'v', 'г': 'g', 'д': 'd',
     'е': 'e', 'ё': 'e', 'ж': 'zh','з': 'z', 'и': 'i',

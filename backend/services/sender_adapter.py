@@ -149,7 +149,7 @@ async def send_media(
 
 
 def _build_event_request(
-    message_id: int,
+    message_id: str,
     text: str,
     contact_id: int,
     messengerId: int,
