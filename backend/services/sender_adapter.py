@@ -160,6 +160,10 @@ def _build_event_request(
     ts = int(datetime.now(tz=timezone.utc).timestamp())
     date = datetime.now().strftime("%d.%m.%Y")
 
+    interaction_logger.info(
+        f"EVENT_BUILD timestamp={ts} date={date}"
+    )
+
     result = {
         "eventType": "InboxReceived",
         "timestamp": ts,
