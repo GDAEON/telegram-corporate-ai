@@ -44,3 +44,53 @@ def clean_commands(commands: dict) -> dict:
     for cmd in commands["commands"]:
         cmd["command"] = normalize_command(cmd["command"])
     return commands
+
+
+def extract_telegram_attachments(message: dict, token: str):
+    """Return attachments list and message type for a Telegram message."""
+    attachments = []
+    message_type = None
+
+    if "photo" in message:
+        photo = message["photo"][-1]
+        file_id = photo["file_id"]
+        attachments.append({
+            "type": "Image",
+            "url": f"https://api.telegram.org/file/bot{token}/{file_id}",
+            "mime": "image/jpeg",
+        })
+        message_type = "photo"
+    elif "voice" in message:
+        file_id = message["voice"]["file_id"]
+        attachments.append({
+            "type": "Voice",
+            "url": f"https://api.telegram.org/file/bot{token}/{file_id}",
+            "mime": "audio/ogg",
+        })
+        message_type = "voice"
+    elif "video" in message:
+        file_id = message["video"]["file_id"]
+        attachments.append({
+            "type": "Video",
+            "url": f"https://api.telegram.org/file/bot{token}/{file_id}",
+            "mime": "video/mp4",
+        })
+        message_type = "video"
+    elif "audio" in message:
+        file_id = message["audio"]["file_id"]
+        attachments.append({
+            "type": "Audio",
+            "url": f"https://api.telegram.org/file/bot{token}/{file_id}",
+            "mime": "audio/mpeg",
+        })
+        message_type = "audio"
+    elif "document" in message:
+        file_id = message["document"]["file_id"]
+        attachments.append({
+            "type": "Document",
+            "url": f"https://api.telegram.org/file/bot{token}/{file_id}",
+            "mime": "application/octet-stream",
+        })
+        message_type = "document"
+
+    return attachments, message_type

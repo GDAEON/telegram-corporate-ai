@@ -1,5 +1,6 @@
 import os
 import json
+from pathlib import Path
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -10,7 +11,8 @@ INTEGRATION_URL = os.getenv("INTEGRATION_URL")
 INTEGRATION_CODE = os.getenv("INTEGRATION_CODE")
 INTEGRATION_TOKEN = os.getenv("INTEGRATION_TOKEN")
 
-with open('config/scheme.json', 'r', encoding='utf-8') as f:
+BASE_DIR = Path(__file__).resolve().parent
+with open(BASE_DIR / 'scheme.json', 'r', encoding='utf-8') as f:
     SCHEME = json.load(f)
 
 

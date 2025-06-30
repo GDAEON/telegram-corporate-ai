@@ -268,13 +268,28 @@ async def handle_webhook(bot_id: int, request: Request):
             )
         )
         message_id = message.get("message_id")
+        attachments, message_type = hf.extract_telegram_attachments(message, token)
 
         if db.no_project_selected(bot_id, contact_id):
             db.set_main_as_selected(bot_id, contact_id)
             project_restart_code = db.get_selected_project_code(contact_id)
             project_restart_code += f"_{message_id}"
-            restart_request_body = sa._build_event_request(message_id, project_restart_code, contact_id, bot_id, participant_name)
-            rdb.Message.set(bot_id, contact_id, message_id, text, participant_name)
+            restart_request_body = sa._build_event_request(
+                message_id,
+                project_restart_code,
+                contact_id,
+                bot_id,
+                participant_name,
+            )
+            rdb.Message.set(
+                bot_id,
+                contact_id,
+                message_id,
+                text,
+                participant_name,
+                attachments,
+                message_type,
+            )
             restart_response = await sa._forward_message(restart_request_body)
 
             return {"status": "ok", "raw_response": restart_response.text}
@@ -319,26 +334,15 @@ async def handle_webhook(bot_id: int, request: Request):
                 return {"status": "ok"}
 
 
-        request_body = sa._build_event_request(message_id, text, contact_id, bot_id, participant_name)
-
-        if "photo" in message:
-            photo = message["photo"][-1]
-            file_id = photo["file_id"]
-            request_body["message"]["attachments"].append({
-                "type": "Image",
-                "url": f"https://api.telegram.org/file/bot{token}/{file_id}",
-                "mime": "image/jpeg",
-            })
-            request_body["externalItem"]["extraData"]["messageType"] = "photo"
-
-        elif "voice" in message:
-            file_id = message["voice"]["file_id"]
-            request_body["message"]["attachments"].append({
-                "type": "Voice",
-                "url": f"https://api.telegram.org/file/bot{token}/{file_id}",
-                "mime": "audio/ogg",
-            })
-            request_body["externalItem"]["extraData"]["messageType"] = "voice"
+        request_body = sa._build_event_request(
+            message_id,
+            text,
+            contact_id,
+            bot_id,
+            participant_name,
+            attachments,
+            message_type,
+        )
 
         response = await sa._forward_message(request_body)
 
