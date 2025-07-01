@@ -285,6 +285,7 @@ async def handle_webhook(bot_id: int, request: Request):
         attachments, message_type = hf.extract_telegram_attachments(message, token)
 
         if db.no_project_selected(bot_id, contact_id):
+            
             db.set_main_as_selected(bot_id, contact_id)
             project_restart_code = db.get_selected_project_code(bot_id, contact_id)
             project_restart_code += f"_{message_id}"
