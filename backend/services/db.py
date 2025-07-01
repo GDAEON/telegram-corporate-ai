@@ -625,3 +625,30 @@ def find_project_by_command(
             if hf.normalize_command(name) == normalized:
                 return pid, code
     return None
+
+
+def add_user_to_all_projects(bot_id: int, user_id: int) -> None:
+    """Link all projects of the bot to the user with is_selected=False."""
+
+    with get_session() as session:
+        project_ids = (
+            session.query(BotProject.project_id)
+            .filter(BotProject.bot_id == bot_id)
+            .all()
+        )
+
+        for (project_id,) in project_ids:
+            exists = (
+                session.query(UserProjectSelection)
+                .filter_by(user_id=user_id, project_id=project_id, bot_id=bot_id)
+                .one_or_none()
+            )
+            if not exists:
+                session.add(
+                    UserProjectSelection(
+                        user_id=user_id,
+                        project_id=project_id,
+                        bot_id=bot_id,
+                        is_selected=False,
+                    )
+                )

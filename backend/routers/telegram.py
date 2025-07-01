@@ -183,6 +183,9 @@ async def _handle_start(bot_id: int, token: str, contact_id: int, text: str, mes
             message["from"].get("last_name"),
             None,
         )
+
+        db.add_user_to_all_projects(bot_id, contact_id)
+        
         db.mark_pass_token_used(bot_id, input_uuid)
         await sa.send_message(
             token,
@@ -191,6 +194,16 @@ async def _handle_start(bot_id: int, token: str, contact_id: int, text: str, mes
             reply_keyboard=contact_button,
             bot_id=bot_id,
         )
+
+        projects = db.get_not_main_projects(bot_id, contact_id)
+        commands = {"commands": []}
+        for project in projects:
+            commands["commands"].append({"command": project, "description": project})
+
+        commands = hf.clean_commands(commands)
+
+        await ws.set_bot_commands(token, commands)
+
         return {"status": "ok"}
 
     await sa.send_message(
