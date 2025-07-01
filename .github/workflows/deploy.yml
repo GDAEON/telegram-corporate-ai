@@ -43,6 +43,7 @@ jobs:
           pytest
 
   changes:
+    if: github.event_name == 'push'
     runs-on: ubuntu-latest
     outputs:
       backend: ${{ steps.filter.outputs.backend }}
