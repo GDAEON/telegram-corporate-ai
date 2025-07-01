@@ -67,7 +67,7 @@ async def integrate_new_user(request: IntegrateRequest):
         "externalId": "12",  # TODO replace with bot_id
         "name": str(bot_name),
         "locale": locale,
-        "paymentType": "external",
+        "paymentType": "internal",
         "status": {
             "status": "active",
         },
@@ -229,7 +229,7 @@ async def refresh_web_url(bot_id: int, locale: Optional[str] = None):
         "externalId": "12",  # TODO replace with bot_id
         "name": str(bot_name),
         "locale": locale,
-        "paymentType": "external",
+        "paymentType": "internal",
         "status": {"status": "active"},
     }
 
