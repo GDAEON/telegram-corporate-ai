@@ -42,13 +42,28 @@ jobs:
           cd backend
           pytest
 
-  deploy:
-    if: github.event_name == 'push'
-    needs: tests
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      backend: ${{ steps.filter.outputs.backend }}
+      frontend: ${{ steps.filter.outputs.frontend }}
+    steps:
+      - uses: dorny/paths-filter@v2
+        id: filter
+        with:
+          filters: |
+            backend:
+              - 'backend/**'
+            frontend:
+              - 'frontend/**'
+
+  deploy-backend:
+    if: github.event_name == 'push' && needs.changes.outputs.backend == 'true'
+    needs: [tests, changes]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Deploy via SSH
+      - name: Deploy backend via SSH
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.SSH_HOST }}
@@ -61,3 +76,23 @@ jobs:
             git pull
             sudo docker compose build backend
             sudo docker compose up -d backend
+
+  deploy-frontend:
+    if: github.event_name == 'push' && needs.changes.outputs.frontend == 'true'
+    needs: [tests, changes]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Deploy frontend via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_KEY }}
+          port: ${{ secrets.SSH_PORT || '22' }}
+          script: |
+            cd telegram-corporate-ai
+            git fetch
+            git pull
+            sudo docker compose build frontend
+            sudo docker compose up -d frontend
