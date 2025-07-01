@@ -198,7 +198,7 @@ async def send_system_message(request: SendSystemMessageRequest):
                 if cached:
                     text, participant, attachments, message_type = cached
                     request_body = sa._build_event_request(
-                        hf.generate_message_id(),
+                        message_id,
                         text,
                         chat_id,
                         messenger_id,
