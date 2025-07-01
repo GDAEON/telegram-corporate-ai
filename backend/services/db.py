@@ -17,6 +17,7 @@ from constants.postgres_models import (
 )
 import constants.redis_models as rdb
 import services.helper_functions as hf
+from services.cache_utils import redis_cache
 
 SessionLocal = sessionmaker(bind=engine)
 
@@ -52,8 +53,11 @@ def create_new_bot(
         new_bot.set_web_url(web_url)
         session.add(new_bot)
     rdb.Bot.create(id, token)
+    # pre-cache bot details
+    get_bot_auth(id)
 
 
+@redis_cache
 def bot_exists(id: int) -> bool:
     with get_session() as session:
         return session.query(exists().where(Bot.id == id)).scalar()
@@ -75,6 +79,7 @@ def update_bot_locale(id: int, locale: str) -> None:
             bot.set_locale(locale)
 
 
+@redis_cache
 def get_bot_auth(id: int) -> Optional[Tuple[str, str, str, str]]:
     """Return bot name, pass uuid, web url and locale for the bot."""
     with get_session() as session:
@@ -84,12 +89,14 @@ def get_bot_auth(id: int) -> Optional[Tuple[str, str, str, str]]:
         return bot.name, bot.get_pass_uuid(), bot.get_web_url(), bot.get_locale()
 
 
+@redis_cache
 def compare_bot_auth_owner(id: int, tested_owner_uuid: str) -> bool:
     with get_session() as session:
         bot = session.get(Bot, id)
         return bool(bot and bot.get_owner_uuid() == tested_owner_uuid)
 
 
+@redis_cache
 def compare_bot_auth_pass(id: int, tested_pass_uuid: str) -> bool:
     """Return True if the token exists and is unused."""
     with get_session() as session:
@@ -129,6 +136,7 @@ def mark_pass_token_used(bot_id: int, pass_uuid: str) -> None:
                 break
 
 
+@redis_cache
 def get_bot_by_owner_uuid(owner_uuid: str) -> Optional[Tuple[int, str, str, str]]:
     """Return bot info by owner uuid."""
     with get_session() as session:
@@ -139,6 +147,7 @@ def get_bot_by_owner_uuid(owner_uuid: str) -> Optional[Tuple[int, str, str, str]
     return None
 
 
+@redis_cache
 def get_bots_by_owner_uuid(owner_uuid: str) -> list[Tuple[int, str, str, str]]:
     """Return list of bot info tuples for the given owner uuid."""
     with get_session() as session:
@@ -150,12 +159,14 @@ def get_bots_by_owner_uuid(owner_uuid: str) -> list[Tuple[int, str, str, str]]:
         return res
 
 
+@redis_cache
 def get_all_bots() -> list[Tuple[int, str]]:
     """Return list of bot id and name for all bots."""
     with get_session() as session:
         rows = session.query(Bot.id, Bot.name).order_by(Bot.id).all()
         return [(bot_id, name) for bot_id, name in rows]
 
+@redis_cache
 def get_all_bot_users() -> list[Tuple[int, int, str | None, str | None]]:
     """Return list of bot id, user id and user names for all bot users."""
     with get_session() as session:
@@ -183,6 +194,7 @@ def get_bot_token(id: int) -> Optional[str]:
     return token
 
 
+@redis_cache
 def get_bot_locale(id: int) -> str | None:
     """Return stored locale for a bot."""
     with get_session() as session:
@@ -192,6 +204,7 @@ def get_bot_locale(id: int) -> str | None:
         return bot.get_locale()
 
 
+@redis_cache
 def is_bot_verified(id: int) -> bool:
     with get_session() as session:
         bot = session.get(Bot, id)
@@ -222,8 +235,11 @@ def add_owner_user(bot_id: int, user_id: int):
         rdb.BotUserStatus.set(bot_id, user_id, True, True)
         rdb.BotOwner.set(bot_id, user_id)
         rdb.BotUsersPage.invalidate(bot_id)
+    # pre-cache owner status
+    get_is_bot_owner(bot_id, user_id)
 
 
+@redis_cache
 def get_is_bot_owner(bot_id: int, user_id: int) -> bool:
     cached = rdb.BotUserStatus.get(bot_id, user_id)
     if cached is not None:
@@ -241,6 +257,7 @@ def get_is_bot_owner(bot_id: int, user_id: int) -> bool:
         return False
 
 
+@redis_cache
 def owner_has_contact(bot_id: int, user_id: int) -> bool:
     """Return True if the owner has provided phone contact."""
     with get_session() as session:
@@ -257,6 +274,7 @@ def owner_has_contact(bot_id: int, user_id: int) -> bool:
         return bool(row and row[0])
 
 
+@redis_cache
 def get_bot_owner_id(bot_id: int) -> Optional[int]:
     """Return user id of the bot owner if exists."""
     cached = rdb.BotOwner.get(bot_id)
@@ -310,8 +328,11 @@ def add_user_to_a_bot(
             session.add(BotUser(bot_id=bot_id, user_id=user_id, is_active=True))
         rdb.BotUserStatus.set(bot_id, user_id, True, False)
         rdb.BotUsersPage.invalidate(bot_id)
+    # pre-cache bot user status
+    bot_has_user(bot_id, user_id)
 
 
+@redis_cache
 def bot_has_user(bot_id: int, user_id: int) -> bool:
     cached = rdb.BotUserStatus.get(bot_id, user_id)
     if cached is not None:
@@ -329,6 +350,7 @@ def bot_has_user(bot_id: int, user_id: int) -> bool:
         return False
 
 
+@redis_cache
 def get_botuser_status(bot_id: int, user_id: int) -> Optional[bool]:
     """Return True/False if user exists, None if not registered"""
     cached = rdb.BotUserStatus.get(bot_id, user_id)
@@ -354,6 +376,7 @@ def bot_set_verified(id: int, new_verified: bool):
             bot.verified = new_verified
 
 
+@redis_cache
 def get_bot_users(
     bot_id: int,
     page: int = 1,
@@ -414,6 +437,7 @@ def get_bot_users(
     rdb.BotUsersPage.set(bot_id, page, per_page, search, is_active, users, total)
     return users, total
 
+@redis_cache
 def get_owner_name(bot_id: int) -> Optional[str]:
     
     with get_session() as session: 
@@ -506,6 +530,7 @@ def set_main_as_selected(bot_id: int, user_id: int) -> None:
             )
 
 
+@redis_cache
 def get_selected_project_code(bot_id: int, user_id: int) -> str | None:
     with get_session() as session:
         result = (
@@ -521,6 +546,7 @@ def get_selected_project_code(bot_id: int, user_id: int) -> str | None:
         return result[0] if result else None
 
 
+@redis_cache
 def is_project_selected(project_id: int, bot_id: int, user_id: int) -> bool:
     with get_session() as session:
         row = (
@@ -530,6 +556,7 @@ def is_project_selected(project_id: int, bot_id: int, user_id: int) -> bool:
         )
         return bool(row and row[0])
 
+@redis_cache
 def no_project_selected(bot_id: int, user_id: int) -> bool:
     """Return True if user has no selected project for the given bot."""
     with get_session() as session:
@@ -544,6 +571,7 @@ def no_project_selected(bot_id: int, user_id: int) -> bool:
         )
         return not bool(row and row[0])
 
+@redis_cache
 def get_selected_project_id(bot_id: int, user_id: int) -> int | None:
     with get_session() as session:
         result = (
@@ -565,6 +593,7 @@ def deselect_project(project_id: int, bot_id: int, user_id: int) -> None:
             project_id=project_id, user_id=user_id, bot_id=bot_id
         ).update({"is_selected": False}, synchronize_session=False)
 
+@redis_cache
 def get_not_main_projects(bot_id: int, user_id: int) -> list[str]:
     """Return names of the user's projects that are not main for the bot."""
     with get_session() as session:
@@ -608,6 +637,7 @@ def set_project_selected(bot_id: int, project_id: int, user_id: int) -> None:
             )
 
 
+@redis_cache
 def find_project_by_command(
     bot_id: int, user_id: int, command: str
 ) -> tuple[int, str] | None:
