@@ -1,4 +1,5 @@
 import types
+import asyncio
 import pytest
 from backend.routers import constructor
 from backend.constants.request_models import (
@@ -57,6 +58,7 @@ async def test_send_system_message_with_media(monkeypatch):
     monkeypatch.setattr(constructor.sa, "_forward_message", fake_forward)
 
     result = await constructor.send_system_message(req)
+    await asyncio.sleep(0)
 
     assert captured["body"]["message"]["attachments"][0]["type"] == "Image"
     assert captured["body"]["externalItem"]["extraData"]["messageType"] == "photo"
