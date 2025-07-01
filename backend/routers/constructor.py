@@ -8,6 +8,7 @@ from services.logging_setup import interaction_logger
 import constants.redis_models as rdb
 import services.helper_functions as hf
 import json
+import asyncio
 
 router = APIRouter(tags=["Constructor"])
 
@@ -205,7 +206,7 @@ async def send_system_message(request: SendSystemMessageRequest):
                         attachments,
                         message_type,
                     )
-                    await sa._forward_message(request_body)
+                    asyncio.create_task(sa._forward_message(request_body))
                 rdb.Message.delete(messenger_id, chat_id, message_id)
 
             session_id = project_data.get("session_id")
