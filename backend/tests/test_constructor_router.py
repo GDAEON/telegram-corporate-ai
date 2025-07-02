@@ -25,17 +25,19 @@ async def test_list_messengers(monkeypatch):
 
 @pytest.mark.asyncio
 async def test_send_message(monkeypatch):
+    id = 1
     req = SendTextMessageRequest(chat=Chat(externalId="1", messengerInstance="1", contact="1", messengerId="1"), text="hi")
     monkeypatch.setattr(constructor.db, "get_bot_token", lambda bot_id: "token")
     async def fake_send(*args, **kwargs):
         return {"status_code": 200, "body": {}}
     monkeypatch.setattr(constructor.sa, "send_message", fake_send)
-    result = await constructor.send_message(req)
+    result = await constructor.send_message(id, req)
     assert result["externalId"] == "1"
 
 
 @pytest.mark.asyncio
 async def test_send_system_message_with_media(monkeypatch):
+    id = 1
     req = SendSystemMessageRequest(
         chat=Chat(externalId="1", messengerInstance="1", contact="1", messengerId="1"),
         text="{\"event\": \"started\", \"req_id\": \"5\"}"
@@ -57,9 +59,9 @@ async def test_send_system_message_with_media(monkeypatch):
 
     monkeypatch.setattr(constructor.sa, "_forward_message", fake_forward)
 
-    result = await constructor.send_system_message(req)
+    result = await constructor.send_system_message(id, req)
     await asyncio.sleep(0)
 
     assert captured["body"]["message"]["attachments"][0]["type"] == "Image"
     assert captured["body"]["externalItem"]["extraData"]["messageType"] == "photo"
-    assert result["messengerId"] == "1"
+    assert result["messengerId"] == 1
