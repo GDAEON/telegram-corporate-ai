@@ -28,7 +28,7 @@ async def list_messengers():
                 "externalType": "employees",
                 "externalId": f"{user_id}",
                 "name": f"{name or ''} {surname or ''}".strip(),
-                "messengerId": f"{user_id}",
+                # "messengerId": f"{user_id}",
             }
             for bot_id, user_id, name, surname in bot_users
         ]
