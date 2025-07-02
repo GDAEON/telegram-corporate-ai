@@ -170,7 +170,7 @@ def _build_event_request(
         "chat": {
             "externalId": f"{contact_id}",
             "messengerInstance": f"{contact_id}",
-            "messengerId": f"{messengerId}",
+            "messengerId": f"{contact_id}",
             "contact": {"externalId": f"{contact_id}"},
         },
         "participant": participant_name,

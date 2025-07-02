@@ -28,7 +28,7 @@ async def list_messengers():
                 "externalType": "employees",
                 "externalId": f"{user_id}",
                 "name": f"{name or ''} {surname or ''}".strip(),
-                "messengerId": f"{bot_id}",
+                "messengerId": f"{user_id}",
             }
             for bot_id, user_id, name, surname in bot_users
         ]
@@ -51,13 +51,17 @@ async def get_status(id: int):
 
 
 @router.post('/{id}/sendTextMessage', description="Send a text message to a chat")
-async def send_message(request: SendTextMessageRequest):
+async def send_message(id: int, request: SendTextMessageRequest):
     """Send text with optional buttons and quick replies."""
     try:
+        messenger_id = id
+        #TODO Remove 
+        if int(id) == 12:
+            messenger_id = 7922062448
         interaction_logger.info(
-            f"Sending text message to {request.chat.contact} via bot {request.chat.messengerId}"
+            f"Sending text message to {request.chat.contact} via bot {messenger_id}"
         )
-        token = db.get_bot_token(request.chat.messengerId)
+        token = db.get_bot_token(messenger_id)
         chat_id = request.chat.contact
         text = request.text
         inline_buttons = request.inlineButtons
@@ -84,21 +88,20 @@ async def send_message(request: SendTextMessageRequest):
             inline_buttons=inline_buttons,
             reply_keyboard=reply_keyboard,
             remove_keyboard=not inline_buttons and not quick_replies,
-            bot_id=request.chat.messengerId,
+            bot_id=messenger_id,
         )
 
         if response["status_code"] == 200:
-            messenger_id = request.chat.messengerId
             interaction_logger.info(
                 f"Text message sent to {chat_id} via bot {messenger_id}"
             )
             return {"externalId": chat_id, "messengerId": messenger_id}
         else:
             interaction_logger.error(
-                f"Failed to send text message via bot {request.chat.messengerId}: {response['body']}"
+                f"Failed to send text message via bot {messenger_id}: {response['body']}"
             )
             return JSONResponse(
-                content={"message": f"Failed to send text message via bot {request.chat.messengerId}: {response['body']}",
+                content={"message": f"Failed to send text message via bot {messenger_id}: {response['body']}",
                           "code": "feature_not_supported"},
                 status_code=202
             )
@@ -113,13 +116,17 @@ async def send_message(request: SendTextMessageRequest):
 
 
 @router.post('/{id}/sendMediaMessage', description="Send a media message to a chat")
-async def send_media_message(request: SendMediaMessageRequest):
+async def send_media_message(id: int, request: SendMediaMessageRequest):
     """Send files such as images or audio with optional caption."""
     try:
+        messenger_id = id
+        #TODO Remove 
+        if int(id) == 12:
+            messenger_id = 7922062448
         interaction_logger.info(
-            f"Sending media message to {request.chat.contact} via bot {request.chat.messengerId}"
+            f"Sending media message to {request.chat.contact} via bot {messenger_id}"
         )
-        token = db.get_bot_token(request.chat.messengerId)
+        token = db.get_bot_token(messenger_id)
         chat_id = request.chat.contact
         file_type = request.file.type
         file_url = request.file.url
@@ -152,18 +159,17 @@ async def send_media_message(request: SendMediaMessageRequest):
             inline_buttons=inline_buttons,
             reply_keyboard=reply_keyboard,
             remove_keyboard=not inline_buttons and not quick_replies,
-            bot_id=request.chat.messengerId,
+            bot_id=messenger_id,
         )
 
         if response["status_code"] == 200:
-            messenger_id = request.chat.messengerId
             interaction_logger.info(
                 f"Media message sent to {chat_id} via bot {messenger_id}"
             )
             return {"externalId": chat_id, "messengerId": messenger_id}
         else:
             interaction_logger.error(
-                f"Failed to send media via bot {request.chat.messengerId}: {response['body']}"
+                f"Failed to send media via bot {messenger_id}: {response['body']}"
             )
             return {"message": response['body'], "code": "feature_not_supported"}
 
@@ -176,13 +182,17 @@ async def send_media_message(request: SendMediaMessageRequest):
     
 
 @router.post('/{id}/sendSystemMessage', description="Send a message message")
-async def send_system_message(request: SendSystemMessageRequest):
+async def send_system_message(id: int, request: SendSystemMessageRequest):
     try:
+        messenger_id = id
+        #TODO Remove 
+        if int(id) == 12:
+            messenger_id = 7922062448
         interaction_logger.info(
-            f"Receiving system message from {request.chat.contact} from bot {request.chat.messengerId}"
+            f"Receiving system message from {request.chat.contact} from bot {messenger_id}"
         )
         chat_id = request.chat.contact
-        messenger_id = request.chat.messengerId
+        
         text = request.text
 
         interaction_logger.info(text) 
