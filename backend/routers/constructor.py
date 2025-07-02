@@ -18,7 +18,7 @@ async def get_schema():
     """Return the constructor schema used by the admin panel."""
     return JSONResponse(content=SCHEME)
 
-@router.get("/messengers", description="List all available messenger contacts")
+@router.get("/{id}/messengers", description="List all available messenger contacts")
 async def list_messengers():
     """Return all users grouped as messenger contacts."""
     try:
@@ -50,7 +50,7 @@ async def get_status(id: int):
     }
 
 
-@router.post('/sendTextMessage', description="Send a text message to a chat")
+@router.post('/{id}/sendTextMessage', description="Send a text message to a chat")
 async def send_message(request: SendTextMessageRequest):
     """Send text with optional buttons and quick replies."""
     try:
@@ -112,7 +112,7 @@ async def send_message(request: SendTextMessageRequest):
         )
 
 
-@router.post('/sendMediaMessage', description="Send a media message to a chat")
+@router.post('/{id}/sendMediaMessage', description="Send a media message to a chat")
 async def send_media_message(request: SendMediaMessageRequest):
     """Send files such as images or audio with optional caption."""
     try:
@@ -175,7 +175,7 @@ async def send_media_message(request: SendMediaMessageRequest):
         )
     
 
-@router.post('/sendSystemMessage', description="Send a message message")
+@router.post('/{id}/sendSystemMessage', description="Send a message message")
 async def send_system_message(request: SendSystemMessageRequest):
     try:
         interaction_logger.info(
