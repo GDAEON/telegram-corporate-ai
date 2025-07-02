@@ -169,7 +169,11 @@ def _build_event_request(
         "timestamp": ts,
         "chat": {
             "externalId": f"{contact_id}",
-            "messengerInstance": f"{contact_id}",
+            "messengerInstance": {
+                "externalType": "employees",
+                "externalId":f"{contact_id}",
+                "name":f"{participant_name}"
+            },
             "messengerId": f"{contact_id}",
             "contact": {"externalId": f"{contact_id}"},
         },
