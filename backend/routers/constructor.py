@@ -57,7 +57,7 @@ async def send_message(id: int, request: SendTextMessageRequest):
         messenger_id = id
         #TODO Remove 
         if int(id) == 12:
-            messenger_id = 7922062448
+            messenger_id = '7922062448'
         interaction_logger.info(
             f"Sending text message to {request.chat.contact} via bot {messenger_id}"
         )
@@ -122,7 +122,7 @@ async def send_media_message(id: int, request: SendMediaMessageRequest):
         messenger_id = id
         #TODO Remove 
         if int(id) == 12:
-            messenger_id = 7922062448
+            messenger_id = '7922062448'
         interaction_logger.info(
             f"Sending media message to {request.chat.contact} via bot {messenger_id}"
         )
@@ -187,7 +187,7 @@ async def send_system_message(id: int, request: SendSystemMessageRequest):
         messenger_id = id
         #TODO Remove 
         if int(id) == 12:
-            messenger_id = 7922062448
+            messenger_id = '7922062448'
         interaction_logger.info(
             f"Receiving system message from {request.chat.contact} from bot {messenger_id}"
         )
