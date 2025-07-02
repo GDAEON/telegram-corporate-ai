@@ -95,7 +95,7 @@ async def send_message(id: int, request: SendTextMessageRequest):
             interaction_logger.info(
                 f"Text message sent to {chat_id} via bot {messenger_id}"
             )
-            return {"externalId": chat_id, "messengerId": messenger_id}
+            return {"externalId": chat_id, "messengerId": chat_id}
         else:
             interaction_logger.error(
                 f"Failed to send text message via bot {messenger_id}: {response['body']}"
@@ -166,7 +166,7 @@ async def send_media_message(id: int, request: SendMediaMessageRequest):
             interaction_logger.info(
                 f"Media message sent to {chat_id} via bot {messenger_id}"
             )
-            return {"externalId": chat_id, "messengerId": messenger_id}
+            return {"externalId": chat_id, "messengerId": chat_id}
         else:
             interaction_logger.error(
                 f"Failed to send media via bot {messenger_id}: {response['body']}"
@@ -236,7 +236,7 @@ async def send_system_message(id: int, request: SendSystemMessageRequest):
                 rdb.Session.delete(messenger_id, chat_id, session_id)
         
 
-        return {"externalId": chat_id, "messengerId": messenger_id}
+        return {"externalId": chat_id, "messengerId": chat_id}
 
     except Exception as e:
         interaction_logger.error(f"System message failed: {e}")
