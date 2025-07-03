@@ -60,9 +60,16 @@ def extract_telegram_attachments(message: dict, token: str):
     if "photo" in message:
         photo = message["photo"][-1]
         file_id = photo["file_id"]
+
+        response = requests.get(
+            f"https://api.telegram.org/bot{token}/getFile",
+            params={"file_id": file_id}
+        )
+        file_path = response.json()["result"]["file_path"]
+
         attachments.append({
             "type": "Image",
-            "url": f"https://api.telegram.org/file/bot{token}/{file_id}",
+            "url": f"https://api.telegram.org/file/bot{token}/{file_path}",
             "mime": "image/jpeg",
         })
         message_type = "photo"
@@ -83,25 +90,46 @@ def extract_telegram_attachments(message: dict, token: str):
         message_type = "voice"
     elif "video" in message:
         file_id = message["video"]["file_id"]
+
+        response = requests.get(
+            f"https://api.telegram.org/bot{token}/getFile",
+            params={"file_id": file_id}
+        )
+        file_path = response.json()["result"]["file_path"]
+
         attachments.append({
             "type": "Video",
-            "url": f"https://api.telegram.org/file/bot{token}/{file_id}",
+            "url": f"https://api.telegram.org/file/bot{token}/{file_path}",
             "mime": "video/mp4",
         })
         message_type = "video"
     elif "audio" in message:
         file_id = message["audio"]["file_id"]
+
+        response = requests.get(
+            f"https://api.telegram.org/bot{token}/getFile",
+            params={"file_id": file_id}
+        )
+        file_path = response.json()["result"]["file_path"]
+
         attachments.append({
             "type": "Audio",
-            "url": f"https://api.telegram.org/file/bot{token}/{file_id}",
+            "url": f"https://api.telegram.org/file/bot{token}/{file_path}",
             "mime": "audio/mpeg",
         })
         message_type = "audio"
     elif "document" in message:
         file_id = message["document"]["file_id"]
+
+        response = requests.get(
+            f"https://api.telegram.org/bot{token}/getFile",
+            params={"file_id": file_id}
+        )
+        file_path = response.json()["result"]["file_path"]
+
         attachments.append({
             "type": "Document",
-            "url": f"https://api.telegram.org/file/bot{token}/{file_id}",
+            "url": f"https://api.telegram.org/file/bot{token}/{file_path}",
             "mime": "application/octet-stream",
         })
         message_type = "document"
