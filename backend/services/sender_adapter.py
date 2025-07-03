@@ -200,7 +200,7 @@ async def _forward_message(request_body: dict):
     interaction_logger.info(f"Sent: {request_body}")
     async with httpx.AsyncClient() as client:
         return await client.post(
-            f"{INTEGRATION_URL}/{INTEGRATION_CODE}/{request_body["chat"]["externalId"]}/event",
+            f"{INTEGRATION_URL}/{INTEGRATION_CODE}/12/event",
             json=request_body,
             headers=headers,
         )
