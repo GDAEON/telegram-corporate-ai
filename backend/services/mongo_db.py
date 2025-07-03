@@ -5,6 +5,7 @@ from config.settings import MONGO_HOST, MONGO_USERNAME, MONGO_PASSWORD, MONGO_DB
 uri = f"mongodb://{MONGO_USERNAME}:{MONGO_PASSWORD}@{MONGO_HOST}"
 
 client = MongoClient(uri)
+
 db = client[str(MONGO_DB)]
 
 def insert_message(
