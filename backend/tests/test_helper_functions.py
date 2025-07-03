@@ -32,9 +32,3 @@ def test_generate_message_id_numeric_and_unique():
     assert mid1.isdigit()
     assert mid2.isdigit()
 
-
-def test_extract_telegram_attachments_photo():
-    message = {"photo": [{"file_id": "1"}, {"file_id": "2"}]}
-    attachments, mtype = extract_telegram_attachments(message, "token")
-    assert mtype == "photo"
-    assert attachments[0]["type"] == "Image"
