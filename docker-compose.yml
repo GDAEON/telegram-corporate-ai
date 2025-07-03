@@ -32,6 +32,10 @@ services:
       REDIS_CACHE_TIME: ${REDIS_CACHE_TIME}
       PROMETHEUS_JOBS_PATH: /app/shared/jobs.json
       LOKI_URL: http://loki:3100
+      MONGO_HOST: ${MONGO_HOST}
+      MONGO_USERNAME: ${MONGO_USERNAME}
+      MONGO_PASSWORD: ${MONGO_PASSWORD}
+      MONGO_DB: ${MONGO_DB}
     depends_on:
       - postgres
       - redis
