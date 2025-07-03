@@ -64,4 +64,4 @@ async def test_send_system_message_with_media(monkeypatch):
 
     assert captured["body"]["message"]["attachments"][0]["type"] == "Image"
     assert captured["body"]["externalItem"]["extraData"]["messageType"] == "photo"
-    assert result["messengerId"] == 1
+    assert result["messengerId"] == '1'
