@@ -5,6 +5,15 @@ on:
     branches: ["master"]
   pull_request:
     branches: ["master"]
+  workflow_dispatch:
+    inputs:
+      component:
+        description: "Service to deploy"
+        required: true
+        type: choice
+        options:
+          - backend
+          - frontend
 
 jobs:
   tests:
@@ -61,12 +70,37 @@ jobs:
             frontend:
               - 'frontend/**'
 
-  deploy-backend:
+  build-backend:
     if: github.event_name == 'push' && needs.changes.outputs.backend == 'true'
     needs: [tests, changes]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Log in to Docker Hub
+        run: echo "${{ secrets.DOCKER_TOKEN }}" | docker login -u ${{ secrets.DOCKER_LOGIN }} --password-stdin
+      - name: Build and push backend image
+        run: |
+          docker build -t ${{ secrets.DOCKER_LOGIN }}/backend:latest ./backend
+          docker push ${{ secrets.DOCKER_LOGIN }}/backend:latest
+
+  build-frontend:
+    if: github.event_name == 'push' && needs.changes.outputs.frontend == 'true'
+    needs: [tests, changes]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Log in to Docker Hub
+        run: echo "${{ secrets.DOCKER_TOKEN }}" | docker login -u ${{ secrets.DOCKER_LOGIN }} --password-stdin
+      - name: Build and push frontend image
+        run: |
+          docker build -t ${{ secrets.DOCKER_LOGIN }}/frontend:latest ./frontend
+          docker push ${{ secrets.DOCKER_LOGIN }}/frontend:latest
+
+  deploy-backend:
+    if: github.event_name == 'workflow_dispatch' && github.event.inputs.component == 'backend'
+    runs-on: ubuntu-latest
+    environment: backend
+    steps:
       - name: Deploy backend via SSH
         uses: appleboy/ssh-action@v1.0.3
         with:
@@ -74,19 +108,19 @@ jobs:
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_KEY }}
           port: ${{ secrets.SSH_PORT || '22' }}
+          envs: |
+            DOCKER_LOGIN,DOCKER_TOKEN,WEBHOOK_URL,INTEGRATION_URL,INTEGRATION_CODE,INTEGRATION_TOKEN,POSTGRES_URL,POSTGRES_USER,POSTGRES_PASSWORD,POSTGRES_DB,FERNET_KEY,REDIS_URL,REDIS_PASSWORD,REDIS_CACHE_TIME,PROMETHEUS_JOBS_PATH,MONGO_HOST,MONGO_USERNAME,MONGO_PASSWORD,MONGO_DB,REACT_APP_BACKEND_IP
           script: |
+            echo "$DOCKER_TOKEN" | docker login -u $DOCKER_LOGIN --password-stdin
             cd telegram-corporate-ai
-            git fetch
-            git pull
-            sudo docker compose build backend
-            sudo docker compose up -d backend
+            docker compose pull backend
+            docker compose up -d backend
 
   deploy-frontend:
-    if: github.event_name == 'push' && needs.changes.outputs.frontend == 'true'
-    needs: [tests, changes]
+    if: github.event_name == 'workflow_dispatch' && github.event.inputs.component == 'frontend'
     runs-on: ubuntu-latest
+    environment: backend
     steps:
-      - uses: actions/checkout@v4
       - name: Deploy frontend via SSH
         uses: appleboy/ssh-action@v1.0.3
         with:
@@ -94,9 +128,10 @@ jobs:
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_KEY }}
           port: ${{ secrets.SSH_PORT || '22' }}
+          envs: |
+            DOCKER_LOGIN,DOCKER_TOKEN,WEBHOOK_URL,INTEGRATION_URL,INTEGRATION_CODE,INTEGRATION_TOKEN,POSTGRES_URL,POSTGRES_USER,POSTGRES_PASSWORD,POSTGRES_DB,FERNET_KEY,REDIS_URL,REDIS_PASSWORD,REDIS_CACHE_TIME,PROMETHEUS_JOBS_PATH,MONGO_HOST,MONGO_USERNAME,MONGO_PASSWORD,MONGO_DB,REACT_APP_BACKEND_IP
           script: |
+            echo "$DOCKER_TOKEN" | docker login -u $DOCKER_LOGIN --password-stdin
             cd telegram-corporate-ai
-            git fetch
-            git pull
-            sudo docker compose build frontend
-            sudo docker compose up -d frontend
+            docker compose pull frontend
+            docker compose up -d frontend
