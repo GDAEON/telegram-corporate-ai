@@ -6,7 +6,7 @@ import services.sender_adapter as sa
 import services.db as db
 from services.logging_setup import interaction_logger
 import constants.redis_models as rdb
-import services.helper_functions as hf
+from services.mongo_db import insert_message
 import json
 import asyncio
 
@@ -91,6 +91,34 @@ async def send_message(id: int, request: SendTextMessageRequest):
             bot_id=messenger_id,
         )
 
+        sent_payload = {
+            "chat_id": chat_id,
+            "text": text,
+            "parse_mode": "HTML",
+        }
+        if not inline_buttons and not quick_replies:
+            sent_payload["reply_markup"] = {"remove_keyboard": True}
+        elif inline_buttons:
+            sent_payload["reply_markup"] = {"inline_keyboard": inline_buttons}
+        elif reply_keyboard:
+            sent_payload["reply_markup"] = {
+                "keyboard": reply_keyboard,
+                "resize_keyboard": True,
+                "one_time_keyboard": True,
+            }
+
+        insert_message(
+            source="ConstructorMessages",
+            bot_id=int(messenger_id),
+            user_id=int(chat_id),
+            message_id=response.get("body", {}).get("result", {}).get("message_id", 0),
+            participant_name=request.chat.operator or "",
+            text=text,
+            attachments=[],
+            received_body=request.model_dump(),
+            sent_body=sent_payload,
+        )
+
         if response["status_code"] == 200:
             interaction_logger.info(
                 f"Text message sent to {chat_id} via bot {messenger_id}"
@@ -160,6 +188,37 @@ async def send_media_message(id: int, request: SendMediaMessageRequest):
             reply_keyboard=reply_keyboard,
             remove_keyboard=not inline_buttons and not quick_replies,
             bot_id=messenger_id,
+        )
+
+        sent_payload = {
+            "chat_id": str(chat_id),
+        }
+        if caption and file_type in ["image", "video", "document"]:
+            sent_payload["caption"] = caption[:1024]
+        if inline_buttons:
+            sent_payload["reply_markup"] = {"inline_keyboard": inline_buttons}
+        elif reply_keyboard:
+            sent_payload["reply_markup"] = {
+                "keyboard": reply_keyboard,
+                "resize_keyboard": True,
+                "one_time_keyboard": True,
+            }
+        elif not inline_buttons and not quick_replies:
+            sent_payload["reply_markup"] = {"remove_keyboard": True}
+        sent_payload["file_type"] = file_type
+        sent_payload["file_url"] = file_url
+        sent_payload["file_mime"] = file_mime
+
+        insert_message(
+            source="ConstructorMessages",
+            bot_id=int(messenger_id),
+            user_id=int(chat_id),
+            message_id=response.get("body", {}).get("result", {}).get("message_id", 0),
+            participant_name=request.chat.operator or "",
+            text=caption or "",
+            attachments=[{"type": file_type, "url": file_url, "mime": file_mime}],
+            received_body=request.model_dump(),
+            sent_body=sent_payload,
         )
 
         if response["status_code"] == 200:

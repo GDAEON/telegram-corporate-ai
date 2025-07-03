@@ -26,6 +26,10 @@ os.environ.setdefault('POSTGRES_DB', 'db')
 os.environ.setdefault('REDIS_URL', 'localhost')
 os.environ.setdefault('REDIS_PASSWORD', 'pass')
 os.environ.setdefault('PROMETHEUS_JOBS_PATH', '/tmp/jobs.json')
+os.environ.setdefault('MONGO_HOST', 'localhost')
+os.environ.setdefault('MONGO_USERNAME', 'user')
+os.environ.setdefault('MONGO_PASSWORD', 'pass')
+os.environ.setdefault('MONGO_DB', 'db')
 
 _real_create_engine = sqlalchemy.create_engine
 

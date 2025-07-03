@@ -1,5 +1,10 @@
+import os
 import types
 import pytest
+os.environ.setdefault("MONGO_DB", "test")
+os.environ.setdefault("MONGO_HOST", "localhost")
+os.environ.setdefault("MONGO_USERNAME", "user")
+os.environ.setdefault("MONGO_PASSWORD", "pass")
 from backend.routers import telegram
 
 

@@ -1,6 +1,11 @@
+import os
 import types
 import asyncio
 import pytest
+os.environ.setdefault("MONGO_DB", "test")
+os.environ.setdefault("MONGO_HOST", "localhost")
+os.environ.setdefault("MONGO_USERNAME", "user")
+os.environ.setdefault("MONGO_PASSWORD", "pass")
 from backend.routers import constructor
 from backend.constants.request_models import (
     SendTextMessageRequest,
@@ -31,6 +36,7 @@ async def test_send_message(monkeypatch):
     async def fake_send(*args, **kwargs):
         return {"status_code": 200, "body": {}}
     monkeypatch.setattr(constructor.sa, "send_message", fake_send)
+    monkeypatch.setattr(constructor, "insert_message", lambda *a, **k: None)
     result = await constructor.send_message(id, req)
     assert result["externalId"] == "1"
 
