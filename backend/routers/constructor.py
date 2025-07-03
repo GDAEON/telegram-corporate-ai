@@ -107,16 +107,19 @@ async def send_message(id: int, request: SendTextMessageRequest):
                 "one_time_keyboard": True,
             }
 
-        insert_message(
-            source="ConstructorMessages",
-            bot_id=int(messenger_id),
-            user_id=int(chat_id),
-            message_id=response.get("body", {}).get("result", {}).get("message_id", 0),
-            participant_name=request.chat.operator or "",
-            text=text,
-            attachments=[],
-            received_body=request.model_dump(),
-            sent_body=sent_payload,
+        asyncio.create_task(
+            asyncio.to_thread(
+                insert_message,
+                source="ConstructorMessages",
+                bot_id=int(messenger_id),
+                user_id=int(chat_id),
+                message_id=response.get("body", {}).get("result", {}).get("message_id", 0),
+                participant_name=request.chat.operator or "",
+                text=text,
+                attachments=[],
+                received_body=request.model_dump(),
+                sent_body=sent_payload,
+            )
         )
 
         if response["status_code"] == 200:
@@ -209,16 +212,19 @@ async def send_media_message(id: int, request: SendMediaMessageRequest):
         sent_payload["file_url"] = file_url
         sent_payload["file_mime"] = file_mime
 
-        insert_message(
-            source="ConstructorMessages",
-            bot_id=int(messenger_id),
-            user_id=int(chat_id),
-            message_id=response.get("body", {}).get("result", {}).get("message_id", 0),
-            participant_name=request.chat.operator or "",
-            text=caption or "",
-            attachments=[{"type": file_type, "url": file_url, "mime": file_mime}],
-            received_body=request.model_dump(),
-            sent_body=sent_payload,
+        asyncio.create_task(
+            asyncio.to_thread(
+                insert_message,
+                source="ConstructorMessages",
+                bot_id=int(messenger_id),
+                user_id=int(chat_id),
+                message_id=response.get("body", {}).get("result", {}).get("message_id", 0),
+                participant_name=request.chat.operator or "",
+                text=caption or "",
+                attachments=[{"type": file_type, "url": file_url, "mime": file_mime}],
+                received_body=request.model_dump(),
+                sent_body=sent_payload,
+            )
         )
 
         if response["status_code"] == 200:

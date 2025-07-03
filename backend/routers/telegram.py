@@ -10,6 +10,7 @@ import services.webhook_server as ws
 from services.logging_setup import interaction_logger
 from services.mongo_db import insert_message
 from constants.prometheus_models import MESSAGE_COUNT, MESSAGE_TEXT_COUNT
+import asyncio
 
 router = APIRouter(tags=["Telegram"])
 
@@ -265,6 +266,8 @@ async def handle_webhook(bot_id: int, request: Request):
             " ".join(
                 part for part in [user_info.get("first_name"), user_info.get("last_name")] if part
             )
+            or
+            user_info.get('username')
         )
         message_id = message.get("message_id")
 
@@ -379,16 +382,19 @@ async def handle_webhook(bot_id: int, request: Request):
 
         response = await sa._forward_message(request_body)
 
-        insert_message(
-            source="UsersMessages",
-            bot_id=bot_id,
-            user_id=contact_id,
-            message_id=message_id,
-            participant_name=participant_name,
-            text=text,
-            attachments=attachments,
-            received_body=update,
-            sent_body=request_body,
+        asyncio.create_task(
+            asyncio.to_thread(
+                insert_message,
+                source="UsersMessages",
+                bot_id=bot_id,
+                user_id=contact_id,
+                message_id=message_id,
+                participant_name=participant_name,
+                text=text,
+                attachments=attachments,
+                received_body=update,
+                sent_body=request_body,
+            )
         )
 
         if response.status_code >= 400:
