@@ -26,7 +26,7 @@ async def list_messengers():
         items = [
             {
                 "externalType": "employees",
-                "externalId": "12",
+                "externalId": f"{user_id}",
                 "name": f"{name or ''} {surname or ''}".strip(),
                 "messengerId": f"{user_id}",
             }
