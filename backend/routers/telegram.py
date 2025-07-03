@@ -262,8 +262,7 @@ async def handle_webhook(bot_id: int, request: Request):
 
         user_info = message.get("from", {})
         participant_name = (
-            user_info.get("username")
-            or " ".join(
+            " ".join(
                 part for part in [user_info.get("first_name"), user_info.get("last_name")] if part
             )
         )
