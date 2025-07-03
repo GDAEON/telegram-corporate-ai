@@ -1,4 +1,5 @@
 from urllib.parse import urlparse
+import requests
 import uuid
 import os
 import re
@@ -67,9 +68,16 @@ def extract_telegram_attachments(message: dict, token: str):
         message_type = "photo"
     elif "voice" in message:
         file_id = message["voice"]["file_id"]
+
+        response = requests.get(
+            f"https://api.telegram.org/bot{token}/getFile",
+            params={"file_id": file_id}
+        )
+        file_path = response.json()["result"]["file_path"]
+
         attachments.append({
             "type": "Voice",
-            "url": f"https://api.telegram.org/file/bot{token}/{file_id}",
+            "url": f"https://api.telegram.org/file/bot{token}/{file_path}",
             "mime": "audio/ogg",
         })
         message_type = "voice"
