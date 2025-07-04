@@ -287,45 +287,6 @@ async def handle_webhook(bot_id: int, request: Request):
 
         attachments, message_type = hf.extract_telegram_attachments(message, token)
 
-        if db.no_project_selected(bot_id, contact_id):
-            
-            db.set_main_as_selected(bot_id, contact_id)
-            project_restart_code = db.get_selected_project_code(bot_id, contact_id)
-            project_restart_code += f"_{message_id}"
-            restart_request_body = sa._build_event_request(
-                message_id,
-                project_restart_code,
-                contact_id,
-                bot_id,
-                participant_name,
-            )
-            rdb.Message.set(
-                bot_id,
-                contact_id,
-                message_id,
-                text,
-                participant_name,
-                attachments,
-                message_type,
-            )
-            restart_response = await sa._forward_message(restart_request_body)
-
-            return {"status": "ok", "raw_response": restart_response.text}
-
-        
-        projects = db.get_not_main_projects(bot_id, contact_id)
-        commands = {"commands": []}
-        for project in projects:
-            commands["commands"].append({"command": project, "description": project})
-
-        commands = hf.clean_commands(commands)
-
-        set_command_response = await ws.set_bot_commands(token, commands)
-
-        if set_command_response["status_code"] > 202:
-            interaction_logger.error(f"Failed to set telegram commands: {set_command_response['body']}")
-            return JSONResponse(content={"ok": False, "error": str(set_command_response["body"])}, status_code=200)
-
         if text.startswith("/"):
             command_text = text[1:].split()[0]
             command_text = command_text.split("@")[0]
@@ -369,6 +330,44 @@ async def handle_webhook(bot_id: int, request: Request):
                     )
                 return {"status": "ok"}
 
+        if db.no_project_selected(bot_id, contact_id):
+            
+            db.set_main_as_selected(bot_id, contact_id)
+            project_restart_code = db.get_selected_project_code(bot_id, contact_id)
+            project_restart_code += f"_{message_id}"
+            restart_request_body = sa._build_event_request(
+                message_id,
+                project_restart_code,
+                contact_id,
+                bot_id,
+                participant_name,
+            )
+            rdb.Message.set(
+                bot_id,
+                contact_id,
+                message_id,
+                text,
+                participant_name,
+                attachments,
+                message_type,
+            )
+            restart_response = await sa._forward_message(restart_request_body)
+
+            return {"status": "ok", "raw_response": restart_response.text}
+
+        
+        projects = db.get_not_main_projects(bot_id, contact_id)
+        commands = {"commands": []}
+        for project in projects:
+            commands["commands"].append({"command": project, "description": project})
+
+        commands = hf.clean_commands(commands)
+
+        set_command_response = await ws.set_bot_commands(token, commands)
+
+        if set_command_response["status_code"] > 202:
+            interaction_logger.error(f"Failed to set telegram commands: {set_command_response['body']}")
+            return JSONResponse(content={"ok": False, "error": str(set_command_response["body"])}, status_code=200)
 
         request_body = sa._build_event_request(
             message_id,
