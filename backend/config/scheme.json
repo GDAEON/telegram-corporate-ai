@@ -22,7 +22,7 @@
   "variables": [
     {
       "key":"contact.context",
-      "type":"string",
+      "type":"text",
       "resolver":"chat.contact.extraData.context",
       "name":"Контекст",
       "category":"contact"
