@@ -32,4 +32,38 @@ def insert_message(
     }
 
     collection.insert_one(document)
-    
+
+def save_variable(bot_id: int, user_id: int, name: str, value: any):
+    collection = db['variables']
+
+    filter = {
+        'bot_id': bot_id,
+        'user_id': user_id,
+        'name': name
+    }
+
+    update = {
+        "$set":
+            {
+                'bot_id': bot_id,
+                'user_id': user_id,
+                'name': name,
+                'value': value
+            }
+    }
+
+    collection.update_one(filter, update, upsert=True)
+
+def get_variable(bot_id: int, user_id: int, name: str) -> str:
+    collection = db['variables']
+
+    document = collection.find_one({
+        'bot_id': bot_id,
+        'user_id': user_id,
+        'name': name
+    })
+
+    if document is None:
+        return ""
+
+    return str(document['value'])

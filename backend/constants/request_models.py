@@ -48,6 +48,9 @@ class SendSystemMessageRequest(BaseModel):
     chat: Chat
     text: str
 
+class UpdateContactDataRequest(BaseModel):
+    externalId: str
+    data: Dict[str, Any]
 
 class IntegrateRequest(BaseModel):
     telegram_token: SecretStr

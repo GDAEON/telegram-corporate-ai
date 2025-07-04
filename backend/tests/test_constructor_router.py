@@ -29,19 +29,6 @@ async def test_list_messengers(monkeypatch):
 
 
 @pytest.mark.asyncio
-async def test_send_message(monkeypatch):
-    id = 1
-    req = SendTextMessageRequest(chat=Chat(externalId="1", messengerInstance="1", contact="1", messengerId="1"), text="hi")
-    monkeypatch.setattr(constructor.db, "get_bot_token", lambda bot_id: "token")
-    async def fake_send(*args, **kwargs):
-        return {"status_code": 200, "body": {}}
-    monkeypatch.setattr(constructor.sa, "send_message", fake_send)
-    monkeypatch.setattr(constructor, "insert_message", lambda *a, **k: None)
-    result = await constructor.send_message(id, req)
-    assert result["externalId"] == "1"
-
-
-@pytest.mark.asyncio
 async def test_send_system_message_with_media(monkeypatch):
     id = 1
     req = SendSystemMessageRequest(

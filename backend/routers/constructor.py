@@ -1,12 +1,12 @@
 from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse
-from constants.request_models import SendTextMessageRequest, SendMediaMessageRequest, SendSystemMessageRequest
+from constants.request_models import SendTextMessageRequest, SendMediaMessageRequest, SendSystemMessageRequest, UpdateContactDataRequest
 from config.settings import SCHEME
 import services.sender_adapter as sa
 import services.db as db
 from services.logging_setup import interaction_logger
 import constants.redis_models as rdb
-from services.mongo_db import insert_message
+import services.mongo_db as mdb
 import json
 import asyncio
 
@@ -109,7 +109,7 @@ async def send_message(id: int, request: SendTextMessageRequest):
 
         asyncio.create_task(
             asyncio.to_thread(
-                insert_message,
+                mdb.insert_message,
                 source="ConstructorMessages",
                 bot_id=int(messenger_id),
                 user_id=int(chat_id),
@@ -214,7 +214,7 @@ async def send_media_message(id: int, request: SendMediaMessageRequest):
 
         asyncio.create_task(
             asyncio.to_thread(
-                insert_message,
+                mdb.insert_message,
                 source="ConstructorMessages",
                 bot_id=int(messenger_id),
                 user_id=int(chat_id),
@@ -313,22 +313,54 @@ async def send_system_message(id: int, request: SendSystemMessageRequest):
 
 @router.get("/{id}/chats/{chatExternalId}/variables/{variable}")
 async def get_variables_of_chat(id: int, chatExternalId: int, variable: str):
-    interaction_logger.warning(f"Got Request on variables for id: {id}, chatExternalId: {chatExternalId}, variable {variable}")
-    return {"value": "string"}
+    try:
+        bot_id = int(id)
+
+        #TODO Remove
+        if bot_id == 12:
+            bot_id = 7922062448
+
+        user_id = int(chatExternalId)
+
+        name = str(variable)
+
+        interaction_logger.info(f"Got Request on variables for bot: {bot_id}, user_id: {user_id}, variable {name}")
+
+        value = mdb.get_variable(bot_id, user_id, name)
+        
+        return {"value": value}
+    
+    except Exception as e:
+        interaction_logger.error(f"System message failed: {e}")
+        return JSONResponse(
+            content={"message": str(e), "code": "internal_server_error"},
+            status_code=202
+        )
     
 
 @router.post("/{id}/updateContactData")
-async def update_contact_data(id: int, request: Request):
-    interaction_logger.warning(f"From id: {id}, got request {await request.json()}")
-    return {
-        "externalId": "string",
-        "name": "string",
-        "phone": "string",
-        "email": "string",
-        "avatarUrl": "string",
-        "extraFields": {},
-        "messengerId": "string",
-        "extraData": {
-            "additionalProp1": {}
+async def update_contact_data(id: int, request: UpdateContactDataRequest):
+    try:
+        bot_id = int(id)
+
+        #TODO Remove
+        if bot_id == 12:
+            bot_id = 7922062448
+
+        user_id = int(request.externalId)
+        data = request.data
+
+        interaction_logger.info(f"Update contact Data for bot: {bot_id}, Data: {data}")
+
+        for name, value in data.items():
+            mdb.save_variable(bot_id, user_id, name, value)
+
+        return {
+            "externalId": f"{user_id}",
         }
-    }
+    except Exception as e:
+        interaction_logger.error(f"System message failed: {e}")
+        return JSONResponse(
+            content={"message": str(e), "code": "internal_server_error"},
+            status_code=202
+        )
