@@ -2,8 +2,34 @@
   "actions": {
       "send_system_message": {
         "supported": true
+      },
+
+      "update_contact_data": {
+        "supported": true,
+        "title": "Обновить данные чата",
+        "editableFields": {
+          "type": "object",
+          "properties": {
+            "context": {
+              "type": "text",
+              "title": "Контекст",
+              "variableRef": "contact.context"
+            }
+          }
+        }
       }
     },
+
+  "variables": [
+    {
+      "key":"contact.context",
+      "type":"string",
+      "resolver":"chat.contact.extraData.context",
+      "name":"Контекст",
+      "category":"contact"
+    }
+  ],
+
   "messenger_types": {
     "employees": {
       "name": "Сотрудники",
