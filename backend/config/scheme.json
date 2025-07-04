@@ -6,7 +6,6 @@
 
       "update_contact_data": {
         "supported": true,
-        "title": "Обновить данные чата",
         "editableFields": {
           "type": "object",
           "properties": {
