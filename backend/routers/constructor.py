@@ -309,3 +309,26 @@ async def send_system_message(id: int, request: SendSystemMessageRequest):
             content={"message": str(e), "code": "internal_server_error"},
             status_code=202
         )
+    
+
+@router.get("/{id}/chats/{chatExternalId}/variables/{variable}")
+async def get_variables_of_chat(id: int, chatExternalId: int, variable: str):
+    interaction_logger.warning(f"Got Request on variables for id: {id}, chatExternalId: {chatExternalId}, variable {variable}")
+    return {"value": "string"}
+    
+
+@router.post("/{id}/updateContactData")
+async def update_contact_data(id: int, request: Request):
+    interaction_logger.warning(f"From id: {id}, got request {request}")
+    return {
+        "externalId": "string",
+        "name": "string",
+        "phone": "string",
+        "email": "string",
+        "avatarUrl": "string",
+        "extraFields": {},
+        "messengerId": "string",
+        "extraData": {
+            "additionalProp1": {}
+        }
+    }
