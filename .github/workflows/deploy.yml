@@ -111,10 +111,10 @@ jobs:
           envs: |
             DOCKER_LOGIN,DOCKER_TOKEN,WEBHOOK_URL,INTEGRATION_URL,INTEGRATION_CODE,INTEGRATION_TOKEN,POSTGRES_URL,POSTGRES_USER,POSTGRES_PASSWORD,POSTGRES_DB,FERNET_KEY,REDIS_URL,REDIS_PASSWORD,REDIS_CACHE_TIME,PROMETHEUS_JOBS_PATH,MONGO_HOST,MONGO_USERNAME,MONGO_PASSWORD,MONGO_DB,REACT_APP_BACKEND_IP
           script: |
-            echo "$DOCKER_TOKEN" | docker login -u $DOCKER_LOGIN --password-stdin
+            echo "$DOCKER_TOKEN" | sudo docker login -u $DOCKER_LOGIN --password-stdin
             cd telegram-corporate-ai
-            docker compose pull backend
-            docker compose up -d backend
+            sudo docker compose pull backend
+            sudo docker compose up -d backend
 
   deploy-frontend:
     if: github.event_name == 'workflow_dispatch' && github.event.inputs.component == 'frontend'
@@ -131,7 +131,7 @@ jobs:
           envs: |
             DOCKER_LOGIN,DOCKER_TOKEN,WEBHOOK_URL,INTEGRATION_URL,INTEGRATION_CODE,INTEGRATION_TOKEN,POSTGRES_URL,POSTGRES_USER,POSTGRES_PASSWORD,POSTGRES_DB,FERNET_KEY,REDIS_URL,REDIS_PASSWORD,REDIS_CACHE_TIME,PROMETHEUS_JOBS_PATH,MONGO_HOST,MONGO_USERNAME,MONGO_PASSWORD,MONGO_DB,REACT_APP_BACKEND_IP
           script: |
-            echo "$DOCKER_TOKEN" | docker login -u $DOCKER_LOGIN --password-stdin
+            echo "$DOCKER_TOKEN" | sudo docker login -u $DOCKER_LOGIN --password-stdin
             cd telegram-corporate-ai
-            docker compose pull frontend
-            docker compose up -d frontend
+            sudo docker compose pull frontend
+            sudo docker compose up -d frontend
