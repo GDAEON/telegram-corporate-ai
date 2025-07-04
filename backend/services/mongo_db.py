@@ -32,3 +32,4 @@ def insert_message(
     }
 
     collection.insert_one(document)
+    
