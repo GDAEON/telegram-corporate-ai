@@ -350,7 +350,7 @@ async def update_contact_data(id: int, request: UpdateContactDataRequest):
         user_id = int(request.externalId)
         data = request.data
 
-        interaction_logger.info(f"Update contact Data for bot: {bot_id}, Data: {data}")
+        interaction_logger.info(f"Update contact Data for bot: {bot_id}, for user: {user_id}, Data: {data}")
 
         for name, value in data.items():
             mdb.save_variable(bot_id, user_id, name, value)
