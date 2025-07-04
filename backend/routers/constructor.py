@@ -356,7 +356,7 @@ async def update_contact_data(id: int, request: UpdateContactDataRequest):
             mdb.save_variable(bot_id, user_id, name, value)
 
         return {
-            "externalId": "12",
+            "externalId": f"{user_id}",
         }
     except Exception as e:
         interaction_logger.error(f"System message failed: {e}")
