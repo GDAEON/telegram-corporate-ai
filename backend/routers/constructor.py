@@ -319,7 +319,7 @@ async def get_variables_of_chat(id: int, chatExternalId: int, variable: str):
 
 @router.post("/{id}/updateContactData")
 async def update_contact_data(id: int, request: Request):
-    interaction_logger.warning(f"From id: {id}, got request {request}")
+    interaction_logger.warning(f"From id: {id}, got request {request.json()}")
     return {
         "externalId": "string",
         "name": "string",
